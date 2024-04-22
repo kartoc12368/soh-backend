@@ -1,16 +1,16 @@
-import {
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import { Constants } from 'src/utils/constants';
-import { FundRaiserRepository } from '../fundraiser/fundraiser.repository';
+import { Donation } from 'src/shared/entity/donation.entity';
+import { FundraiserPage } from 'src/shared/entity/fundraiser-page.entity';
+import { Fundraiser } from 'src/shared/entity/fundraiser.entity';
+import { sendEmailDto } from 'src/shared/utility/mailer/mail.interface';
+import { MailerService } from 'src/shared/utility/mailer/mailer.service';
+import { Constants } from 'src/shared/utility/constants';
+import { DataSource } from 'typeorm';
 import { DonationRepository } from '../donation/donation.repository';
 import { FundraiserPageRepository } from '../fundraiser-page/fundraiser-page.repository';
-import { Fundraiser } from 'src/shared/entity/fundraiser.entity';
-import { Donation } from 'src/shared/entity/donation.entity';
-import { DataSource } from 'typeorm';
+import { FundRaiserRepository } from '../fundraiser/fundraiser.repository';
+import { FundraiserService } from '../fundraiser/fundraiser.service';
 
 @Injectable()
 export class AdminService {
@@ -19,7 +19,9 @@ export class AdminService {
     private donationRepository: DonationRepository,
     private fundraiserPageRepository: FundraiserPageRepository,
     private dataSource: DataSource,
-  ) {}
+    private mailerService: MailerService,
+    private fundraiserService: FundraiserService
+  ) { }
 
   async getTotalFundraisers() {
     try {
@@ -166,6 +168,36 @@ export class AdminService {
     }
   }
 
+  async generatePasswordByEmail(body) {
+    try {
+      const isFundraiserExists = await this.fundraiserRepository.findOne({
+        where: { email: body.email },
+      });
+      if (isFundraiserExists && isFundraiserExists.role == 'FUNDRAISER') {
+        throw new BadRequestException('Email already in use');
+      } else {
+        //generating random password in randomPassword variable
+        var randomPassword = Math.random().toString(36).slice(-8);
+        var body2 = {
+          firstName: body.firstName,
+          password: randomPassword,
+        };
+        const dto: sendEmailDto = {
+          // from: {name:"Lucy", address:"lucy@example.com"},
+          recipients: [{ name: body.firstName, address: body.email }],
+          subject: 'FundRaiser Password',
+          html: '<p>Hi {firstName}, Login to Portal using:{password} </p><p><strong>Cheers!</strong></p>',
+          placeholderReplacements: body2,
+        };
+        await this.mailerService.sendMail(dto);
+
+        return this.createdByAdmin(body, randomPassword);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
   async addOfflineDonation(body) {
     try {
       //same code from donate service here admin passes data in body
@@ -218,6 +250,46 @@ export class AdminService {
     } catch (error) {
       console.log(error);
       return 'Please contact addOfflineDonation';
+    }
+  }
+
+  async createFundraiserPageByEmail(body) {
+    try {
+      let fundRaiser = await this.fundraiserService.findFundRaiserByEmail(body.email,);
+      let fundRaiserPage = await this.fundraiserPageRepository.findOne({
+        where: { fundraiser: { fundraiser_id: fundRaiser.fundraiser_id } },
+      });
+      console.log(fundRaiserPage);
+      if (fundRaiserPage == null) {
+        const fundraiserPage: FundraiserPage = new FundraiserPage();
+        fundraiserPage.supporters = [];
+        fundraiserPage.gallery = [];
+        fundraiserPage.fundraiser = fundRaiser;
+        await this.fundraiserPageRepository.save(fundraiserPage);
+        return fundraiserPage;
+      } else {
+        return 'Fundraiser Page already exists';
+      }
+    } catch (error) {
+      throw new NotFoundException('Fundraiser does not exist');
+    }
+
+  }
+
+  async getAllDonations() {
+    try {
+      return await this.donationRepository.find({ relations: ['fundraiser'] });
+    } catch (error) {
+      console.log(error);
+
+    }
+  }
+
+  async getAllFundraiserPages() {
+    try {
+      return await this.fundraiserPageRepository.find();
+    } catch (error) {
+      console.log(error);
     }
   }
 
