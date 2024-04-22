@@ -1,11 +1,14 @@
 import { Body, Controller, Get, Post, Req, Res, UseGuards, ValidationPipe } from "@nestjs/common";
 import { AuthGuard } from "@nestjs/passport";
 import { ApiTags } from "@nestjs/swagger";
-import { Public } from "src/shared/decorators/public.decorator";
-import { AuthService } from "./auth.service";
+
 import { ForgotPasswordDto } from "./dto/forgot-password.dto";
-import { LoginDto } from "./dto/login.dto";
 import { ResetPasswordDto } from "./dto/reset-password.dto";
+import { LoginDto } from "./dto/login.dto";
+
+import { Public } from "src/shared/decorators/public.decorator";
+
+import { AuthService } from "./auth.service";
 
 @ApiTags("Login")
 @Controller("auth")

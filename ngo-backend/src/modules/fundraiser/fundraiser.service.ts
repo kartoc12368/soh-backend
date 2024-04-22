@@ -56,7 +56,7 @@ export class FundraiserService {
   async getLoggedInFundraiser(user) {
     const id = user;
     try {
-      return await this.fundRaiserRepository.findOneOrFail({ where: { email: id.email } });
+      return await this.fundRaiserRepository.findOneOrFail({ where: { email: id.email }, relations: ["fundraiser_page"] });
 
     } catch (error) {
       throw new NotFoundException("Fundraiser not found");

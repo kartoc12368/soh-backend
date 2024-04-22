@@ -1,11 +1,13 @@
 import { Module, forwardRef } from '@nestjs/common';
-import { FundraiserService } from './fundraiser.service';
-import { FundraiserController } from './fundraiser.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Fundraiser } from 'src/shared/entity/fundraiser.entity';
-import { FundraiserPageModule } from '../fundraiser-page/fundraiser-page.module';
+
 import { DonationModule } from '../donation/donation.module';
+import { FundraiserPageModule } from '../fundraiser-page/fundraiser-page.module';
+
+import { Fundraiser } from 'src/shared/entity/fundraiser.entity';
+import { FundraiserController } from './fundraiser.controller';
 import { FundRaiserRepository } from './fundraiser.repository';
+import { FundraiserService } from './fundraiser.service';
 
 @Module({
   imports: [
@@ -17,4 +19,4 @@ import { FundRaiserRepository } from './fundraiser.repository';
   providers: [FundraiserService, FundRaiserRepository],
   exports: [FundraiserService, FundRaiserRepository],
 })
-export class FundraiserModule {}
+export class FundraiserModule { }

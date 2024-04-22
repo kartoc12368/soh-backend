@@ -50,5 +50,5 @@ export class OwnershipGuard implements CanActivate {
   constructor(
     private readonly fundraiserPageRepository: FundraiserPageRepository,
     private readonly fundraiserRepository: FundRaiserRepository,
-  ) {} // Inject your data service
+  ) { } // Inject your data service
 }

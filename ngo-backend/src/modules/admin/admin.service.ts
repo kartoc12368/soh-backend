@@ -1,16 +1,22 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import * as bcrypt from 'bcrypt';
+
 import { Donation } from 'src/shared/entity/donation.entity';
 import { FundraiserPage } from 'src/shared/entity/fundraiser-page.entity';
 import { Fundraiser } from 'src/shared/entity/fundraiser.entity';
-import { sendEmailDto } from 'src/shared/utility/mailer/mail.interface';
-import { MailerService } from 'src/shared/utility/mailer/mailer.service';
-import { Constants } from 'src/shared/utility/constants';
-import { DataSource } from 'typeorm';
+
 import { DonationRepository } from '../donation/donation.repository';
 import { FundraiserPageRepository } from '../fundraiser-page/fundraiser-page.repository';
 import { FundRaiserRepository } from '../fundraiser/fundraiser.repository';
+
+import { MailerService } from 'src/shared/utility/mailer/mailer.service';
 import { FundraiserService } from '../fundraiser/fundraiser.service';
+
+import { Constants } from 'src/shared/utility/constants';
+import { sendEmailDto } from 'src/shared/utility/mailer/mail.interface';
+
+import { DataSource } from 'typeorm';
+
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AdminService {
@@ -93,11 +99,6 @@ export class AdminService {
       console.log(error);
       return 'Please contact saveRepository';
     }
-
-    // user.user = user1;
-    // console.log(user1)
-    // user.status = "active";
-    // return this.fundraiserRepository.save(user);
   }
 
   async changeFundraiserStatus(id: string) {

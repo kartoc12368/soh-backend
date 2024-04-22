@@ -7,8 +7,8 @@ import Mail from 'nodemailer/lib/mailer';
 @Injectable()
 export class MailerService {
 
-  constructor(private readonly configService:ConfigService){}
-  mailTransport(){
+  constructor(private readonly configService: ConfigService) { }
+  mailTransport() {
     const transporter = nodemailer.createTransport({
       service: "gmail",
       host: this.configService.get<string>("MAIL_HOST"),
@@ -24,25 +24,25 @@ export class MailerService {
 
   //template function is for sending custom html in email
 
-  template( html:string, replacements: Record<string, string>){
+  template(html: string, replacements: Record<string, string>) {
     return html.replace(
-        /{(\w*)}/g,
-        function( m, key ){
-          return replacements.hasOwnProperty( key ) ? replacements[ key ] : "";
-        }
-      );
-}
+      /{(\w*)}/g,
+      function (m, key) {
+        return replacements.hasOwnProperty(key) ? replacements[key] : "";
+      }
+    );
+  }
 
 
-  async sendMail(dto:sendEmailDto){
-    const {from,recipients,subject } = dto;
+  async sendMail(dto: sendEmailDto) {
+    const { from, recipients, subject } = dto;
     const html = dto.placeholderReplacements
-     ?this.template(dto.html,dto.placeholderReplacements)
-     :dto.html
+      ? this.template(dto.html, dto.placeholderReplacements)
+      : dto.html
 
     const transport = this.mailTransport();
-    const options:Mail.Options = {
-      from: from ??{
+    const options: Mail.Options = {
+      from: from ?? {
         name: this.configService.get<string>("APP_NAME"),
         address: this.configService.get<string>("MAIL_USER"),
       },

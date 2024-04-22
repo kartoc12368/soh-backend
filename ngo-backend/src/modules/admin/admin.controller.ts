@@ -1,18 +1,22 @@
 import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Post, Put, Req, UseGuards, ValidationPipe } from '@nestjs/common';
 import { ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { diskStorage } from 'multer';
-import * as path from 'path';
-import { RoleGuard } from 'src/shared/helper/role.guard';
-import { Constants } from 'src/shared/utility/constants';
-import { DataSource } from 'typeorm';
-import { v4 as uuidv4 } from 'uuid';
+
 import { UpdateFundraiserPageDto } from '../fundraiser-page/dto/update-fundraiser-page.dto';
-import { FundraiserPageService } from '../fundraiser-page/fundraiser-page.service';
-import { FundraiserService } from '../fundraiser/fundraiser.service';
-import { AdminService } from './admin.service';
 import { CreateFundraiserPageAdminDto } from './dto/create-fundraiserpage-admin.dto';
 import { GeneratePasswordDto } from './dto/generate-password.dto';
 import { AddOfflineDonationDto } from './dto/offline-donation.dto';
+
+import { FundraiserPageService } from '../fundraiser-page/fundraiser-page.service';
+import { AdminService } from './admin.service';
+
+import { RoleGuard } from 'src/shared/helper/role.guard';
+import { Constants } from 'src/shared/utility/constants';
+
+import { v4 as uuidv4 } from 'uuid';
+
+import { diskStorage } from 'multer';
+
+import * as path from 'path';
 
 //storage path for fundraiserPage Images
 export const storage = {
@@ -35,12 +39,7 @@ export const storage = {
 export class AdminController {
   constructor(
     private readonly adminService: AdminService,
-    private fundraiserService: FundraiserService,
     private fundraiserPageService: FundraiserPageService,
-    private dataSource: DataSource,
-    // private fundraiserRepository: FundRaiserRepository,
-    // private fundraiserPageRepository: FundraiserPageRepository,
-    // private donationRepository: DonationRepository,
   ) { }
 
   //get totaldonations amount

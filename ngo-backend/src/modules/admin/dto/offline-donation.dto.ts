@@ -1,15 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  IsAlpha,
-  IsDate,
-  IsDecimal,
-  IsEmail,
-  IsNotEmpty,
-  IsNumber,
-  IsNumberString,
-  IsOptional,
-  IsString,
-} from 'class-validator';
+
+import { IsAlpha, IsDate, IsEmail, IsNotEmpty, IsNumber, IsNumberString, IsOptional, IsString } from 'class-validator';
 
 export class AddOfflineDonationDto {
   @ApiProperty()

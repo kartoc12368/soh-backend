@@ -1,6 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+
 import { Donation } from 'src/shared/entity/donation.entity';
 import { Fundraiser } from 'src/shared/entity/fundraiser.entity';
+
 import { FundraiserPageRepository } from '../fundraiser-page/fundraiser-page.repository';
 import { FundRaiserRepository } from '../fundraiser/fundraiser.repository';
 import { DonationRepository } from './donation.repository';
@@ -24,7 +26,7 @@ export class DonationService {
     try {
       if (id) {
 
-        let fundraiserPage = await this.fundRaiserPageRepository.findOne({ where: { id: id }, relations: ["fundraiser"] })
+        let fundraiserPage = await this.fundRaiserPageRepository.getFundraiserPage(id)
         console.log(fundraiserPage)
 
         if (!fundraiserPage) {

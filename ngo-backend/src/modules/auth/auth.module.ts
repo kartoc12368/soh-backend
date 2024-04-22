@@ -1,15 +1,19 @@
 import { Module } from '@nestjs/common';
-import { PassportModule } from '@nestjs/passport';
-import { LocalStrategy } from './strategy/local.strategy';
-import { AuthController } from './auth.controller';
-import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { JwtStrategy } from './strategy/jwt.strategy';
+import { JwtModule } from '@nestjs/jwt';
+import { PassportModule } from '@nestjs/passport';
+
 import { MailerModule } from 'src/shared/utility/mailer/mailer.module';
-import { AuthService } from './auth.service';
-import { FundraiserModule } from '../fundraiser/fundraiser.module';
 import { AdminModule } from '../admin/admin.module';
-import { ForgottenPasswordRepository } from './forgot-password.repo';
+import { FundraiserModule } from '../fundraiser/fundraiser.module';
+
+import { JwtStrategy } from './strategy/jwt.strategy';
+import { LocalStrategy } from './strategy/local.strategy';
+
+import { AuthController } from './auth.controller';
+import { AuthService } from './auth.service';
+
+import { ForgottenPasswordRepository } from './forgot-password.repository';
 
 @Module({
   imports: [
@@ -36,4 +40,4 @@ import { ForgottenPasswordRepository } from './forgot-password.repo';
     ForgottenPasswordRepository,
   ],
 })
-export class AuthModule {}
+export class AuthModule { }

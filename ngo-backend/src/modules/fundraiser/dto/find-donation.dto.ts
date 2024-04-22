@@ -1,12 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
+
+import { IsDate, IsOptional, IsString } from 'class-validator';
+
 import { Type } from 'class-transformer';
-import {
-  IsDate,
-  IsNotEmpty,
-  IsNumber,
-  IsOptional,
-  IsString,
-} from 'class-validator';
 
 export class FindDonationsDto {
   @ApiProperty()

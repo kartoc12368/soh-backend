@@ -1,10 +1,14 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { Strategy } from 'passport-local';
-import * as bcrypt from 'bcrypt';
-import { FundraiserService } from 'src/modules/fundraiser/fundraiser.service';
+
 import { FundRaiserRepository } from 'src/modules/fundraiser/fundraiser.repository';
+import { FundraiserService } from 'src/modules/fundraiser/fundraiser.service';
 import { Fundraiser } from 'src/shared/entity/fundraiser.entity';
+
+import { Strategy } from 'passport-local';
+
+import * as bcrypt from 'bcrypt';
+
 @Injectable()
 export class LocalStrategy extends PassportStrategy(Strategy) {
   constructor(

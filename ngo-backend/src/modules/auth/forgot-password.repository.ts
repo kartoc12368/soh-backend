@@ -1,5 +1,7 @@
-import { DataSource, Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
+
+import { DataSource, Repository } from 'typeorm';
+
 import { ForgottenPassword } from 'src/shared/entity/forgot-password.entity';
 
 @Injectable()

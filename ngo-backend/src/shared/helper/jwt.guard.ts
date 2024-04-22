@@ -3,9 +3,9 @@ import { Reflector } from "@nestjs/core";
 import { AuthGuard } from "@nestjs/passport";
 
 @Injectable()
-export class JwtAuthGuard extends AuthGuard("jwt"){
+export class JwtAuthGuard extends AuthGuard("jwt") {
 
-    constructor(private readonly reflector:Reflector){
+    constructor(private readonly reflector: Reflector) {
         super();
     }
     // canActivate(context: ExecutionContext){
@@ -13,11 +13,11 @@ export class JwtAuthGuard extends AuthGuard("jwt"){
     //         'isPublic',
     //         context.getHandler()
     //       );
-      
+
     //       if (isPublic) {
     //         return true;
     //       }
-      
+
     //     const ctx = context.switchToHttp();
     //     const request = ctx.getRequest<Request>();
 
@@ -31,15 +31,15 @@ export class JwtAuthGuard extends AuthGuard("jwt"){
 
     handleRequest(err, user, info, context) {
         const request = context.switchToHttp().getRequest();
-    
+
         const isPublic = this.reflector.get<boolean>('isPublic', context.getHandler());
-        if (user){  return user};  
-        
-        if (isPublic){
+        if (user) { return user };
+
+        if (isPublic) {
             return false;
         }
         throw new UnauthorizedException();
-      }
-    
+    }
+
 
 }

@@ -1,13 +1,18 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from "bcrypt";
+
 import { ForgottenPassword } from 'src/shared/entity/forgot-password.entity';
 import { Fundraiser } from 'src/shared/entity/fundraiser.entity';
-import { sendEmailDto } from 'src/shared/utility/mailer/mail.interface';
+
 import { MailerService } from 'src/shared/utility/mailer/mailer.service';
-import { FundRaiserRepository } from '../fundraiser/fundraiser.repository';
 import { FundraiserService } from '../fundraiser/fundraiser.service';
-import { ForgottenPasswordRepository } from './forgot-password.repo';
+
+import { FundRaiserRepository } from '../fundraiser/fundraiser.repository';
+import { ForgottenPasswordRepository } from './forgot-password.repository';
+
+import { sendEmailDto } from 'src/shared/utility/mailer/mail.interface';
+
+import * as bcrypt from "bcrypt";
 
 @Injectable()
 export class AuthService {

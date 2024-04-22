@@ -1,16 +1,24 @@
 import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Post, Put, Req, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { diskStorage } from 'multer';
-import * as path from 'path';
-import { Public } from 'src/shared/decorators/public.decorator';
+
+import { FundraiserService } from '../fundraiser/fundraiser.service';
+import { FundraiserPageService } from './fundraiser-page.service';
+
 import { OwnershipGuard } from 'src/shared/helper/ownership.guard';
 import { RoleGuard } from 'src/shared/helper/role.guard';
+
+import { Public } from 'src/shared/decorators/public.decorator';
 import { Constants } from 'src/shared/utility/constants';
-import { v4 as uuidv4 } from "uuid";
-import { FundraiserService } from '../fundraiser/fundraiser.service';
+
 import { UpdateFundraiserPageDto } from './dto/update-fundraiser-page.dto';
-import { FundraiserPageService } from './fundraiser-page.service';
+
+import { diskStorage } from 'multer';
+
+import { v4 as uuidv4 } from "uuid";
+
+import * as path from 'path';
+
 
 
 export const storage = {
