@@ -1,6 +1,6 @@
 import { Column, CreateDateColumn, Entity, Generated, OneToMany, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
-import { IsNumber } from 'class-validator';
+import { IsNumber, IsString } from 'class-validator';
 
 import { Donation } from './donation.entity';
 import { FundraiserPage } from './fundraiser-page.entity';
@@ -34,9 +34,9 @@ export class Fundraiser {
   @Column({})
   status: string;
 
-  @IsNumber()
   @Column({ nullable: true })
-  mobile_number: number;
+  @IsString()
+  mobile_number: string;
 
   // @Column('text',{array: true,nullable:true})
   // profilePicture:string[];

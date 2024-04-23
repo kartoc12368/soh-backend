@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Post, Put, Req, UseGuards, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Post, Put, Req, Res, UploadedFile, UseGuards, UseInterceptors, ValidationPipe } from '@nestjs/common';
 import { ApiSecurity, ApiTags } from '@nestjs/swagger';
 
 import { UpdateFundraiserPageDto } from '../fundraiser-page/dto/update-fundraiser-page.dto';
@@ -17,6 +17,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { diskStorage } from 'multer';
 
 import * as path from 'path';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 //storage path for fundraiserPage Images
 export const storage = {
@@ -32,6 +33,20 @@ export const storage = {
   }),
 };
 
+export const storage2 = {
+  storage: diskStorage({
+    destination: './uploads/80G Certificates',
+    filename: (req, file, cb) => {
+      const filename: string =
+        path.parse(file.originalname).name.replace(/\s/g, '') + uuidv4();
+      const extension: string = path.parse(file.originalname).ext;
+
+      cb(null, `${filename}${extension}`);
+    },
+  }),
+};
+
+
 @Controller('admin')
 @UseGuards(new RoleGuard(Constants.ROLES.ADMIN_ROLE))
 @ApiTags('Admin')
@@ -43,34 +58,24 @@ export class AdminController {
   ) { }
 
   //get totaldonations amount
-  @Get('/totaldonations')
-  async getTotalDonations() {
-    return await this.adminService.getTotalDonations();
+  @Get("/adminDashboard")
+  async getAdminDashboardData() {
+    return await this.adminService.getAdminDashboardData();
   }
 
-  //get total fundraiser count
-  @Get('/totalfundraiser')
-  async getTotalFundraisers() {
-    return await this.adminService.getTotalFundraisers();
+  @Post("/donation/uploadCertificate/:id")
+  @UseInterceptors(FileInterceptor("file", storage2))
+  async uploadCertificate(@UploadedFile() file, @Param("id", ParseUUIDPipe) id: string) {
+    return await this.adminService.uploadCertificate(file, id);
   }
 
-  //get total fundraiser count who is active
-  @Get('/activefundraisers')
-  async getActiveFundraisers() {
-    return await this.adminService.getActiveFundraisers();
+  @Get("donation/certificate/:imagename")
+  @ApiSecurity("JWT-auth")
+  @UseGuards(new RoleGuard(Constants.ROLES.ADMIN_ROLE))
+  async findProfileImage(@Param("imagename") imagename, @Res() res) {
+    return await this.adminService.findCerificate(res, imagename)
   }
 
-  //get donations total of that day
-  @Get('/todayDonations')
-  async getTodayDonations() {
-    return await this.adminService.getTodayDonations();
-  }
-
-  //get total donation amount of that month
-  @Get('/monthlyDonations')
-  async getThisMonthDonations() {
-    return await this.adminService.getThisMonthDonations();
-  }
 
   //change fundraiser status
   @Put('/fundraiser/status/:id')

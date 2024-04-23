@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { Donation } from 'src/shared/entity/donation.entity';
 import { FundraiserPage } from 'src/shared/entity/fundraiser-page.entity';
 import { Fundraiser } from 'src/shared/entity/fundraiser.entity';
@@ -158,18 +158,19 @@ export class FundraiserService {
         ...(dto.donation_id ? { donation_id_frontend: donation_id } : {}),
         ...(dto.from_date || dto.to_date
           ? {
-            created_at: Between(
+            donation_date: Between(
               dto.from_date ? new Date(dto.from_date) : new Date('1970-01-01'),
               dto.to_date ? incrementDate(new Date(to_date)) : new Date()
             ),
           }
           : {}), // Only add filter if either from_date or to_date is provided
       }
-
       console.log(conditions)
+
       return await this.donationRepository.find({ relations: { fundraiser: true }, where: conditions })
 
     } catch (error) {
+      throw new InternalServerErrorException();
       console.log(error);
     }
   }
@@ -204,7 +205,7 @@ export class FundraiserService {
         });
       });
 
-      const downloadsFolder = path.join(__dirname, '../..', 'downloads');
+      const downloadsFolder = path.join(__dirname, '../../../', 'downloads');
       if (!fs.existsSync(downloadsFolder)) {
         try {
           fs.mkdirSync(downloadsFolder);

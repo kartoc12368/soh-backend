@@ -27,8 +27,6 @@ export class DonationService {
       if (id) {
 
         let fundraiserPage = await this.fundRaiserPageRepository.getFundraiserPage(id)
-        console.log(fundraiserPage)
-
         if (!fundraiserPage) {
           throw new NotFoundException("Fundraiser Page not found");
         }
@@ -42,7 +40,6 @@ export class DonationService {
 
         //getting fundraiser to update its dashboard content
         let fundraiser: Fundraiser = await this.fundRaiserRepository.findOne({ where: { fundraiser_id: fundraiserPage.fundraiser.fundraiser_id } })
-        console.log(fundraiser)
         const total_amount_raised = fundraiser.total_amount_raised + parseInt(body.amount);
         const total_donations = fundraiser.total_donations + 1;
         await this.fundRaiserRepository.update(fundraiser.fundraiser_id, {
@@ -71,9 +68,17 @@ export class DonationService {
       donation.donor_phone = body.donor_phone;
       donation.donor_address = body.donor_address;
       donation.comments = body.comments;
+      donation.donation_date = new Date();
+      donation.donor_city = body.donor_city;
+      donation.donor_state = body.donor_state;
+      donation.donor_country = body.donor_country;
+      donation.donor_bankName = body.donor_bankName;
+      donation.donor_bankBranch = body.donor_bankBranch;
+      donation.donor_pincode = body.donor_pincode;
+      donation.reference_payment = body.reference_payment;
 
-
-      return this.donationRepository.save(donation);
+      await this.donationRepository.save(donation);
+      return { "message": "Donation received successfully" };
     }
   }
 

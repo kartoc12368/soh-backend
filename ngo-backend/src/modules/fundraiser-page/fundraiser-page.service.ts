@@ -25,7 +25,6 @@ export class FundraiserPageService {
       //accessing existing galley of fundraiserPage and pushing new uploaded files
       const fundraiserGallery = fundRaiserPageNew.gallery
       fundraiserGallery.push(file.filename)
-      console.log(fundraiserGallery)
 
       //saving new data of fundraiserPage with gallery
       await this.fundraiserPageRepository.update(PageId, { gallery: fundraiserGallery })
@@ -41,7 +40,6 @@ export class FundraiserPageService {
 
       //finding fundraiserPage using id from parmameters and updating data using body data 
       let fundRaiserPageNew = await this.fundraiserPageRepository.findOne({ where: { id: PageId } })
-      console.log(fundRaiserPageNew)
       await this.fundraiserPageRepository.update(PageId, body)
 
 

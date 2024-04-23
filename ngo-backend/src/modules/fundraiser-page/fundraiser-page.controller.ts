@@ -58,6 +58,7 @@ export class FundraiserPageController {
   @UseGuards(new RoleGuard(Constants.ROLES.FUNDRAISER_ROLE), OwnershipGuard)
   // @UseInterceptors(FilesInterceptor("file",20,storage))
   async updatePage(@Body() body: UpdateFundraiserPageDto, @Param("id", ParseUUIDPipe) id: string) {
+    console.log("hello")
     return await this.fundraiserPageService.update(body, id)
   }
 

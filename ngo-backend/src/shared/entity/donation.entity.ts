@@ -1,9 +1,11 @@
-import { Column, CreateDateColumn, Entity, Generated, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { BeforeInsert, Column, CreateDateColumn, Entity, Generated, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
 import { Fundraiser } from './fundraiser.entity';
 
 import { PaymentType } from '../enums/payment-type.enum';
 import { PaymentStatus } from '../enums/payment-status.enum';
+import { Transform, Type } from "class-transformer";
+import { IsDate } from "class-validator";
 
 @Entity()
 export class Donation {
@@ -27,7 +29,7 @@ export class Donation {
   donor_email: string;
 
   @Column({ nullable: true })
-  donor_phone: number;
+  donor_phone: string;
 
   @Column({ nullable: true })
   donor_address: string;
@@ -52,6 +54,8 @@ export class Donation {
   payment_status: string;
 
   @Column({ nullable: true })
+  @Type(() => Date)
+  @IsDate()
   donation_date: Date;
 
   @Column({ nullable: true })
@@ -95,4 +99,5 @@ export class Donation {
     onDelete: 'SET NULL',
   })
   fundraiser: Fundraiser;
+
 }

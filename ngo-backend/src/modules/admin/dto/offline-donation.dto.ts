@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 
 import { IsAlpha, IsDate, IsEmail, IsNotEmpty, IsNumber, IsNumberString, IsOptional, IsString } from 'class-validator';
 
@@ -46,6 +47,7 @@ export class AddOfflineDonationDto {
   @ApiProperty()
   @IsOptional()
   @IsDate()
+  @Type(() => Date)
   donation_date: Date;
 
   @ApiProperty()
@@ -82,4 +84,5 @@ export class AddOfflineDonationDto {
   @IsOptional()
   @IsString()
   reference_payment: string;
+
 }

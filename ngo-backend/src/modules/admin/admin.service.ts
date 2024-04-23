@@ -1,4 +1,4 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 
 import { Donation } from 'src/shared/entity/donation.entity';
 import { FundraiserPage } from 'src/shared/entity/fundraiser-page.entity';
@@ -17,6 +17,8 @@ import { sendEmailDto } from 'src/shared/utility/mailer/mail.interface';
 import { DataSource } from 'typeorm';
 
 import * as bcrypt from 'bcrypt';
+import { of } from 'rxjs';
+import * as path from 'path';
 
 @Injectable()
 export class AdminService {
@@ -28,6 +30,20 @@ export class AdminService {
     private mailerService: MailerService,
     private fundraiserService: FundraiserService
   ) { }
+
+  async getAdminDashboardData() {
+    try {
+      const totalDonations = await this.getTotalDonations();
+      const totalFundraisers = await this.getTotalFundraisers();
+      const activeFundraisers = await this.getActiveFundraisers();
+      const todayDonations = await this.getTodayDonations();
+      const thisMonthDonations = await this.getThisMonthDonations();
+      return { totalDonations, totalFundraisers, activeFundraisers, todayDonations, thisMonthDonations }
+    } catch (error) {
+      console.log(error);
+      throw new InternalServerErrorException();
+    }
+  }
 
   async getTotalFundraisers() {
     try {
@@ -88,8 +104,9 @@ export class AdminService {
     const hashedPassword = await bcrypt.hash(password, 10);
     let fundraiser: Fundraiser = new Fundraiser();
     fundraiser.firstName = createUserDto.firstName;
-    fundraiser.lastName = createUserDto.lastName;
+    // fundraiser.lastName = createUserDto.lastName;
     fundraiser.email = createUserDto.email;
+    fundraiser.mobile_number = createUserDto.mobile_number;
     fundraiser.password = hashedPassword;
     fundraiser.role = Constants.ROLES.FUNDRAISER_ROLE;
     fundraiser.status = 'active';
@@ -111,7 +128,6 @@ export class AdminService {
       if (!fundraiser) {
         throw new NotFoundException('Fundraiser not found');
       }
-      console.log(fundraiser.status);
       // Toggle the status based on its current value
       fundraiser.status =
         fundraiser.status === 'active' ? 'inactive' : 'active';
@@ -158,7 +174,7 @@ export class AdminService {
 
   async getAllFundraiser() {
     try {
-      const fundraisers = await this.fundraiserRepository.find();
+      const fundraisers = await this.fundraiserRepository.find({ relations: ["fundraiser_page"] });
       const filteredUsers = fundraisers.filter(
         (fundraiser) => fundraiser.role !== 'ADMIN',
       );
@@ -175,7 +191,7 @@ export class AdminService {
         where: { email: body.email },
       });
       if (isFundraiserExists && isFundraiserExists.role == 'FUNDRAISER') {
-        throw new BadRequestException('Email already in use');
+        return new NotFoundException('Email already in use');
       } else {
         //generating random password in randomPassword variable
         var randomPassword = Math.random().toString(36).slice(-8);
@@ -207,17 +223,14 @@ export class AdminService {
         where: { email: body.email },
         relations: ['fundraiser_page'],
       });
-      console.log(fundraiser);
       let fundraiserPage = await this.fundraiserPageRepository.findOne({
         where: { id: fundraiser.fundraiser_page.id },
       });
-      console.log(fundraiserPage);
       let supportersOfFundraiser = fundraiserPage.supporters;
       if (supportersOfFundraiser == null) {
         supportersOfFundraiser = [];
       }
       supportersOfFundraiser.push(body.donor_name);
-      console.log(supportersOfFundraiser);
       if (fundraiser != null) {
         const total_amount_raised =
           fundraiser.total_amount_raised + parseInt(body.amount);
@@ -244,7 +257,19 @@ export class AdminService {
         donation.donor_email = body.donor_email;
         donation.donor_phone = body.donor_phone;
         donation.donor_address = body.donor_address;
-        return this.donationRepository.save(donation);
+        donation.donation_date = body.donation_date;
+        donation.donor_city = body.donor_city;
+        donation.donor_state = body.donor_state;
+        donation.donor_country = body.donor_country;
+        donation.donor_bankName = body.donor_bankName;
+        donation.donor_bankBranch = body.donor_bankBranch;
+        donation.donor_pincode = body.donor_pincode;
+        donation.reference_payment = body.reference_payment;
+        donation.payment_type = "offline";
+        donation.payment_status = "success";
+        await this.donationRepository.save(donation);
+        return { "message": "Donation added successfully" };
+
       } else {
         return 'Fundraiser not active';
       }
@@ -260,7 +285,6 @@ export class AdminService {
       let fundRaiserPage = await this.fundraiserPageRepository.findOne({
         where: { fundraiser: { fundraiser_id: fundRaiser.fundraiser_id } },
       });
-      console.log(fundRaiserPage);
       if (fundRaiserPage == null) {
         const fundraiserPage: FundraiserPage = new FundraiserPage();
         fundraiserPage.supporters = [];
@@ -300,7 +324,6 @@ export class AdminService {
       let fundRaiserPageNew = await this.fundraiserPageRepository.findOne({
         where: { id: PageId },
       });
-      console.log(fundRaiserPageNew);
       await this.fundraiserPageRepository.update(PageId, body);
 
       //accessing existing galley of fundraiserPage and pushing new uploaded files
@@ -308,7 +331,6 @@ export class AdminService {
       for (let i = 0; i < files.length; i++) {
         fundraiserGallery.push(files[i]);
       }
-      console.log(fundraiserGallery);
 
       //saving new data of fundraiserPage with gallery
       await this.fundraiserPageRepository.update(PageId, {
@@ -332,6 +354,26 @@ export class AdminService {
     } catch (error) {
       console.log(error);
       return 'Please contact getTotalDonationsService';
+    }
+  }
+
+  async uploadCertificate(file, id) {
+    try {
+      let donation = await this.donationRepository.findOne({ where: { donation_id: id } })
+      return await this.donationRepository.update(donation.donation_id, { certificate: file.filename })
+
+    } catch (error) {
+      console.log(error);
+    }
+
+  }
+
+  async findCerificate(res, imagename) {
+    try {
+      return of(res.sendFile(path.join(process.cwd(), "/uploads/80G Certificates/" + imagename)));
+
+    } catch (error) {
+      console.log(error);
     }
   }
 }
