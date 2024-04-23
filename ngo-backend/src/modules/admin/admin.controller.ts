@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Post, Put, Req, Res, UploadedFile, UseGuards, UseInterceptors, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Post, Put, Query, Req, Res, UploadedFile, UseGuards, UseInterceptors, ValidationPipe } from '@nestjs/common';
 import { ApiSecurity, ApiTags } from '@nestjs/swagger';
 
 import { UpdateFundraiserPageDto } from '../fundraiser-page/dto/update-fundraiser-page.dto';
@@ -18,6 +18,7 @@ import { diskStorage } from 'multer';
 
 import * as path from 'path';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { FindDonationsDto } from '../fundraiser/dto/find-donation.dto';
 
 //storage path for fundraiserPage Images
 export const storage = {
@@ -63,6 +64,13 @@ export class AdminController {
     return await this.adminService.getAdminDashboardData();
   }
 
+  @Get("/donations")
+  @ApiSecurity("JWT-auth")
+  @UseGuards(new RoleGuard(Constants.ROLES.ADMIN_ROLE))
+  async findAll(@Query() query: FindDonationsDto, @Req() req) {
+    return await this.adminService.findMany(query, req)
+  }
+
   @Post("/donation/uploadCertificate/:id")
   @UseInterceptors(FileInterceptor("file", storage2))
   async uploadCertificate(@UploadedFile() file, @Param("id", ParseUUIDPipe) id: string) {
@@ -75,6 +83,7 @@ export class AdminController {
   async findProfileImage(@Param("imagename") imagename, @Res() res) {
     return await this.adminService.findCerificate(res, imagename)
   }
+
 
 
   //change fundraiser status

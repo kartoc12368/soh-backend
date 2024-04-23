@@ -65,7 +65,8 @@ export class FundraiserController {
   @ApiSecurity("JWT-auth")
   @UseGuards(new RoleGuard(Constants.ROLES.FUNDRAISER_ROLE))
   async updateFundraiser(@Req() req, @Body(ValidationPipe) body: UpdateFundraiserDto) {
-    return this.fundraiserService.updateFundRaiserById(req, body)
+    this.fundraiserService.updateFundRaiserById(req, body)
+    return { "message": "Successfully updated" }
   }
 
   //get fundraiserPage By Login Fundraiser
@@ -104,7 +105,7 @@ export class FundraiserController {
   //get all donations with filter
   @Get("/donations")
   @ApiSecurity("JWT-auth")
-  @UseGuards(new RoleGuard(Constants.ROLES.FUNDRAISER_ROLE))
+  @UseGuards(new RoleGuard(Constants.ROLES.FUNDRAISER_ROLE) || new RoleGuard(Constants.ROLES.ADMIN_ROLE))
   async findAll(@Query() query: FindDonationsDto, @Req() req) {
     return await this.fundraiserService.findMany(query, req)
   }

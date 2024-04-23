@@ -14,11 +14,19 @@ import { FundraiserService } from '../fundraiser/fundraiser.service';
 import { Constants } from 'src/shared/utility/constants';
 import { sendEmailDto } from 'src/shared/utility/mailer/mail.interface';
 
-import { DataSource } from 'typeorm';
+import { Between, DataSource, FindOptionsWhere } from 'typeorm';
 
 import * as bcrypt from 'bcrypt';
 import { of } from 'rxjs';
 import * as path from 'path';
+import { FindDonationsDto } from '../fundraiser/dto/find-donation.dto';
+
+function incrementDate(date: Date): Date {
+  const newDate = new Date(date);
+  newDate.setDate(newDate.getDate() + 1);
+  return newDate;
+}
+
 
 @Injectable()
 export class AdminService {
@@ -376,4 +384,34 @@ export class AdminService {
       console.log(error);
     }
   }
+
+  async findMany(dto: FindDonationsDto, req) {
+    try {
+      const { payment_option, payment_status, donation_id, from_date, to_date } = dto;
+      let conditions: FindOptionsWhere<Donation> | FindOptionsWhere<Donation>[] = {}
+      conditions = {
+        ...conditions,
+        ...(dto.payment_option ? { payment_type: payment_option } : {}),
+        ...(dto.payment_status ? { payment_status: payment_status } : {}),
+        ...(dto.donation_id ? { donation_id_frontend: donation_id } : {}),
+        ...(dto.from_date || dto.to_date
+          ? {
+            donation_date: Between(
+              dto.from_date ? new Date(dto.from_date) : new Date('1970-01-01'),
+              dto.to_date ? incrementDate(new Date(to_date)) : new Date()
+            ),
+          }
+          : {}), // Only add filter if either from_date or to_date is provided
+      }
+      console.log(conditions)
+
+      return await this.donationRepository.find({ relations: { fundraiser: true }, where: conditions })
+
+    } catch (error) {
+      throw new InternalServerErrorException();
+      console.log(error);
+    }
+  }
+
 }
+
