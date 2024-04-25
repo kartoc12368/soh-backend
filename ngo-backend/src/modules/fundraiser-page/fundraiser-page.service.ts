@@ -24,6 +24,7 @@ export class FundraiserPageService {
 
       //accessing existing galley of fundraiserPage and pushing new uploaded files
       const fundraiserGallery = fundRaiserPageNew.gallery
+      console.log(fundRaiserPageNew.gallery)
       fundraiserGallery.push(file.filename)
 
       //saving new data of fundraiserPage with gallery

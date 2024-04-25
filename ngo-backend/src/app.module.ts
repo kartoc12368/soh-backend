@@ -1,13 +1,14 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { MailerModule } from './shared/utility/mailer/mailer.module';
 import { ScheduleModule } from '@nestjs/schedule';
-import { AuthModule } from './modules/auth/auth.module';
-import { FundraiserModule } from './modules/fundraiser/fundraiser.module';
-import { DonationModule } from './modules/donation/donation.module';
+import { TypeOrmModule } from '@nestjs/typeorm';
+
 import { AdminModule } from './modules/admin/admin.module';
+import { AuthModule } from './modules/auth/auth.module';
+import { DonationModule } from './modules/donation/donation.module';
 import { FundraiserPageModule } from './modules/fundraiser-page/fundraiser-page.module';
+import { FundraiserModule } from './modules/fundraiser/fundraiser.module';
+import { MailerModule } from './shared/utility/mailer/mailer.module';
 
 @Module({
   imports: [
@@ -43,4 +44,4 @@ import { FundraiserPageModule } from './modules/fundraiser-page/fundraiser-page.
   controllers: [],
   providers: [],
 })
-export class AppModule {}
+export class AppModule { }

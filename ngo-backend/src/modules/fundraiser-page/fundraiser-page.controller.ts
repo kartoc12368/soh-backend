@@ -49,6 +49,7 @@ export class FundraiserPageController {
   @UseGuards(new RoleGuard(Constants.ROLES.FUNDRAISER_ROLE), OwnershipGuard)
   @UseInterceptors(FileInterceptor("file", storage))
   async uploadFile(@UploadedFile() file, @Param("id", ParseUUIDPipe) PageId: string) {
+    console.log(file.filename)
     return await this.fundraiserPageService.uploadFile(file, PageId);
   }
 
@@ -72,7 +73,7 @@ export class FundraiserPageController {
   //delete fundraiserPage Image one by one
   @Delete(":id")
   @ApiSecurity("JWT-auth")
-  @UseGuards(new RoleGuard(Constants.ROLES.FUNDRAISER_ROLE))
+  @UseGuards(new RoleGuard(Constants.ROLES.FUNDRAISER_ROLE), OwnershipGuard)
   async deleteGalleryImage(@Param("id") filePath: string, @Req() req) {
     return await this.fundraiserPageService.deleteGalleryImage(req.user, filePath);
   }

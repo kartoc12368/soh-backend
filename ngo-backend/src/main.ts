@@ -1,17 +1,17 @@
-import { NestFactory, Reflector } from '@nestjs/core';
-import { AppModule } from './app.module';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
-import { JwtAuthGuard } from './shared/helper/jwt.guard';
-import * as cookieParser from 'cookie-parser';
+import { NestFactory, Reflector } from '@nestjs/core';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
-const cors = require('cors');
+import { JwtAuthGuard } from './shared/helper/jwt.guard';
+import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
   const reflector = app.get(Reflector);
+
   const port = process.env.PORT || 3003;
-  app.use(cookieParser());
+
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -21,6 +21,8 @@ async function bootstrap() {
   app.useGlobalGuards(new JwtAuthGuard(reflector));
   app.enableCors();
 
+
+  //swagger setup
   const options = new DocumentBuilder()
     .setTitle('NGO Website')
     .setDescription('Ngo Website Api Documentation')
@@ -37,9 +39,10 @@ async function bootstrap() {
       'JWT-auth',
     )
     .build();
-
   const document = SwaggerModule.createDocument(app, options);
   SwaggerModule.setup('api', app, document);
+
   await app.listen(port);
 }
+
 bootstrap();

@@ -15,6 +15,7 @@ import * as bcrypt from 'bcrypt';
 import * as exceljs from "exceljs";
 import * as fs from "fs";
 import * as path from 'path';
+import { error } from 'console';
 
 
 function incrementDate(date: Date): Date {
@@ -95,7 +96,12 @@ export class FundraiserService {
   async getFundraiserPage(user) {
     try {
       let fundRaiser: Fundraiser = await this.fundRaiserRepository.findOne({ where: { fundraiser_id: user.id } })
-      return await this.fundraiserPageRepository.findOne({ select: ["fundraiser"], where: { fundraiser: { fundraiser_id: fundRaiser.fundraiser_id } } })
+      console.log(fundRaiser)
+      let fundraiserPage = await this.fundraiserPageRepository.findOne({ select: ["fundraiser"], where: { fundraiser: { fundraiser_id: fundRaiser.fundraiser_id } } })
+      if (!fundraiserPage) {
+        return { error: new NotFoundException("FundraiserPage not found") }
+      }
+      return fundraiserPage
     }
     catch (error) {
       console.log(error);
