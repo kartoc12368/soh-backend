@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 
 import { ForgottenPassword } from 'src/shared/entity/forgot-password.entity';
@@ -13,6 +13,7 @@ import { ForgottenPasswordRepository } from './forgot-password.repository';
 import { sendEmailDto } from 'src/shared/utility/mailer/mail.interface';
 
 import * as bcrypt from "bcrypt";
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
@@ -22,11 +23,12 @@ export class AuthService {
     private forgottenPasswordRepository: ForgottenPasswordRepository,
     private fundraiserService: FundraiserService,
     private fundraiserRepository: FundRaiserRepository,
-    private jwtService: JwtService
+    private jwtService: JwtService,
+    private configService: ConfigService
 
   ) { }
 
-  async login(user, loginDto) {
+  async login(user, loginDto, response) {
     try {
       //jwt token
       const fundraiser: Fundraiser = user;
@@ -41,8 +43,8 @@ export class AuthService {
             "fundraiserId": fundraiser.fundraiser_id,
             "profileImage": fundraiser.profileImage
           }
-          return { token: this.jwtService.sign(payload) };
-          // return this.authService.issueTokens(user, response); // Issue tokens on login
+          // return { token: this.jwtService.sign(payload) };
+          return this.issueTokens(user, response); // Issue tokens on login
 
         }
         else {
@@ -123,65 +125,74 @@ export class AuthService {
   }
 
 
-  // async refreshToken(req: Request, res: Response): Promise<string> {
-  //     const refreshToken = req.cookies['refresh_token'];
+  async refreshToken(req, res) {
+    const refreshToken = req.cookies['refresh_token'];
+    console.log(refreshToken)
+    if (!refreshToken) {
+      throw new UnauthorizedException('Refresh token not found');
+    }
 
-  //     if (!refreshToken) {
-  //       throw new UnauthorizedException('Refresh token not found');
-  //     }
+    let payload;
+    try {
+      payload = this.jwtService.verify(refreshToken, {
+        secret: this.configService.get<string>('REFRESH_TOKEN_SECRET'),
+      });
+      console.log(payload);
+    } catch (error) {
+      throw new UnauthorizedException('Invalid or expired refresh token');
+    }
 
-  //     let payload;
-  //     try {
-  //       payload = this.jwtService.verify(refreshToken, {
-  //         secret: this.configService.get<string>('REFRESH_TOKEN_SECRET'),
-  //       });
-  //     } catch (error) {
-  //       throw new UnauthorizedException('Invalid or expired refresh token');
-  //     }
+    const userExists = await this.fundraiserRepository.findOne({
+      where: { fundraiser_id: payload.id },
+    });
 
-  //     const userExists = await this.userRepository.findOne({
-  //       where: { id: payload.sub },
-  //     });
+    if (!userExists) {
+      throw new BadRequestException('User no longer exists');
+    }
 
-  //     if (!userExists) {
-  //       throw new BadRequestException('User no longer exists');
-  //     }
+    const expiresIn = 30; // seconds
+    const expiration = Math.floor(Date.now() / 1000) + expiresIn;
+    console.log((Date.now()))
+    const accessToken = this.jwtService.sign(
+      { ...payload, exp: expiration },
+      {
+        secret: this.configService.get<string>('ACCESS_TOKEN_SECRET'),
+      },
+    );
 
-  //     const expiresIn = 15000; // seconds
-  //     const expiration = Math.floor(Date.now() / 1000) + expiresIn;
-  //     const accessToken = this.jwtService.sign(
-  //       { ...payload, exp: expiration },
-  //       {
-  //         secret: this.configService.get<string>('ACCESS_TOKEN_SECRET'),
-  //       },
-  //     );
+    res.cookie('access_token', accessToken, { httpOnly: true });
 
-  //     res.cookie('access_token', accessToken, { httpOnly: true });
+    return { accessToken: accessToken };
+  }
 
-  //     return accessToken;
-  //   }
+  async issueTokens(fundraiser: Fundraiser, response) {
+    const payload = {
+      "firstName": fundraiser.firstName,
+      "email": fundraiser.email,
+      "role": fundraiser.role,
+      "fundraiserId": fundraiser.fundraiser_id,
+      "profileImage": fundraiser.profileImage
+    }
 
-  //   async issueTokens(user: User, response: Response) {
-  //     const payload = { username: user.firstName, sub: user.id ,role:user.role};
-  //     const accessToken = this.jwtService.sign(
-  //       { ...payload },
-  //       {
-  //         secret: this.configService.get<string>('ACCESS_TOKEN_SECRET'),
-  //         expiresIn: '150sec',
-  //       },
-  //     );
+    const accessToken = this.jwtService.sign(
+      { ...payload },
+      {
+        secret: this.configService.get<string>('ACCESS_TOKEN_SECRET'),
+        expiresIn: '30sec',
+      },
+    );
 
-  //     const refreshToken = this.jwtService.sign(payload, {
-  //       secret: this.configService.get<string>('REFRESH_TOKEN_SECRET'),
-  //       expiresIn: '7d',
-  //     });
+    const refreshToken = this.jwtService.sign(payload, {
+      secret: this.configService.get<string>('REFRESH_TOKEN_SECRET'),
+      expiresIn: '7d',
+    });
 
-  //     response.cookie('access_token', accessToken, { httpOnly: true ,maxAge:150000});
-  //     response.cookie('refresh_token', refreshToken, {
-  //       httpOnly: true,
-  //     });
-  //     return { user };
-  //   }
+    response.cookie('access_token', accessToken, { httpOnly: true, maxAge: 150000 });
+    response.cookie('refresh_token', refreshToken, {
+      httpOnly: true,
+    });
+    return { accessToken: accessToken, refreshToken: refreshToken };
+  }
 
 
 }

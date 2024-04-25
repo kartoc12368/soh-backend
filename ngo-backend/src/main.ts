@@ -3,11 +3,13 @@ import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
 import { JwtAuthGuard } from './shared/helper/jwt.guard';
+import * as cookieParser from 'cookie-parser';
 const cors = require('cors');
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const reflector = app.get(Reflector);
+  app.use(cookieParser())
   const port = process.env.PORT || 3003;
   app.useGlobalPipes(
     new ValidationPipe({

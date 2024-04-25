@@ -23,7 +23,12 @@ export class AuthController {
   @UseGuards(AuthGuard("local"))
   @Public()
   async login(@Req() req, @Body(ValidationPipe) loginDto: LoginDto, @Res({ passthrough: true }) response) {
-    return await this.authService.login(req.user, loginDto)
+    return await this.authService.login(req.user, loginDto, response)
+  }
+
+  @Get("/refreshToken")
+  async refreshTokens(@Req() req, @Res({ passthrough: true }) response) {
+    return await this.authService.refreshToken(req, response)
   }
 
 

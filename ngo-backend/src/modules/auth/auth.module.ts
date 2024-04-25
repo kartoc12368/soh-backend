@@ -25,9 +25,9 @@ import { ForgottenPasswordRepository } from './forgot-password.repository';
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
         secret: configService.get('JWT_SECRET'),
-        signOptions: {
-          expiresIn: configService.get<string>('JWT_EXPIRE') + 's',
-        },
+        // signOptions: {
+        //   expiresIn: configService.get<string>('JWT_EXPIRE') + 's',
+        // },
       }),
       inject: [ConfigService],
     }),
