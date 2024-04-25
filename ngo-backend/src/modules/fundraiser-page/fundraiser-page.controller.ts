@@ -72,7 +72,7 @@ export class FundraiserPageController {
   //delete fundraiserPage Image one by one
   @Delete(":id")
   @ApiSecurity("JWT-auth")
-  @UseGuards(new RoleGuard(Constants.ROLES.FUNDRAISER_ROLE), OwnershipGuard)
+  @UseGuards(new RoleGuard(Constants.ROLES.FUNDRAISER_ROLE))
   async deleteGalleryImage(@Param("id") filePath: string, @Req() req) {
     return await this.fundraiserPageService.deleteGalleryImage(req.user, filePath);
   }

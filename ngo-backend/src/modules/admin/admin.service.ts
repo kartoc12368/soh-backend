@@ -413,5 +413,9 @@ export class AdminService {
     }
   }
 
+  async deleteFundraiserPage(id) {
+    return await this.fundraiserPageRepository.delete(id)
+  }
+
 }
 

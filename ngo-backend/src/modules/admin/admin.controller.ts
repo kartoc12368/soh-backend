@@ -116,6 +116,11 @@ export class AdminController {
     return await this.adminService.addOfflineDonation(body);
   }
 
+  @Delete("/deletePage/:id")
+  async deleteFundraiserPage(@Param('id', ParseUUIDPipe) id: string) {
+    return await this.adminService.deleteFundraiserPage(id);
+  }
+
   //create fundraiser Page from admin side
   @ApiSecurity('JWT-auth')
   @UseGuards(new RoleGuard(Constants.ROLES.ADMIN_ROLE))
@@ -139,8 +144,9 @@ export class AdminController {
   //update fundraiserPage from admin side
   @ApiSecurity('JWT-auth')
   @UseGuards(new RoleGuard(Constants.ROLES.ADMIN_ROLE))
-  @Put('fundraiserPage/:id/updatePage')
+  @Put('fundraiserPage/updatePage/:id')
   async updatePage(@Body() body: UpdateFundraiserPageDto, @Param('id', ParseUUIDPipe) id: string,) {
+    console.log(body);
     return await this.fundraiserPageService.update(body, id);
   }
 }

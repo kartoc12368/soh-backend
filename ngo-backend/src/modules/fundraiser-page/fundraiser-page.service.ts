@@ -66,6 +66,7 @@ export class FundraiserPageService {
   async deleteGalleryImage(user, filePath) {
     try {
       let fundraiser = user;
+      console.log(fundraiser)
       const filepath = `uploads/fundraiserPageImages/${filePath}`;
       let fundRaiser: Fundraiser = await this.fundraiserRepository.findOne({ where: { fundraiser_id: fundraiser.id }, relations: ["fundraiser_page"] })
       let fundraiserPage: FundraiserPage = await this.fundraiserPageRepository.findOne({ where: { id: fundRaiser.fundraiser_page.id } })
