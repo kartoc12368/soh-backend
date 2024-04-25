@@ -32,11 +32,6 @@ import { ForgottenPasswordRepository } from './forgot-password.repository';
     }),
   ],
   controllers: [AuthController],
-  providers: [
-    LocalStrategy,
-    JwtStrategy,
-    AuthService,
-    ForgottenPasswordRepository,
-  ],
+  providers: [LocalStrategy, JwtStrategy, AuthService, ForgottenPasswordRepository],
 })
 export class AuthModule { }

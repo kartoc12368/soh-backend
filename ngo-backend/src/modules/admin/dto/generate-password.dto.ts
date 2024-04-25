@@ -10,7 +10,7 @@ export class GeneratePasswordDto {
 
   @ApiProperty()
   @IsString()
-  @IsNotEmpty({ message: "First name is required" })
+  @IsNotEmpty({ message: 'First name is required' })
   firstName: string;
 
   @ApiProperty()

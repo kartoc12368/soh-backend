@@ -10,11 +10,7 @@ import { DonationRepository } from './donation.repository';
 import { DonationService } from './donation.service';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([Donation]),
-    forwardRef(() => FundraiserModule),
-    FundraiserPageModule,
-  ],
+  imports: [TypeOrmModule.forFeature([Donation]), forwardRef(() => FundraiserModule), FundraiserPageModule],
   controllers: [DonationController],
   providers: [DonationService, DonationRepository],
   exports: [DonationRepository],

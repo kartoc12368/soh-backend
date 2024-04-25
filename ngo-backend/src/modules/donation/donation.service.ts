@@ -9,59 +9,66 @@ import { DonationRepository } from './donation.repository';
 
 @Injectable()
 export class DonationService {
-  constructor(private donationRepository: DonationRepository,
+  constructor(
+    private readonly donationRepository: DonationRepository,
     private readonly fundRaiserRepository: FundRaiserRepository,
-    private readonly fundRaiserPageRepository: FundraiserPageRepository) { }
+    private readonly fundRaiserPageRepository: FundraiserPageRepository,
+  ) { }
 
   async donate(body, id?) {
     //making a new donation object to save
     let donation: Donation = new Donation();
 
     //creating empty supporter array to push to supporters of fundraiserPage
-    let supporters = []
+    let supporters = [];
+
     donation.donor_name = body.donor_name;
-    supporters.push(body.donor_name)
+
+    supporters.push(body.donor_name);
 
     //getting fundraiserPage using id from params if any
     try {
       if (id) {
+        let fundraiserPage = await this.fundRaiserPageRepository.getFundraiserPage(id);
 
-        let fundraiserPage = await this.fundRaiserPageRepository.getFundraiserPage(id)
         if (!fundraiserPage) {
-          throw new NotFoundException("Fundraiser Page not found");
+          throw new NotFoundException('Fundraiser Page not found');
         }
 
         //getting existing fundraiserPage supporters anf pushing new supporters
-        let supportersOfFundraiser = fundraiserPage.supporters
+        let supportersOfFundraiser = fundraiserPage.supporters;
+
         for (let i = 0; i < supporters.length; i++) {
-          supportersOfFundraiser.push(supporters[i])
+          supportersOfFundraiser.push(supporters[i]);
         }
 
-
         //getting fundraiser to update its dashboard content
-        let fundraiser: Fundraiser = await this.fundRaiserRepository.findOne({ where: { fundraiser_id: fundraiserPage.fundraiser.fundraiser_id } })
+        let fundraiser: Fundraiser = await this.fundRaiserRepository.findOne({ where: { fundraiser_id: fundraiserPage.fundraiser.fundraiser_id } });
+
         const total_amount_raised = fundraiser.total_amount_raised + parseInt(body.amount);
+
         const total_donations = fundraiser.total_donations + 1;
+
         await this.fundRaiserRepository.update(fundraiser.fundraiser_id, {
           total_amount_raised: total_amount_raised,
-          total_donations: total_donations
-        })
+          total_donations: total_donations,
+        });
 
         //getting already raised amount of FundraiserPage and updating amount with supporters
         const newAmount: number = fundraiserPage.raised_amount + parseInt(body.amount);
-        await this.fundRaiserPageRepository.update(id, { raised_amount: newAmount, supporters: supportersOfFundraiser })
+
+        await this.fundRaiserPageRepository.update(id, { raised_amount: newAmount, supporters: supportersOfFundraiser });
 
         //checking if status is active then only fundraiser data is available in donation database
-        if (fundraiser.status == "active") {
+        if (fundraiser.status == 'active') {
           donation.fundraiser = fundraiser;
         }
       }
-    }
-    //executing a finally block so that no matter what amount saves with name in database
-    //[whether user is logged in or not]
-    //[whether fundraiser is active or not]
-    //[whether fundraiser id is passed or not]
-    finally {
+    } finally {
+      //executing a finally block so that no matter what amount saves with name in database
+      //[whether user is logged in or not]
+      //[whether fundraiser is active or not]
+      //[whether fundraiser id is passed or not]
       donation.amount = body.amount;
       donation.pan = body.pan;
       donation.donor_email = body.donor_email;
@@ -78,8 +85,8 @@ export class DonationService {
       donation.reference_payment = body.reference_payment;
 
       await this.donationRepository.save(donation);
-      return { "message": "Donation received successfully" };
+
+      return { message: 'Donation received successfully' };
     }
   }
-
 }

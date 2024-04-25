@@ -8,10 +8,7 @@ import { FundraiserPageRepository } from './fundraiser-page.repository';
 import { FundraiserPageService } from './fundraiser-page.service';
 
 @Module({
-  imports: [
-    forwardRef(() => FundraiserModule),
-    TypeOrmModule.forFeature([FundraiserPage]),
-  ],
+  imports: [forwardRef(() => FundraiserModule), TypeOrmModule.forFeature([FundraiserPage])],
   controllers: [FundraiserPageController],
   providers: [FundraiserPageService, FundraiserPageRepository],
   exports: [FundraiserPageRepository, FundraiserPageService],

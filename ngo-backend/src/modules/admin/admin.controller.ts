@@ -12,40 +12,10 @@ import { AdminService } from './admin.service';
 import { RoleGuard } from 'src/shared/helper/role.guard';
 import { Constants } from 'src/shared/utility/constants';
 
-import { v4 as uuidv4 } from 'uuid';
-
-import { diskStorage } from 'multer';
-
-import * as path from 'path';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { FindDonationsDto } from '../fundraiser/dto/find-donation.dto';
 
-//storage path for fundraiserPage Images
-export const storage = {
-  storage: diskStorage({
-    destination: './uploads/fundraiserPageImages',
-    filename: (req, file, cb) => {
-      const filename: string =
-        path.parse(file.originalname).name.replace(/\s/g, '') + uuidv4();
-      const extension: string = path.parse(file.originalname).ext;
-
-      cb(null, `${filename}${extension}`);
-    },
-  }),
-};
-
-export const storage2 = {
-  storage: diskStorage({
-    destination: './uploads/80G Certificates',
-    filename: (req, file, cb) => {
-      const filename: string =
-        path.parse(file.originalname).name.replace(/\s/g, '') + uuidv4();
-      const extension: string = path.parse(file.originalname).ext;
-
-      cb(null, `${filename}${extension}`);
-    },
-  }),
-};
+import { storage2 } from 'src/shared/utility/storage';
 
 
 @Controller('admin')
@@ -59,32 +29,30 @@ export class AdminController {
   ) { }
 
   //get totaldonations amount
-  @Get("/adminDashboard")
+  @Get('/adminDashboard')
   async getAdminDashboardData() {
     return await this.adminService.getAdminDashboardData();
   }
 
-  @Get("/donations")
-  @ApiSecurity("JWT-auth")
+  @Get('/donations')
+  @ApiSecurity('JWT-auth')
   @UseGuards(new RoleGuard(Constants.ROLES.ADMIN_ROLE))
   async findAll(@Query() query: FindDonationsDto, @Req() req) {
-    return await this.adminService.findMany(query, req)
+    return await this.adminService.findMany(query, req);
   }
 
-  @Post("/donation/uploadCertificate/:id")
-  @UseInterceptors(FileInterceptor("file", storage2))
-  async uploadCertificate(@UploadedFile() file, @Param("id", ParseUUIDPipe) id: string) {
+  @Post('/donation/uploadCertificate/:id')
+  @UseInterceptors(FileInterceptor('file', storage2))
+  async uploadCertificate(@UploadedFile() file, @Param('id', ParseUUIDPipe) id: string) {
     return await this.adminService.uploadCertificate(file, id);
   }
 
-  @Get("donation/certificate/:imagename")
-  @ApiSecurity("JWT-auth")
+  @Get('donation/certificate/:imagename')
+  @ApiSecurity('JWT-auth')
   @UseGuards(new RoleGuard(Constants.ROLES.ADMIN_ROLE))
-  async findProfileImage(@Param("imagename") imagename, @Res() res) {
-    return await this.adminService.findCerificate(res, imagename)
+  async findProfileImage(@Param('imagename') imagename, @Res() res) {
+    return await this.adminService.findCerificate(res, imagename);
   }
-
-
 
   //change fundraiser status
   @Put('/fundraiser/status/:id')
@@ -106,7 +74,7 @@ export class AdminController {
 
   //generate password for fundraiser
   @Post('/generate')
-  async generatePasswordByEmail(@Body(ValidationPipe) body: GeneratePasswordDto,) {
+  async generatePasswordByEmail(@Body(ValidationPipe) body: GeneratePasswordDto) {
     return await this.adminService.generatePasswordByEmail(body);
   }
 
@@ -116,7 +84,7 @@ export class AdminController {
     return await this.adminService.addOfflineDonation(body);
   }
 
-  @Delete("/deletePage/:id")
+  @Delete('/deletePage/:id')
   async deleteFundraiserPage(@Param('id', ParseUUIDPipe) id: string) {
     return await this.adminService.deleteFundraiserPage(id);
   }
@@ -126,7 +94,7 @@ export class AdminController {
   @UseGuards(new RoleGuard(Constants.ROLES.ADMIN_ROLE))
   @Post('/createPage')
   async createPage(@Req() req, @Body() body: CreateFundraiserPageAdminDto) {
-    return await this.adminService.createFundraiserPageByEmail(body)
+    return await this.adminService.createFundraiserPageByEmail(body);
   }
 
   //get all donations
@@ -145,7 +113,7 @@ export class AdminController {
   @ApiSecurity('JWT-auth')
   @UseGuards(new RoleGuard(Constants.ROLES.ADMIN_ROLE))
   @Put('fundraiserPage/updatePage/:id')
-  async updatePage(@Body() body: UpdateFundraiserPageDto, @Param('id', ParseUUIDPipe) id: string,) {
+  async updatePage(@Body() body: UpdateFundraiserPageDto, @Param('id', ParseUUIDPipe) id: string) {
     console.log(body);
     return await this.fundraiserPageService.update(body, id);
   }

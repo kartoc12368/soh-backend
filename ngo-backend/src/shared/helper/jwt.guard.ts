@@ -1,10 +1,9 @@
-import { Injectable, UnauthorizedException } from "@nestjs/common";
-import { Reflector } from "@nestjs/core";
-import { AuthGuard } from "@nestjs/passport";
+import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
+import { AuthGuard } from '@nestjs/passport';
 
 @Injectable()
-export class JwtAuthGuard extends AuthGuard("jwt") {
-
+export class JwtAuthGuard extends AuthGuard('jwt') {
     constructor(private readonly reflector: Reflector) {
         super();
     }
@@ -13,13 +12,15 @@ export class JwtAuthGuard extends AuthGuard("jwt") {
         const request = context.switchToHttp().getRequest();
 
         const isPublic = this.reflector.get<boolean>('isPublic', context.getHandler());
-        if (user) { return user };
+
+        if (user) {
+            return user;
+        }
 
         if (isPublic) {
             return false;
         }
+
         throw new UnauthorizedException();
     }
-
-
 }

@@ -22,22 +22,23 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(email: string, password: string): Promise<Fundraiser> {
-    const fundraiser: Fundraiser =
-      await this.fundraiserService.findFundRaiserByEmail(email);
+
+    const fundraiser: Fundraiser = await this.fundraiserService.findFundRaiserByEmail(email);
+
     const fundraiserPassword = await this.fundraiserRepository.findOne({
       where: { email: email },
       select: ['password'],
     });
-    if (
-      fundraiser &&
-      (await bcrypt.compare(password, fundraiserPassword.password))
-    ) {
+
+    if (fundraiser && (await bcrypt.compare(password, fundraiserPassword.password))) {
       // console.log(fundraiser)
       return fundraiser;
     }
+
     if (fundraiser == undefined) {
       throw new UnauthorizedException('fundraiser not found:' + email);
     }
+
     if (!(await bcrypt.compare(password, fundraiserPassword.password))) {
       throw new UnauthorizedException('Invalid password');
     }

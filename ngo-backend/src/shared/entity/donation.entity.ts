@@ -1,11 +1,11 @@
-import { BeforeInsert, Column, CreateDateColumn, Entity, Generated, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, Generated, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 
 import { Fundraiser } from './fundraiser.entity';
 
-import { PaymentType } from '../enums/payment-type.enum';
+import { Type } from 'class-transformer';
+import { IsDate } from 'class-validator';
 import { PaymentStatus } from '../enums/payment-status.enum';
-import { Transform, Type } from "class-transformer";
-import { IsDate } from "class-validator";
+import { PaymentType } from '../enums/payment-type.enum';
 
 @Entity()
 export class Donation {
@@ -95,9 +95,6 @@ export class Donation {
   })
   public updated_at: Date;
 
-  @ManyToOne(() => Fundraiser, (fundraiser) => fundraiser.donations, {
-    onDelete: 'SET NULL',
-  })
+  @ManyToOne(() => Fundraiser, (fundraiser) => fundraiser.donations, { onDelete: 'SET NULL' })
   fundraiser: Fundraiser;
-
 }

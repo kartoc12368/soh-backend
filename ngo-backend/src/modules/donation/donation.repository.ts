@@ -9,6 +9,4 @@ export class DonationRepository extends Repository<Donation> {
   constructor(private dataSource: DataSource) {
     super(Donation, dataSource.createEntityManager());
   }
-
-
 }

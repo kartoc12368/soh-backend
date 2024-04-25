@@ -7,27 +7,22 @@ import { DonationService } from './donation.service';
 
 import { DonateDto } from './dto/donate.dto';
 
-@ApiTags("Donation")
+@ApiTags('Donation')
 @Controller()
 export class DonationController {
-  constructor(private readonly donationService: DonationService
-  ) { }
+  constructor(private readonly donationService: DonationService) { }
 
   //donate without fundraiser-page
-  @Post("/donate")
+  @Post('/donate')
   @Public()
   async donate(@Body(ValidationPipe) body: DonateDto) {
     await this.donationService.donate(body);
   }
 
-
-
   //donate with reference from fundraiser-page
-  @Post("/fundraiser-page/:id/donate")
+  @Post('/fundraiser-page/:id/donate')
   @Public()
-  async donateToFundRaiser(@Body(ValidationPipe) body: DonateDto, @Param("id", ParseUUIDPipe) id: string) {
+  async donateToFundRaiser(@Body(ValidationPipe) body: DonateDto, @Param('id', ParseUUIDPipe) id: string) {
     await this.donationService.donate(body, id);
   }
-
-
 }

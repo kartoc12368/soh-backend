@@ -10,12 +10,7 @@ import { AdminController } from './admin.controller';
 import { AdminService } from './admin.service';
 
 @Module({
-  imports: [
-    forwardRef(() => FundraiserModule),
-    MailerModule,
-    DonationModule,
-    FundraiserPageModule,
-  ],
+  imports: [forwardRef(() => FundraiserModule), MailerModule, DonationModule, FundraiserPageModule],
   controllers: [AdminController],
   providers: [AdminService],
   exports: [AdminService],

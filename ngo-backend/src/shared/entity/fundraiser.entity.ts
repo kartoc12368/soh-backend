@@ -1,6 +1,6 @@
-import { Column, CreateDateColumn, Entity, Generated, OneToMany, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, Generated, OneToMany, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 
-import { IsNumber, IsString } from 'class-validator';
+import { IsString } from 'class-validator';
 
 import { Donation } from './donation.entity';
 import { FundraiserPage } from './fundraiser-page.entity';
@@ -37,9 +37,6 @@ export class Fundraiser {
   @Column({ nullable: true })
   @IsString()
   mobile_number: string;
-
-  // @Column('text',{array: true,nullable:true})
-  // profilePicture:string[];
 
   @Column({ nullable: true })
   address: string;
@@ -84,15 +81,9 @@ export class Fundraiser {
   })
   public updated_at: Date;
 
-  @OneToMany(() => Donation, (donation) => donation.fundraiser, {
-    onDelete: 'SET NULL',
-  })
+  @OneToMany(() => Donation, (donation) => donation.fundraiser, { onDelete: 'SET NULL' })
   donations: Donation[];
 
-  @OneToOne(
-    () => FundraiserPage,
-    (fundraiserPage) => fundraiserPage.fundraiser,
-    { onDelete: 'CASCADE' },
-  )
+  @OneToOne(() => FundraiserPage, (fundraiserPage) => fundraiserPage.fundraiser, { onDelete: 'CASCADE' })
   fundraiser_page: FundraiserPage;
 }

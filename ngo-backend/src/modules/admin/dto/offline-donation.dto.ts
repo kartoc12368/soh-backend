@@ -84,5 +84,4 @@ export class AddOfflineDonationDto {
   @IsOptional()
   @IsString()
   reference_payment: string;
-
 }

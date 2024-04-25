@@ -1,4 +1,4 @@
-import { BadRequestException, ForbiddenException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 
 import { Donation } from 'src/shared/entity/donation.entity';
 import { FundraiserPage } from 'src/shared/entity/fundraiser-page.entity';
@@ -13,20 +13,16 @@ import { FundraiserService } from '../fundraiser/fundraiser.service';
 
 import { Constants } from 'src/shared/utility/constants';
 import { sendEmailDto } from 'src/shared/utility/mailer/mail.interface';
+import { incrementDate } from 'src/shared/utility/incrementDate';
 
 import { Between, DataSource, FindOptionsWhere } from 'typeorm';
 
-import * as bcrypt from 'bcrypt';
-import { of } from 'rxjs';
-import * as path from 'path';
 import { FindDonationsDto } from '../fundraiser/dto/find-donation.dto';
 
-function incrementDate(date: Date): Date {
-  const newDate = new Date(date);
-  newDate.setDate(newDate.getDate() + 1);
-  return newDate;
-}
 
+import * as bcrypt from 'bcrypt';
+import * as path from 'path';
+import { of } from 'rxjs';
 
 @Injectable()
 export class AdminService {
@@ -36,7 +32,7 @@ export class AdminService {
     private fundraiserPageRepository: FundraiserPageRepository,
     private dataSource: DataSource,
     private mailerService: MailerService,
-    private fundraiserService: FundraiserService
+    private fundraiserService: FundraiserService,
   ) { }
 
   async getAdminDashboardData() {
@@ -46,7 +42,7 @@ export class AdminService {
       const activeFundraisers = await this.getActiveFundraisers();
       const todayDonations = await this.getTodayDonations();
       const thisMonthDonations = await this.getThisMonthDonations();
-      return { totalDonations, totalFundraisers, activeFundraisers, todayDonations, thisMonthDonations }
+      return { totalDonations, totalFundraisers, activeFundraisers, todayDonations, thisMonthDonations };
     } catch (error) {
       console.log(error);
       throw new InternalServerErrorException();
@@ -74,11 +70,7 @@ export class AdminService {
   async getTodayDonations() {
     try {
       let todayDonations = 0;
-      const donations = await this.dataSource
-        .getRepository(Donation)
-        .createQueryBuilder('donation')
-        .where('DATE(donation.created_at)=:date', { date: new Date() })
-        .getMany();
+      const donations = await this.dataSource.getRepository(Donation).createQueryBuilder('donation').where('DATE(donation.created_at)=:date', { date: new Date() }).getMany();
       for (let index = 0; index < donations.length; index++) {
         const element = donations[index].amount;
         todayDonations = todayDonations + element;
@@ -137,8 +129,7 @@ export class AdminService {
         throw new NotFoundException('Fundraiser not found');
       }
       // Toggle the status based on its current value
-      fundraiser.status =
-        fundraiser.status === 'active' ? 'inactive' : 'active';
+      fundraiser.status = fundraiser.status === 'active' ? 'inactive' : 'active';
 
       // Save the updated fundraiser
       await this.fundraiserRepository.update(id, { status: fundraiser.status });
@@ -182,10 +173,8 @@ export class AdminService {
 
   async getAllFundraiser() {
     try {
-      const fundraisers = await this.fundraiserRepository.find({ relations: ["fundraiser_page"] });
-      const filteredUsers = fundraisers.filter(
-        (fundraiser) => fundraiser.role !== 'ADMIN',
-      );
+      const fundraisers = await this.fundraiserRepository.find({ relations: ['fundraiser_page'] });
+      const filteredUsers = fundraisers.filter((fundraiser) => fundraiser.role !== 'ADMIN');
       return filteredUsers;
     } catch (error) {
       console.log(error);
@@ -240,15 +229,13 @@ export class AdminService {
       }
       supportersOfFundraiser.push(body.donor_name);
       if (fundraiser != null) {
-        const total_amount_raised =
-          fundraiser.total_amount_raised + parseInt(body.amount);
+        const total_amount_raised = fundraiser.total_amount_raised + parseInt(body.amount);
         const total_donations = fundraiser.total_donations + 1;
         await this.fundraiserRepository.update(fundraiser.fundraiser_id, {
           total_amount_raised: total_amount_raised,
           total_donations: total_donations,
         });
-        const newAmount: number =
-          fundraiserPage.raised_amount + parseInt(body.amount);
+        const newAmount: number = fundraiserPage.raised_amount + parseInt(body.amount);
         await this.fundraiserPageRepository.update(fundraiserPage.id, {
           raised_amount: newAmount,
           supporters: supportersOfFundraiser,
@@ -273,11 +260,10 @@ export class AdminService {
         donation.donor_bankBranch = body.donor_bankBranch;
         donation.donor_pincode = body.donor_pincode;
         donation.reference_payment = body.reference_payment;
-        donation.payment_type = "offline";
-        donation.payment_status = "success";
+        donation.payment_type = 'offline';
+        donation.payment_status = 'success';
         await this.donationRepository.save(donation);
-        return { "message": "Donation added successfully" };
-
+        return { message: 'Donation added successfully' };
       } else {
         return 'Fundraiser not active';
       }
@@ -289,7 +275,7 @@ export class AdminService {
 
   async createFundraiserPageByEmail(body) {
     try {
-      let fundRaiser = await this.fundraiserService.findFundRaiserByEmail(body.email,);
+      let fundRaiser = await this.fundraiserService.findFundRaiserByEmail(body.email);
       let fundRaiserPage = await this.fundraiserPageRepository.findOne({
         where: { fundraiser: { fundraiser_id: fundRaiser.fundraiser_id } },
       });
@@ -306,7 +292,6 @@ export class AdminService {
     } catch (error) {
       throw new NotFoundException('Fundraiser does not exist');
     }
-
   }
 
   async getAllDonations() {
@@ -314,7 +299,6 @@ export class AdminService {
       return await this.donationRepository.find({ relations: ['fundraiser'] });
     } catch (error) {
       console.log(error);
-
     }
   }
 
@@ -367,19 +351,16 @@ export class AdminService {
 
   async uploadCertificate(file, id) {
     try {
-      let donation = await this.donationRepository.findOne({ where: { donation_id: id } })
-      return await this.donationRepository.update(donation.donation_id, { certificate: file.filename })
-
+      let donation = await this.donationRepository.findOne({ where: { donation_id: id } });
+      return await this.donationRepository.update(donation.donation_id, { certificate: file.filename });
     } catch (error) {
       console.log(error);
     }
-
   }
 
   async findCerificate(res, imagename) {
     try {
-      return of(res.sendFile(path.join(process.cwd(), "/uploads/80G Certificates/" + imagename)));
-
+      return of(res.sendFile(path.join(process.cwd(), '/uploads/80G Certificates/' + imagename)));
     } catch (error) {
       console.log(error);
     }
@@ -388,7 +369,7 @@ export class AdminService {
   async findMany(dto: FindDonationsDto, req) {
     try {
       const { payment_option, payment_status, donation_id, from_date, to_date } = dto;
-      let conditions: FindOptionsWhere<Donation> | FindOptionsWhere<Donation>[] = {}
+      let conditions: FindOptionsWhere<Donation> | FindOptionsWhere<Donation>[] = {};
       conditions = {
         ...conditions,
         ...(dto.payment_option ? { payment_type: payment_option } : {}),
@@ -396,17 +377,13 @@ export class AdminService {
         ...(dto.donation_id ? { donation_id_frontend: donation_id } : {}),
         ...(dto.from_date || dto.to_date
           ? {
-            donation_date: Between(
-              dto.from_date ? new Date(dto.from_date) : new Date('1970-01-01'),
-              dto.to_date ? incrementDate(new Date(to_date)) : new Date()
-            ),
+            donation_date: Between(dto.from_date ? new Date(dto.from_date) : new Date('1970-01-01'), dto.to_date ? incrementDate(new Date(to_date)) : new Date()),
           }
           : {}), // Only add filter if either from_date or to_date is provided
-      }
-      console.log(conditions)
+      };
+      console.log(conditions);
 
-      return await this.donationRepository.find({ relations: { fundraiser: true }, where: conditions })
-
+      return await this.donationRepository.find({ relations: { fundraiser: true }, where: conditions });
     } catch (error) {
       throw new InternalServerErrorException();
       console.log(error);
@@ -414,8 +391,6 @@ export class AdminService {
   }
 
   async deleteFundraiserPage(id) {
-    return await this.fundraiserPageRepository.delete(id)
+    return await this.fundraiserPageRepository.delete(id);
   }
-
 }
-

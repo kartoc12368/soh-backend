@@ -11,11 +11,9 @@ export class FundraiserPageRepository extends Repository<FundraiserPage> {
   }
   async getFundraiserPage(id: string): Promise<FundraiserPage> {
     try {
-      return await this.findOne({ where: { id: id }, relations: ["fundraiser"] });
-
+      return await this.findOne({ where: { id: id }, relations: ['fundraiser'] });
     } catch (error) {
       console.log(error);
     }
   }
-
 }
