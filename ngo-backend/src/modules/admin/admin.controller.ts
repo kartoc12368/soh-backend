@@ -35,7 +35,6 @@ export class AdminController {
   }
 
   @Get('/donations')
-  @ApiSecurity('JWT-auth')
   @UseGuards(new RoleGuard(Constants.ROLES.ADMIN_ROLE))
   async findAll(@Query() query: FindDonationsDto, @Req() req) {
     return await this.adminService.findMany(query, req);
@@ -48,7 +47,6 @@ export class AdminController {
   }
 
   @Get('donation/certificate/:imagename')
-  @ApiSecurity('JWT-auth')
   @UseGuards(new RoleGuard(Constants.ROLES.ADMIN_ROLE))
   async findProfileImage(@Param('imagename') imagename, @Res() res) {
     return await this.adminService.findCerificate(res, imagename);
@@ -90,8 +88,6 @@ export class AdminController {
   }
 
   //create fundraiser Page from admin side
-  @ApiSecurity('JWT-auth')
-  @UseGuards(new RoleGuard(Constants.ROLES.ADMIN_ROLE))
   @Post('/createPage')
   async createPage(@Req() req, @Body() body: CreateFundraiserPageAdminDto) {
     return await this.adminService.createFundraiserPageByEmail(body);
@@ -110,8 +106,6 @@ export class AdminController {
   }
 
   //update fundraiserPage from admin side
-  @ApiSecurity('JWT-auth')
-  @UseGuards(new RoleGuard(Constants.ROLES.ADMIN_ROLE))
   @Put('fundraiserPage/updatePage/:id')
   async updatePage(@Body() body: UpdateFundraiserPageDto, @Param('id', ParseUUIDPipe) id: string) {
     console.log(body);

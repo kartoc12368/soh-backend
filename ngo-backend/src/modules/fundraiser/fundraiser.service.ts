@@ -245,7 +245,4 @@ export class FundraiserService {
     }
   }
 
-  async downloadExcelReport(res, filename) {
-    return of(res.sendFile(path.join(process.cwd(), 'uploads/fundraiserPageImages/' + filename)));
-  }
 }
