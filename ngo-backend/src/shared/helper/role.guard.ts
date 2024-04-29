@@ -13,9 +13,9 @@ export class RoleGuard implements CanActivate {
 
         const request: any = ctx.getRequest<Request>();
 
-        const user = request.user;
+        const user = request?.user;
 
-        if (user.role === this.role) {
+        if (user?.role === this.role) {
             return true;
         }
         return false;

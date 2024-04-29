@@ -9,6 +9,7 @@ import { DonationModule } from './modules/donation/donation.module';
 import { FundraiserPageModule } from './modules/fundraiser-page/fundraiser-page.module';
 import { FundraiserModule } from './modules/fundraiser/fundraiser.module';
 import { MailerModule } from './shared/utility/mailer/mailer.module';
+import { PaymentModule } from './modules/payment/payment.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { MailerModule } from './shared/utility/mailer/mailer.module';
     AdminModule,
     FundraiserPageModule,
     ScheduleModule.forRoot(),
+    PaymentModule,
   ],
 
   controllers: [],

@@ -6,6 +6,7 @@ import { Fundraiser } from 'src/shared/entity/fundraiser.entity';
 import { FundraiserPageRepository } from '../fundraiser-page/fundraiser-page.repository';
 import { FundRaiserRepository } from '../fundraiser/fundraiser.repository';
 import { DonationRepository } from './donation.repository';
+import { PaymentService } from '../payment/payment.service';
 
 @Injectable()
 export class DonationService {
@@ -13,9 +14,13 @@ export class DonationService {
     private readonly donationRepository: DonationRepository,
     private readonly fundRaiserRepository: FundRaiserRepository,
     private readonly fundRaiserPageRepository: FundraiserPageRepository,
+    private readonly paymentService: PaymentService
   ) { }
 
   async donate(body, id?) {
+
+    await this.paymentService.checkout(body.amount)
+
     //making a new donation object to save
     let donation: Donation = new Donation();
 

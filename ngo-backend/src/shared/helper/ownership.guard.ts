@@ -22,9 +22,9 @@ export class OwnershipGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean | Promise<boolean> | Observable<boolean> {
     const request: any = context.switchToHttp().getRequest<Request>();
 
-    const user = request.user;
+    const user = request?.user;
 
-    const dataId = request.params.id;
+    const dataId = request?.params?.id;
 
     if (dataId.length > 36) {
       return this.checkOwnershipforImage(dataId, user.email);

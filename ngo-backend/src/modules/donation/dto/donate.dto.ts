@@ -1,12 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 
 import { IsAlpha, IsDecimal, IsEmail, IsLowercase, IsNotEmpty, IsNumberString, IsOptional, IsString } from 'class-validator';
 
 export class DonateDto {
   @ApiProperty()
-  @IsDecimal()
   @IsNotEmpty()
+  // @Type(() => Number)
+  @Transform(({ value }) => Number.parseFloat(value))
   amount: number;
 
   @ApiProperty()
