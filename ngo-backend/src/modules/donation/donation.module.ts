@@ -8,12 +8,11 @@ import { Donation } from 'src/shared/entity/donation.entity';
 import { DonationController } from './donation.controller';
 import { DonationRepository } from './donation.repository';
 import { DonationService } from './donation.service';
-import { PaymentModule } from '../payment/payment.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Donation]), forwardRef(() => FundraiserModule), FundraiserPageModule, PaymentModule],
+  imports: [TypeOrmModule.forFeature([Donation]), forwardRef(() => FundraiserModule), FundraiserPageModule],
   controllers: [DonationController],
   providers: [DonationService, DonationRepository],
-  exports: [DonationRepository],
+  exports: [DonationRepository, DonationService],
 })
 export class DonationModule { }

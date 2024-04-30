@@ -16,13 +16,13 @@ export class DonationController {
   @Post('/donate')
   @Public()
   async donate(@Body(ValidationPipe) body: DonateDto) {
-    await this.donationService.donate(body);
+    return await this.donationService.donate(body);
   }
 
   //donate with reference from fundraiser-page
   @Post('/fundraiser-page/:id/donate')
   @Public()
   async donateToFundRaiser(@Body(ValidationPipe) body: DonateDto, @Param('id', ParseUUIDPipe) id: string) {
-    await this.donationService.donate(body, id);
+    return await this.donationService.donate(body, id);
   }
 }

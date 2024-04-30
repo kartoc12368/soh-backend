@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Res } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Res } from '@nestjs/common';
 import { PaymentService } from './payment.service';
 import { Public } from 'src/shared/decorators/public.decorator';
 import { PaymentDto } from './dto/payment.dto';
@@ -8,10 +8,10 @@ import { PaymentDto } from './dto/payment.dto';
 export class PaymentController {
   constructor(private readonly paymentService: PaymentService) { }
 
-  @Post("/checkout")
+  @Post("/checkout/:reference")
   @Public()
-  async checkout(@Body() body: PaymentDto) {
-    return await this.paymentService.checkout(body.amount);
+  async checkout(@Body() body: PaymentDto, @Param("reference") reference: string) {
+    return await this.paymentService.checkout(body.amount, reference);
   }
 
   @Post("/paymentVerfications")

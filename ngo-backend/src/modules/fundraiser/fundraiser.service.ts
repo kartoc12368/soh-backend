@@ -132,6 +132,11 @@ export class FundraiserService {
     return of(res.sendFile(path.join(process.cwd(), 'uploads/profileImages/' + imagename)));
   }
 
+  async findFundraiserPageImage(res, imagename) {
+    return of(res.sendFile(path.join(process.cwd(), 'uploads/fundraiserPageImages/' + imagename)));
+  }
+
+
   async createFundraiserPage(user) {
     try {
       let fundRaiser = await this.findFundRaiserByEmail(user.email);

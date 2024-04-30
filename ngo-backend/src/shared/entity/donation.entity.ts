@@ -53,6 +53,19 @@ export class Donation {
   })
   payment_status: string;
 
+
+  @Column({ nullable: true })
+  order_id: string;
+
+  @Column({ nullable: true, default: null })
+  payment_id: string;
+
+  @Column({ nullable: true, default: null })
+  payment_order_id: string;
+
+  @Column({ nullable: true, default: null })
+  payment_signature: string;
+
   @Column({ nullable: true })
   @Type(() => Date)
   @IsDate()
