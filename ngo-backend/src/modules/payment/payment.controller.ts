@@ -11,6 +11,7 @@ export class PaymentController {
   @Post("/checkout/:reference")
   @Public()
   async checkout(@Body() body: PaymentDto, @Param("reference") reference: string) {
+    console.log(reference)
     return await this.paymentService.checkout(body.amount, reference);
   }
 

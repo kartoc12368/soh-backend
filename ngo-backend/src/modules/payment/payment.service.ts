@@ -1,7 +1,8 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
-import Razorpay from 'razorpay';
+import { Injectable } from '@nestjs/common';
 import crypto from "crypto";
+import Razorpay from 'razorpay';
 import { DonationRepository } from '../donation/donation.repository';
+import { DonationService } from '../donation/donation.service';
 
 
 @Injectable()
@@ -9,6 +10,7 @@ export class PaymentService {
 
     constructor(
         private donationRepository: DonationRepository,
+        private donationService: DonationService
     ) { }
 
 
@@ -55,7 +57,7 @@ export class PaymentService {
 
         if (isAuthentic) {
             // Database comes here
-            const donation = await this.donationRepository.findOne({ where: { order_id: razorpay_order_id } })
+            const donation = await this.donationRepository.findOne({ where: { order_id: razorpay_order_id }, relations: ["fundraiser"] })
             await this.donationRepository.update(donation.donation_id, {
                 payment_order_id: razorpay_order_id,
                 payment_status: "success",
@@ -66,6 +68,9 @@ export class PaymentService {
             res.redirect(
                 `http://localhost:3000/paymentsuccess?reference=${razorpay_payment_id}`
             );
+            console.log("helloe");
+            const saveDonation = await this.donationService.saveDonation(donation);
+
         } else {
             return { success: false }
         }

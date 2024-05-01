@@ -56,54 +56,63 @@ export class DonationService {
         donation.reference_payment = reference;
 
         await this.donationRepository.save(donation);
+        console.log(reference)
 
         return { message: 'Donation received successfully', reference: reference };
       }
-    } catch (error) { }
+    } catch (error) {
+      console.log(error);
+    }
   }
 
 
 
-  // async saveDonation() {
-  //   //creating empty supporter array to push to supporters of fundraiserPage
-  //   let supporters = [];
+  async saveDonation(body) {
 
-  //   supporters.push(body.donor_name);
+    //getting fundraiserPage using id from params if any
+    try {
+      console.log(body)
+      //creating empty supporter array to push to supporters of fundraiserPage
 
-  //   //getting fundraiserPage using id from params if any
-  //   try {
-  //     if (id) {
-  //       let fundraiserPage = await this.fundRaiserPageRepository.getFundraiserPage(id);
+      let supporters = [];
 
-  //       if (!fundraiserPage) {
-  //         throw new NotFoundException('Fundraiser Page not found');
-  //       }
+      supporters.push(body.donor_name);
+      //getting fundraiser to update its dashboard content
+      let fundraiser: Fundraiser = await this.fundRaiserRepository.findOne({ where: { fundraiser_id: body.fundraiser.fundraiser_id }, relations: ["fundraiser_page"] });
+      console.log(fundraiser)
+      if (fundraiser.fundraiser_id) {
+        let fundraiserPage = await this.fundRaiserPageRepository.getFundraiserPage(fundraiser.fundraiser_page.id);
+        console.log(fundraiserPage)
+        if (!fundraiserPage) {
+          throw new NotFoundException('Fundraiser Page not found');
+        }
 
-  //       //getting existing fundraiserPage supporters anf pushing new supporters
-  //       let supportersOfFundraiser = fundraiserPage.supporters;
+        //getting existing fundraiserPage supporters anf pushing new supporters
+        let supportersOfFundraiser = fundraiserPage.supporters;
 
-  //       for (let i = 0; i < supporters.length; i++) {
-  //         supportersOfFundraiser.push(supporters[i]);
-  //       }
+        for (let i = 0; i < supporters.length; i++) {
+          supportersOfFundraiser.push(supporters[i]);
+        }
 
-  //       //getting fundraiser to update its dashboard content
-  //       let fundraiser: Fundraiser = await this.fundRaiserRepository.findOne({ where: { fundraiser_id: fundraiserPage.fundraiser.fundraiser_id } });
 
-  //       const total_amount_raised = fundraiser.total_amount_raised + parseInt(body.amount);
+        const total_amount_raised = fundraiser.total_amount_raised + parseInt(body.amount);
 
-  //       const total_donations = fundraiser.total_donations + 1;
+        const total_donations = fundraiser.total_donations + 1;
 
-  //       await this.fundRaiserRepository.update(fundraiser.fundraiser_id, {
-  //         total_amount_raised: total_amount_raised,
-  //         total_donations: total_donations,
-  //       });
+        await this.fundRaiserRepository.update(fundraiser.fundraiser_id, {
+          total_amount_raised: total_amount_raised,
+          total_donations: total_donations,
+        });
 
-  //       //getting already raised amount of FundraiserPage and updating amount with supporters
-  //       const newAmount: number = fundraiserPage.raised_amount + parseInt(body.amount);
+        //getting already raised amount of FundraiserPage and updating amount with supporters
+        const newAmount: number = fundraiserPage.raised_amount + parseInt(body.amount);
 
-  //       await this.fundRaiserPageRepository.update(id, { raised_amount: newAmount, supporters: supportersOfFundraiser });
+        await this.fundRaiserPageRepository.update(fundraiser.fundraiser_id, { raised_amount: newAmount, supporters: supportersOfFundraiser });
 
-  //     }
-  //   }
-  // }
+      }
+    } catch (error) {
+      console.log(error);
+
+    }
+  }
 }

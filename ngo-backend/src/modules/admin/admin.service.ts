@@ -72,7 +72,12 @@ export class AdminService {
   async getTodayDonations() {
     try {
       let todayDonations = 0;
-      const donations = await this.dataSource.getRepository(Donation).createQueryBuilder('donation').where('DATE(donation.created_at)=:date', { date: new Date() }).getMany();
+      const donations = await this.dataSource
+        .getRepository(Donation)
+        .createQueryBuilder('donation')
+        .where('DATE(donation.created_at)=:date', { date: new Date() })
+        .andWhere("donation.payment_status=:payment_status", { payment_status: "success" })
+        .getMany();
       for (let index = 0; index < donations.length; index++) {
         const element = donations[index].amount;
         todayDonations = todayDonations + element;
@@ -92,6 +97,7 @@ export class AdminService {
         .where("date_part('month',donation.created_at)=:date", {
           date: new Date().getMonth() + 1,
         })
+        .andWhere("donation.payment_status=:payment_status", { payment_status: "success" })
         .getMany();
       for (let index = 0; index < donations.length; index++) {
         const element = donations[index].amount;
@@ -338,7 +344,7 @@ export class AdminService {
 
   async getTotalDonations() {
     try {
-      const Donations = await this.donationRepository.find();
+      const Donations = await this.donationRepository.find({ where: { payment_status: "success" } });
       let totalDonations = 0;
       for (let i = 0; i < Donations.length; i++) {
         totalDonations = totalDonations + Donations[i].amount;
