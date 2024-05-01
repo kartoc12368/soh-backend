@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Res } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, Res } from '@nestjs/common';
 import { PaymentService } from './payment.service';
 import { Public } from 'src/shared/decorators/public.decorator';
 import { PaymentDto } from './dto/payment.dto';
@@ -17,8 +17,8 @@ export class PaymentController {
 
   @Post("/paymentVerfications")
   @Public()
-  async paymentVerfications(@Body() body: any, @Res() res) {
-    return await this.paymentService.paymentVerification(body, res);
+  async paymentVerfications(@Body() body: any, @Res() res, @Query() query: any) {
+    return await this.paymentService.paymentVerification(body, res, query);
   }
 
   @Get("/getKey")

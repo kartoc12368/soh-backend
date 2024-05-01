@@ -41,7 +41,8 @@ export class PaymentService {
         return { success: true, response };
     }
 
-    async paymentVerification(body, res) {
+    async paymentVerification(body, res, query) {
+        const { id } = query;
         const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = body;
         console.log(razorpay_order_id, razorpay_payment_id, razorpay_signature)
         // console.log(res)
@@ -66,7 +67,7 @@ export class PaymentService {
             })
 
             res.redirect(
-                `http://localhost:3000/paymentsuccess?reference=${razorpay_payment_id}`
+                `http://localhost:3000/paymentsuccess/${id}/?reference=${razorpay_payment_id}`
             );
             console.log("helloe");
             const saveDonation = await this.donationService.saveDonation(donation);

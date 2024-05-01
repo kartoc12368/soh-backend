@@ -58,7 +58,7 @@ export class DonationService {
         await this.donationRepository.save(donation);
         console.log(reference)
 
-        return { message: 'Donation received successfully', reference: reference };
+        return { message: 'Donation received successfully', reference: reference, id: id };
       }
     } catch (error) {
       console.log(error);
