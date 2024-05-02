@@ -1,4 +1,4 @@
-import { Column, CreateDateColumn, Entity, Generated, OneToMany, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { Column, CreateDateColumn, Entity, OneToMany, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 
 import { IsString } from 'class-validator';
 
@@ -10,16 +10,13 @@ export class Fundraiser {
   @PrimaryGeneratedColumn('uuid')
   fundraiser_id: string;
 
-  @Generated()
-  @Column()
+  @Column({ generated: true })
   f_id: number;
 
   @Column()
   firstName: string;
 
-  @Column({
-    nullable: true,
-  })
+  @Column({ nullable: true })
   lastName: string;
 
   @Column({ unique: true })

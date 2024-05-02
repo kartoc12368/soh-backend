@@ -192,7 +192,6 @@ export class FundraiserService {
       return await this.donationRepository.find({ relations: { fundraiser: true }, where: conditions });
     } catch (error) {
       throw new InternalServerErrorException();
-      console.log(error);
     }
   }
 

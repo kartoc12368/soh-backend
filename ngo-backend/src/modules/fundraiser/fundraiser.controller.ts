@@ -69,7 +69,8 @@ export class FundraiserController {
 
   //get fundraiser ProfileImage
   @Get('profile-image/:imagename')
-  @UseGuards(new RoleGuard(Constants.ROLES.FUNDRAISER_ROLE))
+  // @UseGuards(new RoleGuard(Constants.ROLES.FUNDRAISER_ROLE))
+  @Public()
   async findProfileImage(@Param('imagename') imagename, @Res() res) {
     return await this.fundraiserService.findProfileImage(res, imagename);
   }
@@ -92,7 +93,7 @@ export class FundraiserController {
   @Get('/donations/download')
   @UseGuards(new RoleGuard(Constants.ROLES.FUNDRAISER_ROLE))
   async downloadExcel(@Req() req, @Res() res) {
-    await this.fundraiserService.downloadExcelforDonations(req.user, res);
+    return await this.fundraiserService.downloadExcelforDonations(req.user, res);
   }
 
 }

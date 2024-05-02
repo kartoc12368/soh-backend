@@ -1,9 +1,7 @@
-import { Column, CreateDateColumn, Entity, Generated, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 
 import { Fundraiser } from './fundraiser.entity';
 
-import { Type } from 'class-transformer';
-import { IsDate } from 'class-validator';
 import { PaymentStatus } from '../enums/payment-status.enum';
 import { PaymentType } from '../enums/payment-type.enum';
 
@@ -12,8 +10,7 @@ export class Donation {
   @PrimaryGeneratedColumn('uuid')
   donation_id: string;
 
-  @Generated()
-  @Column()
+  @Column({ generated: true })
   donation_id_frontend: number;
 
   @Column()
@@ -66,9 +63,7 @@ export class Donation {
   @Column({ nullable: true, default: null })
   payment_signature: string;
 
-  @Column({ nullable: true })
-  @Type(() => Date)
-  @IsDate()
+  @Column({ nullable: true, type: "date" })
   donation_date: Date;
 
   @Column({ nullable: true })

@@ -17,17 +17,20 @@ import * as bcrypt from 'bcrypt';
 @Injectable()
 export class AuthService {
   constructor(
-    private mailerService: MailerService,
     private forgottenPasswordRepository: ForgottenPasswordRepository,
-    private fundraiserService: FundraiserService,
     private fundraiserRepository: FundRaiserRepository,
+
+    private fundraiserService: FundraiserService,
     private jwtService: JwtService,
+    private mailerService: MailerService,
+
   ) { }
 
   async login(user, loginDto) {
     try {
       //jwt token
       const fundraiser: Fundraiser = user;
+
       if ((fundraiser.role == 'FUNDRAISER' && (await this.fundraiserService.getFundRaiserStatusByEmail(fundraiser.email)) == 'active') || fundraiser.role == 'ADMIN') {
         const userPassword = await this.fundraiserRepository.findOne({ where: { email: fundraiser.email }, select: ['password'] });
 
@@ -58,6 +61,7 @@ export class AuthService {
   async sendEmailForgotPassword(email: string) {
     try {
       const user = await this.fundraiserService.findFundRaiserByEmail(email);
+
       if (!user) {
         throw new NotFoundException('User not found');
       }
@@ -106,6 +110,7 @@ export class AuthService {
   async setNewPassword(body) {
     try {
       var fundraiser = await this.forgottenPasswordRepository.findOne({ where: { newPasswordToken: body.otp } });
+
       if (!fundraiser) {
         throw new NotFoundException('Invalid Otp');
       } else {

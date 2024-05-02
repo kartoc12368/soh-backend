@@ -6,7 +6,6 @@ import { Fundraiser } from 'src/shared/entity/fundraiser.entity';
 import { FundraiserPageRepository } from '../fundraiser-page/fundraiser-page.repository';
 import { FundRaiserRepository } from '../fundraiser/fundraiser.repository';
 import { DonationRepository } from './donation.repository';
-import { PaymentService } from '../payment/payment.service';
 
 @Injectable()
 export class DonationService {
@@ -20,7 +19,9 @@ export class DonationService {
     try {
       //making a new donation object to save
       let donation: Donation = new Donation();
+
       var reference = Math.random().toString(36).slice(-8);
+
       if (id) {
         let fundraiserPage = await this.fundRaiserPageRepository.getFundraiserPage(id);
 
@@ -56,6 +57,7 @@ export class DonationService {
         donation.reference_payment = reference;
 
         await this.donationRepository.save(donation);
+
         console.log(reference)
 
         return { message: 'Donation received successfully', reference: reference, id: id };
@@ -77,12 +79,17 @@ export class DonationService {
       let supporters = [];
 
       supporters.push(body.donor_name);
+
       //getting fundraiser to update its dashboard content
       let fundraiser: Fundraiser = await this.fundRaiserRepository.findOne({ where: { fundraiser_id: body.fundraiser.fundraiser_id }, relations: ["fundraiser_page"] });
+
       console.log(fundraiser)
+
       if (fundraiser.fundraiser_id) {
         let fundraiserPage = await this.fundRaiserPageRepository.getFundraiserPage(fundraiser.fundraiser_page.id);
+
         console.log(fundraiserPage)
+
         if (!fundraiserPage) {
           throw new NotFoundException('Fundraiser Page not found');
         }
