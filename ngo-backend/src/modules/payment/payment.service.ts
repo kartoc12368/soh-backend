@@ -1,9 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import crypto from "crypto";
-import Razorpay from 'razorpay';
+
 import { DonationRepository } from '../donation/donation.repository';
+
 import { DonationService } from '../donation/donation.service';
 
+import crypto from "crypto";
+
+import Razorpay from 'razorpay';
 
 @Injectable()
 export class PaymentService {
@@ -21,6 +24,7 @@ export class PaymentService {
             key_id: process.env.RAZORPAY_API_KEY,
             key_secret: process.env.RAZORPAY_API_SECRET,
         })
+
         return instance;
     }
 
@@ -34,6 +38,7 @@ export class PaymentService {
         const options = {
             amount: parseInt(amount),
             currency: 'INR',
+
             // receipt: 'order_rcptid_11',
             // payment_capture: 1
         }
@@ -75,11 +80,18 @@ export class PaymentService {
                 payment_id: razorpay_payment_id,
             })
 
-            res.redirect(
-                `http://localhost:3000/paymentsuccess/${id}/?reference=${razorpay_payment_id}`
-            );
-            console.log("helloe");
-            const saveDonation = await this.donationService.saveDonation(donation);
+
+            if (id) {
+                res.redirect(
+                    `http://localhost:3000/paymentsuccess/${id}/?reference=${razorpay_payment_id}`
+                );
+                const saveDonation = await this.donationService.saveDonation(donation);
+            }
+            else {
+                res.redirect(
+                    `http://localhost:3000/paymentsuccess/?reference=${razorpay_payment_id}`
+                );
+            }
 
         } else {
             return { success: false }

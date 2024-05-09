@@ -51,10 +51,15 @@ export class FundraiserPageService {
     try {
       const fundraiserPage = await this.fundraiserPageRepository.findOne({ where: { id: id } });
 
+      const fundraiser = await this.fundraiserRepository.findOne({ where: { fundraiser_page: { id: id } } })
+
+      console.log(fundraiser)
+
       if (!fundraiserPage) {
         throw new NotFoundException('Fundraiser not found');
       }
-      return fundraiserPage;
+
+      return { fundraiserPage, firstName: fundraiser.firstName, lastName: fundraiser.lastName, profileImage: fundraiser.profileImage };
     } catch (error) {
       throw new NotFoundException('Fundraiser Page not found');
     }
@@ -76,9 +81,9 @@ export class FundraiserPageService {
         return image !== filePath;
       });
 
-      await fs.promises.unlink(filepath);
-
       await this.fundraiserPageRepository.update(fundraiserPage.id, { gallery: galleryNew });
+
+      await fs.promises.unlink(filepath);
 
       return 'Image Deleted';
     } catch (error) {

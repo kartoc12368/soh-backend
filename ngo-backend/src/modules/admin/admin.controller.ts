@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Post, Put, Query, Req, Res, UploadedFile, UseGuards, UseInterceptors, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Post, Put, Query, Req, Res, UseGuards, ValidationPipe } from '@nestjs/common';
 import { ApiSecurity, ApiTags } from '@nestjs/swagger';
 
 import { UpdateFundraiserPageDto } from '../fundraiser-page/dto/update-fundraiser-page.dto';
@@ -12,10 +12,8 @@ import { AdminService } from './admin.service';
 import { RoleGuard } from 'src/shared/helper/role.guard';
 import { Constants } from 'src/shared/utility/constants';
 
-import { FileInterceptor } from '@nestjs/platform-express';
 import { FindDonationsDto } from '../fundraiser/dto/find-donation.dto';
 
-import { storage2 } from 'src/shared/utility/storage';
 
 
 @Controller('admin')
@@ -38,18 +36,6 @@ export class AdminController {
   @UseGuards(new RoleGuard(Constants.ROLES.ADMIN_ROLE))
   async findAll(@Query() query: FindDonationsDto, @Req() req) {
     return await this.adminService.findMany(query, req);
-  }
-
-  @Post('/donation/uploadCertificate/:id')
-  @UseInterceptors(FileInterceptor('file', storage2))
-  async uploadCertificate(@UploadedFile() file, @Param('id', ParseUUIDPipe) id: string) {
-    return await this.adminService.uploadCertificate(file, id);
-  }
-
-  @Get('donation/certificate/:imagename')
-  @UseGuards(new RoleGuard(Constants.ROLES.ADMIN_ROLE))
-  async findProfileImage(@Param('imagename') imagename, @Res() res) {
-    return await this.adminService.findCerificate(res, imagename);
   }
 
   //change fundraiser status
@@ -78,10 +64,11 @@ export class AdminController {
 
   //adding Offline donation entry
   @Post('/addOfflineDonation')
-  async addOfflineDonation(@Req() req, @Body() body: AddOfflineDonationDto) {
+  async addOfflineDonation(@Body() body: AddOfflineDonationDto) {
     return await this.adminService.addOfflineDonation(body);
   }
 
+  //deleting fundraiserPage
   @Delete('/deletePage/:id')
   async deleteFundraiserPage(@Param('id', ParseUUIDPipe) id: string) {
     return await this.adminService.deleteFundraiserPage(id);
@@ -89,14 +76,8 @@ export class AdminController {
 
   //create fundraiser Page from admin side
   @Post('/createPage')
-  async createPage(@Req() req, @Body() body: CreateFundraiserPageAdminDto) {
+  async createPage(@Body() body: CreateFundraiserPageAdminDto) {
     return await this.adminService.createFundraiserPageByEmail(body);
-  }
-
-  //get all donations
-  @Get('/donations')
-  async getAllDonations() {
-    return await this.adminService.getAllDonations();
   }
 
   //get all fundraiserPages
@@ -111,4 +92,11 @@ export class AdminController {
     console.log(body);
     return await this.fundraiserPageService.update(body, id);
   }
+
+  //download and save to local excel for donations data
+  @Get('/donations/download')
+  async downloadExcel(@Res() res) {
+    return await this.adminService.downloadExcelforDonations(res);
+  }
+
 }

@@ -46,9 +46,11 @@ export class FundraiserService {
 
       if (isSame) {
         if (changePasswordDto.newPassword == changePasswordDto.confirmPassword) {
+
           const hashedPassword = await bcrypt.hash(changePasswordDto.newPassword, 10);
 
           return this.fundRaiserRepository.update(fundraiser2.fundraiser_id, { password: hashedPassword });
+
         } else {
           throw new UnauthorizedException('New password and confirm password do not match');
         }
@@ -189,7 +191,7 @@ export class FundraiserService {
       };
       console.log(conditions);
 
-      return await this.donationRepository.find({ relations: { fundraiser: true }, where: conditions });
+      return await this.donationRepository.find({ relations: { fundraiser: true }, where: conditions, order: { donation_id_frontend: 'ASC' } });
     } catch (error) {
       throw new InternalServerErrorException();
     }
@@ -207,23 +209,40 @@ export class FundraiserService {
 
       sheet.columns = [
         { header: 'Donation Id', key: 'donation_id_frontend' },
-        { header: 'Donation Date', key: 'created_at' },
+        { header: 'Donation Date', key: 'donation_date' },
         { header: 'Donor Name', key: 'donor_name' },
         { header: 'Donation Amount', key: 'amount' },
         { header: 'Payment Type', key: 'payment_type' },
         { header: 'Payment Status', key: 'payment_status' },
-        { header: '80G Certificate', key: 'certificate' },
+        { header: 'PAN', key: 'pan' },
+        { header: 'Donor Email', key: 'donor_email' },
+        { header: 'Donor Phone', key: 'donor_phone' },
+        { header: 'Donor Address', key: 'donor_address' },
+        { header: 'Donor City', key: 'donor_city' },
+        { header: 'Donor State', key: 'donor_state' },
+        { header: 'Donor Country', key: 'donor_country' },
+        { header: 'Payment Reference', key: 'payment_id' },
+
+
+
       ];
 
       donations.forEach((value, idx) => {
         sheet.addRow({
           donation_id_frontend: value.donation_id_frontend,
-          created_at: value.created_at,
+          donation_date: value.donation_date,
           donor_name: value.donor_name,
           amount: value.amount,
           payment_type: value.payment_type,
           payment_status: value.payment_status,
-          certificate: value.certificate,
+          pan: value.pan,
+          donor_email: value.donor_email,
+          donor_phone: value.donor_phone,
+          donor_address: value.donor_address,
+          donor_city: value.donor_city,
+          donor_state: value.donor_state,
+          donor_country: value.donor_country,
+          payment_id: value.payment_id
         });
       });
 
@@ -247,6 +266,47 @@ export class FundraiserService {
     } catch (error) {
       console.error('Error creating Excel file:', error);
     }
+  }
+
+  async getRaisedAmount(user) {
+    try {
+      let raisedAmount = 0;
+
+      let donations = await this.donationRepository.find({ where: { fundraiser: { fundraiser_id: user.fundraiser_id }, payment_status: "success" }, relations: ["fundraiser"] })
+
+      for (let index = 0; index < donations.length; index++) {
+
+        const element = donations[index].amount;
+
+        raisedAmount = raisedAmount + element;
+      }
+
+      return raisedAmount;
+    } catch (error) {
+      console.log(error);
+    }
+
+
+  }
+
+  async getTotalDonor(user) {
+
+    let donations = await this.donationRepository.count({ where: { fundraiser: { fundraiser_id: user.fundraiser_id }, payment_status: "success" }, relations: ["fundraiser"] })
+
+    return donations;
+
+  }
+
+  async getDonorNames(user) {
+    let supporters = []
+
+    let donations = await this.donationRepository.find({ select: { donor_name: true }, where: { fundraiser: { fundraiser_id: user.fundraiser_id }, payment_status: "success" } })
+
+    for (let index = 0; index < donations.length; index++) {
+      supporters.push(donations[index].donor_name)
+    }
+
+    return supporters;
   }
 
 }

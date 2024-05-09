@@ -27,6 +27,7 @@ export class AuthController {
   @Get('forgot-password')
   @Public()
   public async sendEmailForgotPassword(@Body(ValidationPipe) body: ForgotPasswordDto) {
+    console.log(body)
     return await this.authService.sendEmailForgotPassword(body.email);
   }
 

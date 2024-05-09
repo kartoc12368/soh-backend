@@ -3,16 +3,24 @@ import { v4 as uuidv4 } from 'uuid';
 import { diskStorage } from 'multer';
 
 import * as path from 'path';
+import { NotFoundException } from '@nestjs/common';
 
 //storage path for fundraiserPage Images
 export const storageForFundraiserPage = {
     storage: diskStorage({
         destination: './uploads/fundraiserPageImages',
         filename: (req, file, cb) => {
-            const filename: string = path.parse(file?.originalname).name.replace(/\s/g, '') + uuidv4();
-            const extension: string = path.parse(file?.originalname).ext;
+            try {
 
-            cb(null, `${filename}${extension}`);
+                const filename: string = path.parse(file?.originalname).name.replace(/\s/g, '') + uuidv4();
+                const extension: string = path.parse(file?.originalname).ext;
+
+                cb(null, `${filename}${extension}`);
+            } catch (error) {
+                console.log(error.message);
+                throw new NotFoundException("Filename is not found");
+            }
+
         },
     }),
 };

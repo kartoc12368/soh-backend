@@ -96,4 +96,13 @@ export class FundraiserController {
     return await this.fundraiserService.downloadExcelforDonations(req.user, res);
   }
 
+  @Get("/getRaisedAmount")
+  async getRaisedAmount(@Req() req) {
+    const fundRaiser = await this.fundraiserService.getLoggedInFundraiser(req.user);
+    const totalDonor = await this.fundraiserService.getTotalDonor(fundRaiser)
+    const amount = await this.fundraiserService.getRaisedAmount(fundRaiser);
+    const donorNames = await this.fundraiserService.getDonorNames(fundRaiser);
+    return { totalDonor, amount, donorNames }
+  }
+
 }

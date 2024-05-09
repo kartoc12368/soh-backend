@@ -60,6 +60,7 @@ export class AuthService {
 
   async sendEmailForgotPassword(email: string) {
     try {
+      console.log("hello")
       const user = await this.fundraiserService.findFundRaiserByEmail(email);
 
       if (!user) {

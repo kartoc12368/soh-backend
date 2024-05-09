@@ -25,6 +25,12 @@ import * as path from 'path';
 
 import { of } from 'rxjs';
 
+import { v4 as uuidv4 } from 'uuid';
+
+import * as exceljs from 'exceljs';
+
+import * as fs from 'fs';
+
 @Injectable()
 export class AdminService {
   constructor(
@@ -132,14 +138,15 @@ export class AdminService {
       let fundraiser: Fundraiser = new Fundraiser();
 
       fundraiser.firstName = createUserDto.firstName;
-      // fundraiser.lastName = createUserDto.lastName;
       fundraiser.email = createUserDto.email;
       fundraiser.mobile_number = createUserDto.mobile_number;
       fundraiser.password = hashedPassword;
       fundraiser.role = Constants.ROLES.FUNDRAISER_ROLE;
       fundraiser.status = 'active';
 
-      return await this.fundraiserRepository.save(fundraiser);
+      const createdNew = await this.fundraiserRepository.save(fundraiser);
+
+      return { createdNew, status: "201" }
     } catch (error) {
       console.log(error);
 
@@ -164,12 +171,11 @@ export class AdminService {
       await this.fundraiserRepository.update(id, { status: fundraiser.status });
 
       if (fundraiser.status === 'active') {
-        return { status: 1, };
+        return { status: 1 };
       } else {
-        return {
-          status: 0,
-        };
+        return { status: 0 };
       }
+
     } catch (error) {
       console.log(error);
 
@@ -205,7 +211,7 @@ export class AdminService {
 
   async getAllFundraiser() {
     try {
-      const fundraisers = await this.fundraiserRepository.find({ relations: ['fundraiser_page'] });
+      const fundraisers = await this.fundraiserRepository.find({ relations: ['fundraiser_page'], order: { f_id: 'ASC' } });
 
       const filteredUsers = fundraisers.filter((fundraiser) => fundraiser.role !== 'ADMIN');
 
@@ -293,24 +299,8 @@ export class AdminService {
         return 'Fundraiser Page Not Found';
       }
       if (fundraiser.status == 'active') {
-        donation.fundraiser = fundraiser;
-        donation.amount = body.amount;
-        donation.donor_name = body.donor_name;
-        donation.comments = body.comments;
-        donation.pan = body.pan;
-        donation.donor_email = body.donor_email;
-        donation.donor_phone = body.donor_phone;
-        donation.donor_address = body.donor_address;
-        donation.donation_date = body.donation_date;
-        donation.donor_city = body.donor_city;
-        donation.donor_state = body.donor_state;
-        donation.donor_country = body.donor_country;
-        donation.donor_bankName = body.donor_bankName;
-        donation.donor_bankBranch = body.donor_bankBranch;
-        donation.donor_pincode = body.donor_pincode;
-        donation.reference_payment = body.reference_payment;
-        donation.payment_type = 'offline';
-        donation.payment_status = 'success';
+
+        donation = { ...body, payment_type: 'offline', payment_status: 'success' };
 
         await this.donationRepository.save(donation);
 
@@ -391,6 +381,7 @@ export class AdminService {
       });
     } catch (error) {
       console.log(error);
+
       throw new NotFoundException('Not Found');
     }
   }
@@ -450,7 +441,7 @@ export class AdminService {
 
       console.log(conditions);
 
-      return await this.donationRepository.find({ relations: { fundraiser: true }, where: conditions });
+      return await this.donationRepository.find({ relations: { fundraiser: true }, where: conditions, order: { donation_id_frontend: 'ASC' } });
     } catch (error) {
       throw new InternalServerErrorException();
     }
@@ -459,4 +450,57 @@ export class AdminService {
   async deleteFundraiserPage(id) {
     return await this.fundraiserPageRepository.delete(id);
   }
+
+  async downloadExcelforDonations(res) {
+    try {
+      const donations = await this.donationRepository.find();
+
+      const workbook = new exceljs.Workbook();
+
+      const sheet = workbook.addWorksheet('donations');
+
+      sheet.columns = [
+        { header: 'Donation Id', key: 'donation_id_frontend' },
+        { header: 'Donation Date', key: 'created_at' },
+        { header: 'Donor Name', key: 'donor_name' },
+        { header: 'Donation Amount', key: 'amount' },
+        { header: 'Payment Type', key: 'payment_type' },
+        { header: 'Payment Status', key: 'payment_status' },
+        { header: '80G Certificate', key: 'certificate' },
+      ];
+
+      donations.forEach((value, idx) => {
+        sheet.addRow({
+          donation_id_frontend: value.donation_id_frontend,
+          created_at: value.created_at,
+          donor_name: value.donor_name,
+          amount: value.amount,
+          payment_type: value.payment_type,
+          payment_status: value.payment_status,
+          certificate: value.certificate,
+        });
+      });
+
+      const downloadsFolder = path.join(__dirname, '../../../', 'downloads');
+
+      if (!fs.existsSync(downloadsFolder)) {
+        try {
+          fs.mkdirSync(downloadsFolder);
+        } catch (error) {
+          console.error('Error creating downloads folder:', error);
+        }
+      }
+
+      const filename = `${uuidv4()}.xlsx`;
+
+      const filePath = path.join(downloadsFolder, filename);
+
+      await workbook.xlsx.writeFile(filePath);
+
+      return of(res.sendFile(path.join(process.cwd(), 'downloads/' + filename)));
+    } catch (error) {
+      console.error('Error creating Excel file:', error);
+    }
+  }
+
 }
