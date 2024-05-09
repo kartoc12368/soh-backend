@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Post, Put, Query, Req, Res, UseGuards, ValidationPipe } from '@nestjs/common';
-import { ApiSecurity, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 
 import { UpdateFundraiserPageDto } from '../fundraiser-page/dto/update-fundraiser-page.dto';
 import { CreateFundraiserPageAdminDto } from './dto/create-fundraiserpage-admin.dto';
@@ -26,75 +26,75 @@ export class AdminController {
     private fundraiserPageService: FundraiserPageService,
   ) { }
 
-  //get totaldonations amount
   @Get('/adminDashboard')
+  @ApiOperation({ summary: "Get Admin Dashboard Data" })
   async getAdminDashboardData() {
     return await this.adminService.getAdminDashboardData();
   }
 
   @Get('/donations')
-  @UseGuards(new RoleGuard(Constants.ROLES.ADMIN_ROLE))
-  async findAll(@Query() query: FindDonationsDto, @Req() req) {
-    return await this.adminService.findMany(query, req);
+  @ApiOperation({ summary: "Get Donations with filter" })
+  async getDonationsAdmin(@Query() query: FindDonationsDto) {
+    return await this.adminService.getDonationsAdmin(query);
   }
 
-  //change fundraiser status
   @Put('/fundraiser/status/:id')
-  changeFundraiserStatus(@Param('id', ParseUUIDPipe) id: string) {
-    return this.adminService.changeFundraiserStatus(id);
+  @ApiOperation({ summary: "Changing Fundraiser Status" })
+  async changeFundraiserStatus(@Param('id', ParseUUIDPipe) id: string) {
+    return await this.adminService.changeFundraiserStatus(id);
   }
 
-  //delete fundraiser
   @Delete('/fundraiser/delete/:id')
+  @ApiOperation({ summary: "Delete Fundraiser" })
   async deleteFundraiser(@Param('id', ParseUUIDPipe) id: string) {
-    return this.adminService.deleteFundraiser(id);
+    return await this.adminService.deleteFundraiser(id);
   }
 
-  //get all fundraiser
   @Get('/fundraiser')
-  getAllFundraiser() {
-    return this.adminService.getAllFundraiser();
+  @ApiOperation({ summary: "Get List of all existing fundraisers" })
+  async getAllFundraiser() {
+    return await this.adminService.getAllFundraiser();
   }
 
-  //generate password for fundraiser
   @Post('/generate')
+  @ApiOperation({ summary: "Generate Password for Fundraiser" })
   async generatePasswordByEmail(@Body(ValidationPipe) body: GeneratePasswordDto) {
     return await this.adminService.generatePasswordByEmail(body);
   }
 
-  //adding Offline donation entry
   @Post('/addOfflineDonation')
+  @ApiOperation({ summary: "Add Offline Donation both general and to fundraiser" })
   async addOfflineDonation(@Body() body: AddOfflineDonationDto) {
     return await this.adminService.addOfflineDonation(body);
   }
 
-  //deleting fundraiserPage
   @Delete('/deletePage/:id')
+  @ApiOperation({ summary: "Delete Fundraiser Page" })
   async deleteFundraiserPage(@Param('id', ParseUUIDPipe) id: string) {
     return await this.adminService.deleteFundraiserPage(id);
   }
 
-  //create fundraiser Page from admin side
   @Post('/createPage')
+  @ApiOperation({ summary: "Create Fundraiser Page from admin side" })
   async createPage(@Body() body: CreateFundraiserPageAdminDto) {
     return await this.adminService.createFundraiserPageByEmail(body);
   }
 
-  //get all fundraiserPages
   @Get('/fundraiserPages')
+  @ApiOperation({ summary: "Get All Fundraiser Pages" })
   async getAllFundraiserPages() {
     return await this.adminService.getAllFundraiserPages();
   }
 
-  //update fundraiserPage from admin side
   @Put('fundraiserPage/updatePage/:id')
+  @ApiOperation({ summary: "Update Page Content of Fundraiser-Page" })
   async updatePage(@Body() body: UpdateFundraiserPageDto, @Param('id', ParseUUIDPipe) id: string) {
-    console.log(body);
     return await this.fundraiserPageService.update(body, id);
   }
 
   //download and save to local excel for donations data
   @Get('/donations/download')
+  @ApiOperation({ summary: "Download Excel for all donations" })
   async downloadExcel(@Res() res) {
     return await this.adminService.downloadExcelforDonations(res);
   }

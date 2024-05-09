@@ -5,8 +5,10 @@ import { PaymentService } from './payment.service';
 import { Public } from 'src/shared/decorators/public.decorator';
 
 import { PaymentDto } from './dto/payment.dto';
+import { ApiTags } from '@nestjs/swagger';
 
 
+@ApiTags('Payment')
 @Controller('payment')
 export class PaymentController {
   constructor(private readonly paymentService: PaymentService) { }
@@ -24,9 +26,4 @@ export class PaymentController {
     return await this.paymentService.paymentVerification(body, res, query);
   }
 
-  @Get("/getKey")
-  @Public()
-  async getKey() {
-    return await this.paymentService.getKey();
-  }
 }

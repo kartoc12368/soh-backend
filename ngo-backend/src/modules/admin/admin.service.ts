@@ -30,6 +30,7 @@ import { v4 as uuidv4 } from 'uuid';
 import * as exceljs from 'exceljs';
 
 import * as fs from 'fs';
+import { ResponseStructure } from 'src/shared/interface/response-structure.interface';
 
 @Injectable()
 export class AdminService {
@@ -44,41 +45,21 @@ export class AdminService {
     private dataSource: DataSource,
   ) { }
 
-  async getAdminDashboardData() {
+  async getAdminDashboardData(): Promise<ResponseStructure> {
     try {
       const totalDonations = await this.getTotalDonations();
 
-      const totalFundraisers = await this.getTotalFundraisers();
+      const totalFundraisers = await this.fundraiserRepository.count();
 
-      const activeFundraisers = await this.getActiveFundraisers();
+      const activeFundraisers = await this.fundraiserRepository.count({ where: { status: 'active' } });
 
       const todayDonations = await this.getTodayDonations();
 
       const thisMonthDonations = await this.getThisMonthDonations();
 
-      return { totalDonations, totalFundraisers, activeFundraisers, todayDonations, thisMonthDonations };
+      return { message: "Dashboard Data received successfully", data: { totalDonations, totalFundraisers, activeFundraisers, todayDonations, thisMonthDonations }, success: true };
     } catch (error) {
-      console.log(error);
-
       throw new InternalServerErrorException();
-    }
-  }
-
-  async getTotalFundraisers() {
-    try {
-      return await this.fundraiserRepository.count();
-    } catch (error) {
-      console.log(error);
-    }
-  }
-
-  async getActiveFundraisers() {
-    try {
-      return await this.fundraiserRepository.count({
-        where: { status: 'active' },
-      });
-    } catch (error) {
-      console.log(error);
     }
   }
 
@@ -131,7 +112,35 @@ export class AdminService {
       console.log(error);
     }
   }
-  async createdByAdmin(createUserDto: any, password: string) {
+
+  async getDonationsAdmin(dto: FindDonationsDto): Promise<ResponseStructure> {
+    try {
+      const { payment_option, payment_status, donation_id, from_date, to_date } = dto;
+
+      let conditions: FindOptionsWhere<Donation> | FindOptionsWhere<Donation>[] = {};
+
+      conditions = {
+        ...conditions,
+        ...(payment_option ? { payment_type: payment_option } : {}),
+        ...(payment_status ? { payment_status: payment_status } : {}),
+        ...(donation_id ? { donation_id_frontend: donation_id } : {}),
+        ...(from_date || to_date
+          ? {
+            donation_date: Between(from_date ? new Date(from_date) : new Date('1970-01-01'), to_date ? incrementDate(new Date(to_date)) : new Date()),
+          }
+          : {}), // Only add filter if either from_date or to_date is provided
+      };
+
+      console.log(conditions);
+
+      const donationsData = await this.donationRepository.find({ relations: { fundraiser: true }, where: conditions, order: { donation_id_frontend: 'ASC' } });
+      return { message: "Donations Received Successfully", data: donationsData, success: true }
+    } catch (error) {
+      throw new InternalServerErrorException();
+    }
+  }
+
+  async createdByAdmin(createUserDto: any, password: string): Promise<ResponseStructure> {
     try {
       const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -146,16 +155,16 @@ export class AdminService {
 
       const createdNew = await this.fundraiserRepository.save(fundraiser);
 
-      return { createdNew, status: "201" }
+      return { message: "Password Generated Successfully", data: createdNew, statusCode: 201 }
+
     } catch (error) {
       console.log(error);
 
-      return 'Please contact saveRepository';
+      // return 'Please contact saveRepository';
     }
   }
 
-  async changeFundraiserStatus(id: string) {
-    // return await this.fundraiserRepository.update(id,{status:"inactive"});
+  async changeFundraiserStatus(id: string): Promise<ResponseStructure> {
     try {
       const fundraiser = await this.fundraiserRepository.findOne({
         where: { fundraiser_id: id },
@@ -171,19 +180,19 @@ export class AdminService {
       await this.fundraiserRepository.update(id, { status: fundraiser.status });
 
       if (fundraiser.status === 'active') {
-        return { status: 1 };
+        return { message: "Status changed to active ", success: true };
       } else {
-        return { status: 0 };
+        return { message: "Status changed to inactive", success: true };
       }
 
     } catch (error) {
       console.log(error);
 
-      return 'Please contact statusmanager';
+      // return 'Please contact statusmanager';
     }
   }
 
-  async deleteFundraiser(id: string) {
+  async deleteFundraiser(id: string): Promise<ResponseStructure> {
     try {
       let user = await this.fundraiserRepository.findOne({
         where: { fundraiser_id: id },
@@ -201,31 +210,33 @@ export class AdminService {
         throw new NotFoundException('Fundraiser not found');
       }
 
-      return await this.fundraiserRepository.delete(id);
+      await this.fundraiserRepository.delete(id);
+
+      return { message: "Fundraiser deleted successfully", success: true }
     } catch (error) {
       console.log(error);
 
-      return 'Please contact deleteFundraiser';
+      // return 'Please contact deleteFundraiser';
     }
   }
 
-  async getAllFundraiser() {
+  async getAllFundraiser(): Promise<ResponseStructure> {
     try {
-      const fundraisers = await this.fundraiserRepository.find({ relations: ['fundraiser_page'], order: { f_id: 'ASC' } });
+      const fundraisers = await this?.fundraiserRepository?.find({ relations: ['fundraiser_page'], order: { f_id: 'ASC' } });
 
-      const filteredUsers = fundraisers.filter((fundraiser) => fundraiser.role !== 'ADMIN');
+      const filteredUsers = fundraisers?.filter((fundraiser) => fundraiser?.role !== 'ADMIN');
 
-      return filteredUsers;
+      return { message: "Fundraisers data fetched successfully", data: filteredUsers, success: true }
     } catch (error) {
       console.log(error);
 
-      return 'Please contact getAllFundraiser';
+      // return 'Please contact getAllFundraiser';
     }
   }
 
-  async generatePasswordByEmail(body) {
+  async generatePasswordByEmail(body): Promise<ResponseStructure> {
     try {
-      const isFundraiserExists = await this.fundraiserRepository.findOne({
+      const isFundraiserExists = await this?.fundraiserRepository?.findOne({
         where: { email: body.email },
       });
 
@@ -233,7 +244,7 @@ export class AdminService {
         return new NotFoundException('Email already in use');
       } else {
         //generating random password in randomPassword variable
-        var randomPassword = Math.random().toString(36).slice(-8);
+        var randomPassword = Math?.random()?.toString(36)?.slice(-8);
 
         var body2 = {
           firstName: body.firstName,
@@ -248,9 +259,10 @@ export class AdminService {
           placeholderReplacements: body2,
         };
 
-        await this.mailerService.sendMail(dto);
+        await this?.mailerService?.sendMail(dto);
 
-        return this.createdByAdmin(body, randomPassword);
+        return this?.createdByAdmin(body, randomPassword);
+
       }
     } catch (error) {
       console.log(error);
@@ -426,31 +438,7 @@ export class AdminService {
     }
   }
 
-  async findMany(dto: FindDonationsDto, req) {
-    try {
-      const { payment_option, payment_status, donation_id, from_date, to_date } = dto;
 
-      let conditions: FindOptionsWhere<Donation> | FindOptionsWhere<Donation>[] = {};
-
-      conditions = {
-        ...conditions,
-        ...(dto.payment_option ? { payment_type: payment_option } : {}),
-        ...(dto.payment_status ? { payment_status: payment_status } : {}),
-        ...(dto.donation_id ? { donation_id_frontend: donation_id } : {}),
-        ...(dto.from_date || dto.to_date
-          ? {
-            donation_date: Between(dto.from_date ? new Date(dto.from_date) : new Date('1970-01-01'), dto.to_date ? incrementDate(new Date(to_date)) : new Date()),
-          }
-          : {}), // Only add filter if either from_date or to_date is provided
-      };
-
-      console.log(conditions);
-
-      return await this.donationRepository.find({ relations: { fundraiser: true }, where: conditions, order: { donation_id_frontend: 'ASC' } });
-    } catch (error) {
-      throw new InternalServerErrorException();
-    }
-  }
 
   async deleteFundraiserPage(id) {
     return await this.fundraiserPageRepository.delete(id);

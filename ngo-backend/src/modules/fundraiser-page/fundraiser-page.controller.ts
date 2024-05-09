@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Post, Put, Req, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiSecurity, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 
 import { FundraiserPageService } from './fundraiser-page.service';
 
@@ -21,37 +21,36 @@ export class FundraiserPageController {
     private readonly fundraiserPageService: FundraiserPageService,
   ) { }
 
-  //upload images for fundraiserPage One by One
   @Post('/updatePage/upload/:id')
   @ApiSecurity('JWT-auth')
   @UseGuards(new RoleGuard(Constants.ROLES.FUNDRAISER_ROLE), OwnershipGuard)
   @UseInterceptors(FileInterceptor('file', storageForFundraiserPage))
+  @ApiOperation({ summary: "Upload Image By Fundraiser for the page" })
   async uploadFile(@UploadedFile() file, @Param('id', ParseUUIDPipe) PageId: string) {
     console.log(file.filename);
     return await this.fundraiserPageService.uploadFile(file, PageId);
   }
 
-  //update FundraiserPage Information
   @Put('/updatePage/:id')
   @ApiSecurity('JWT-auth')
   @UseGuards(new RoleGuard(Constants.ROLES.FUNDRAISER_ROLE), OwnershipGuard)
-  // @UseInterceptors(FilesInterceptor("file",20,storage))
+  @ApiOperation({ summary: "Update Fundraiser Page by fundraiser" })
   async updatePage(@Body() body: UpdateFundraiserPageDto, @Param('id', ParseUUIDPipe) id: string) {
     console.log('hello');
     return await this.fundraiserPageService.update(body, id);
   }
 
-  //public page for fundraiser
   @Get(':id')
   @Public()
+  @ApiOperation({ summary: "Public Fundraiser Page" })
   async getFundraiserById(@Param('id', ParseUUIDPipe) id: string) {
     return await this.fundraiserPageService.getFundraiserById(id);
   }
 
-  //delete fundraiserPage Image one by one
   @Delete(':id')
   @ApiSecurity('JWT-auth')
   @UseGuards(new RoleGuard(Constants.ROLES.FUNDRAISER_ROLE), OwnershipGuard)
+  @ApiOperation({ summary: "Delete Fundraiser Page Image " })
   async deleteGalleryImage(@Param('id') filePath: string, @Req() req) {
     return await this.fundraiserPageService.deleteGalleryImage(req.user, filePath);
   }
