@@ -9,7 +9,7 @@ import { UpdateFundraiserDto } from './dto/update-profile.dto';
 import { Public } from 'src/shared/decorators/public.decorator';
 import { RoleGuard } from 'src/shared/helper/role.guard';
 import { Constants } from 'src/shared/utility/constants';
-import { storageForProfileImages } from 'src/shared/utility/storage';
+import { storageForProfileImages } from 'src/shared/utility/storage.utility';
 
 import { FundraiserService } from './fundraiser.service';
 

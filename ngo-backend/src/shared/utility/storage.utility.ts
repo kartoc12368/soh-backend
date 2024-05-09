@@ -1,9 +1,9 @@
-import { v4 as uuidv4 } from 'uuid';
+import { NotFoundException } from '@nestjs/common';
+import * as path from 'path';
 
 import { diskStorage } from 'multer';
 
-import * as path from 'path';
-import { NotFoundException } from '@nestjs/common';
+import { v4 as uuidv4 } from 'uuid';
 
 //storage path for fundraiserPage Images
 export const storageForFundraiserPage = {

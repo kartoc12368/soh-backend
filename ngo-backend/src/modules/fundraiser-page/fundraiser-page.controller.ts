@@ -9,7 +9,7 @@ import { RoleGuard } from 'src/shared/helper/role.guard';
 
 import { Public } from 'src/shared/decorators/public.decorator';
 import { Constants } from 'src/shared/utility/constants';
-import { storageForFundraiserPage } from 'src/shared/utility/storage';
+import { storageForFundraiserPage } from 'src/shared/utility/storage.utility';
 
 import { UpdateFundraiserPageDto } from './dto/update-fundraiser-page.dto';
 

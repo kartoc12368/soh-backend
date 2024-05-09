@@ -13,7 +13,7 @@ import { FundraiserService } from '../fundraiser/fundraiser.service';
 
 import { Constants } from 'src/shared/utility/constants';
 import { sendEmailDto } from 'src/shared/utility/mailer/mail.interface';
-import { incrementDate } from 'src/shared/utility/incrementDate';
+import { incrementDate } from 'src/shared/utility/date.utility';
 
 import { Between, DataSource, FindOptionsWhere } from 'typeorm';
 

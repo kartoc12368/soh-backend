@@ -12,7 +12,7 @@ import { DonationRepository } from '../donation/donation.repository';
 import { FundraiserPageRepository } from '../fundraiser-page/fundraiser-page.repository';
 import { FundRaiserRepository } from './fundraiser.repository';
 
-import { incrementDate } from 'src/shared/utility/incrementDate';
+import { incrementDate } from 'src/shared/utility/date.utility';
 
 import { Between, FindOptionsWhere } from 'typeorm';
 
