@@ -5,8 +5,9 @@ import { IsAlpha, IsDate, IsEmail, IsNotEmpty, IsNumber, IsNumberString, IsOptio
 
 export class AddOfflineDonationDto {
   @ApiProperty()
-  @IsEmail()
-  @IsNotEmpty()
+  // @IsEmail()
+  @IsOptional()
+  @Type(() => IsEmail)
   email: string;
 
   @ApiProperty()

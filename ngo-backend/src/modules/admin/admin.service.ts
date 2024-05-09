@@ -258,55 +258,60 @@ export class AdminService {
   }
 
   async addOfflineDonation(body) {
+    console.log(body)
     try {
       //same code from donate service here admin passes data in body
       let donation: Donation = new Donation();
 
-      let fundraiser: Fundraiser = await this.fundraiserRepository.findOne({
-        where: { email: body.email },
-        relations: ['fundraiser_page'],
-      });
+      if (body.email) {
 
-      let fundraiserPage = await this.fundraiserPageRepository.findOne({
-        where: { id: fundraiser.fundraiser_page.id },
-      });
-
-      let supportersOfFundraiser = fundraiserPage.supporters;
-
-      if (supportersOfFundraiser == null) {
-        supportersOfFundraiser = [];
-      }
-
-      supportersOfFundraiser.push(body.donor_name);
-
-      if (fundraiser != null) {
-        const total_amount_raised = fundraiser.total_amount_raised + parseInt(body.amount);
-
-        const total_donations = fundraiser.total_donations + 1;
-
-        await this.fundraiserRepository.update(fundraiser.fundraiser_id, {
-          total_amount_raised: total_amount_raised,
-          total_donations: total_donations,
+        let fundraiser: Fundraiser = await this.fundraiserRepository.findOne({
+          where: { email: body.email },
+          relations: ['fundraiser_page'],
         });
 
-        const newAmount: number = fundraiserPage.raised_amount + parseInt(body.amount);
+        if (fundraiser.status == 'active') {
 
-        await this.fundraiserPageRepository.update(fundraiserPage.id, {
-          raised_amount: newAmount,
-          supporters: supportersOfFundraiser,
-        });
-      } else {
-        return 'Fundraiser Page Not Found';
+          donation = { ...body, payment_type: 'offline', payment_status: 'success', fundraiser: fundraiser };
+
+          await this.donationRepository.save(donation);
+
+          let fundraiserPage = await this.fundraiserPageRepository.findOne({
+            where: { id: fundraiser.fundraiser_page.id },
+          });
+
+          //getting existing fundraiserPage supporters anf pushing new supporters
+          let supportersOfFundraiser = await this.fundraiserService.getDonorNames(fundraiser)
+
+          if (fundraiser != null) {
+            const total_amount_raised = await this.fundraiserService.getRaisedAmount(fundraiser)
+
+            const total_donations = await this.fundraiserService.getTotalDonor(fundraiser);
+
+            await this.fundraiserRepository.update(fundraiser.fundraiser_id, {
+              total_amount_raised: total_amount_raised,
+              total_donations: total_donations,
+            });
+
+            await this.fundraiserPageRepository.update(fundraiserPage.id, {
+              raised_amount: total_amount_raised,
+              supporters: supportersOfFundraiser,
+            });
+          } else {
+            return 'Fundraiser Page Not Found';
+          }
+
+          return { message: 'Donation added successfully' };
+        } else {
+          return 'Fundraiser not active';
+        }
       }
-      if (fundraiser.status == 'active') {
-
+      else {
         donation = { ...body, payment_type: 'offline', payment_status: 'success' };
 
         await this.donationRepository.save(donation);
 
         return { message: 'Donation added successfully' };
-      } else {
-        return 'Fundraiser not active';
       }
     } catch (error) {
       console.log(error);
