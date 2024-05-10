@@ -24,10 +24,9 @@ export class AuthService {
 
     private jwtService: JwtService,
     private mailerService: MailerService,
+  ) {}
 
-  ) { }
-
-  async login(user, loginDto) {
+  async login(user, loginDto): Promise<ResponseStructure> {
     try {
       //jwt token
       const fundraiser: Fundraiser = user;
@@ -37,11 +36,10 @@ export class AuthService {
         throw new NotFoundException('Fundraiser not found');
       }
 
-      if ((fundraiser?.role == 'FUNDRAISER' && (fundraiserStatus == 'active')) || fundraiser?.role == 'ADMIN') {
+      if ((fundraiser?.role == 'FUNDRAISER' && fundraiserStatus == 'active') || fundraiser?.role == 'ADMIN') {
         const userPassword = await this.fundraiserRepository.getFundraiser({ where: { email: fundraiser.email }, select: ['password'] });
 
         if (fundraiser && (await bcrypt?.compare(loginDto?.password, userPassword?.password))) {
-
           const payload = {
             firstName: fundraiser?.firstName,
             email: fundraiser?.email,
@@ -50,20 +48,19 @@ export class AuthService {
             profileImage: fundraiser?.profileImage,
           };
 
-          return { token: this.jwtService.sign(payload) };
+          return { message: 'Login Successful', data: { token: this.jwtService.sign(payload) } };
         } else {
           throw new UnauthorizedException('Invalid Password');
         }
-
       } else {
-        throw new UnauthorizedException("Please Sign Up")
+        throw new UnauthorizedException('Please Sign Up');
       }
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }
   }
 
-  async sendEmailForgotPassword(email: string) {
+  async sendEmailForgotPassword(email: string): Promise<ResponseStructure> {
     try {
       const user = await this.fundraiserRepository.findFundRaiserByEmail(email);
 
@@ -99,8 +96,7 @@ export class AuthService {
         }
       }, 600000);
 
-      return 'true';
-
+      return { message: 'Email Sent successfully', success: true };
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }
@@ -126,8 +122,7 @@ export class AuthService {
         await this.forgottenPasswordRepository.deleteOtp(fundraiser);
       }
 
-      return { message: "Password Reset Successfully" }
-
+      return { message: 'Password Reset Successfully' };
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }

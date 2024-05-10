@@ -8,6 +8,7 @@ import { FundRaiserRepository } from '../fundraiser/fundraiser.repository';
 import { DonationRepository } from './donation.repository';
 import { FundraiserService } from '../fundraiser/fundraiser.service';
 import { ErrorResponseUtility } from 'src/shared/utility/error-response.utility';
+import { ResponseStructure } from 'src/shared/interface/response-structure.interface';
 
 @Injectable()
 export class DonationService {
@@ -15,14 +16,14 @@ export class DonationService {
     private readonly donationRepository: DonationRepository,
     private readonly fundRaiserRepository: FundRaiserRepository,
     private readonly fundRaiserPageRepository: FundraiserPageRepository,
-  ) { }
+  ) {}
 
-  async donate(body, id?) {
+  async donate(body, id?): Promise<ResponseStructure> {
     try {
       var reference = Math.random().toString(36).slice(-8);
 
       if (!id) {
-        await this.donationRepository.createDonationOnline(body, reference)
+        await this.donationRepository.createDonationOnline(body, reference);
 
         return { message: 'Donation received successfully' };
       }
@@ -35,32 +36,28 @@ export class DonationService {
       //getting fundraiser to update its dashboard content
       let fundraiser: Fundraiser = await this.fundRaiserRepository.getFundraiser({ where: { fundraiser_id: fundraiserPage?.fundraiser?.fundraiser_id } });
       if (!fundraiser) {
-        throw new NotFoundException("Fundraiser not found, Page is expired");
+        throw new NotFoundException('Fundraiser not found, Page is expired');
       }
 
       //checking if status is active then only fundraiser data is available in donation database
       if (fundraiser?.status == 'active') {
-        await this.donationRepository.createDonationOnline(body, reference, fundraiser)
+        await this.donationRepository.createDonationOnline(body, reference, fundraiser);
       }
 
-      return { message: 'Donation received successfully', reference: reference, id: id };
-
+      return { message: 'Donation received successfully', data: { reference: reference, id: id } };
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }
   }
 
-
-
-  async saveDonation(body) {
-
+  async saveDonation(body): Promise<ResponseStructure> {
     //getting fundraiserPage using id from params if any
     try {
       //getting fundraiser to update its dashboard content
-      let fundraiser: Fundraiser = await this.fundRaiserRepository.getFundraiser({ where: { fundraiser_id: body.fundraiser.fundraiser_id }, relations: ["fundraiser_page"] });
+      let fundraiser: Fundraiser = await this.fundRaiserRepository.getFundraiser({ where: { fundraiser_id: body.fundraiser.fundraiser_id }, relations: ['fundraiser_page'] });
 
       if (!fundraiser) {
-        throw new NotFoundException("Fundraiser not found");
+        throw new NotFoundException('Fundraiser not found');
       }
 
       let fundraiserPage = await this.fundRaiserPageRepository.getFundraiserPage({
@@ -72,9 +69,9 @@ export class DonationService {
       }
 
       //getting existing fundraiserPage supporters and pushing new supporters
-      let supportersOfFundraiser = await this.donationRepository.getDonorNames(body.fundraiser)
+      let supportersOfFundraiser = await this.donationRepository.getDonorNames(body.fundraiser);
 
-      const total_amount_raised = await this.donationRepository.getRaisedAmount(body.fundraiser)
+      const total_amount_raised = await this.donationRepository.getRaisedAmount(body.fundraiser);
 
       const total_donations = await this.donationRepository.getTotalDonor(body.fundraiser);
 
@@ -84,11 +81,9 @@ export class DonationService {
       });
 
       await this.fundRaiserPageRepository.UpdateFundraiserPage(fundraiser?.fundraiser_page.id, { raised_amount: total_amount_raised, supporters: supportersOfFundraiser });
-
+      return { message: 'Donation updated successfully to Page' };
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }
   }
-
-
 }

@@ -12,21 +12,19 @@ import { Constants } from 'src/shared/utility/constants';
 import { storageForFundraiserPage } from 'src/shared/utility/storage.utility';
 
 import { UpdateFundraiserPageDto } from './dto/update-fundraiser-page.dto';
-
+import { ResponseStructure } from 'src/shared/interface/response-structure.interface';
 
 @ApiTags('Fundraiser-Page')
 @Controller('fundraiser-page')
 export class FundraiserPageController {
-  constructor(
-    private readonly fundraiserPageService: FundraiserPageService,
-  ) { }
+  constructor(private readonly fundraiserPageService: FundraiserPageService) {}
 
   @Post('/updatePage/upload/:id')
   @ApiSecurity('JWT-auth')
   @UseGuards(new RoleGuard(Constants.ROLES.FUNDRAISER_ROLE), OwnershipGuard)
   @UseInterceptors(FileInterceptor('file', storageForFundraiserPage))
-  @ApiOperation({ summary: "Upload Image By Fundraiser for the page" })
-  async uploadFile(@UploadedFile() file, @Param('id', ParseUUIDPipe) PageId: string) {
+  @ApiOperation({ summary: 'Upload Image By Fundraiser for the page' })
+  async uploadFile(@UploadedFile() file, @Param('id', ParseUUIDPipe) PageId: string): Promise<ResponseStructure> {
     console.log(file.filename);
     return await this.fundraiserPageService.uploadFile(file, PageId);
   }
@@ -34,24 +32,24 @@ export class FundraiserPageController {
   @Put('/updatePage/:id')
   @ApiSecurity('JWT-auth')
   @UseGuards(new RoleGuard(Constants.ROLES.FUNDRAISER_ROLE), OwnershipGuard)
-  @ApiOperation({ summary: "Update Fundraiser Page by fundraiser" })
-  async updatePage(@Body() body: UpdateFundraiserPageDto, @Param('id', ParseUUIDPipe) id: string) {
+  @ApiOperation({ summary: 'Update Fundraiser Page by fundraiser' })
+  async updatePage(@Body() body: UpdateFundraiserPageDto, @Param('id', ParseUUIDPipe) id: string): Promise<ResponseStructure> {
     console.log('hello');
     return await this.fundraiserPageService.update(body, id);
   }
 
   @Get(':id')
   @Public()
-  @ApiOperation({ summary: "Public Fundraiser Page" })
-  async getFundraiserById(@Param('id', ParseUUIDPipe) id: string) {
+  @ApiOperation({ summary: 'Public Fundraiser Page' })
+  async getFundraiserById(@Param('id', ParseUUIDPipe) id: string): Promise<ResponseStructure> {
     return await this.fundraiserPageService.getFundraiserById(id);
   }
 
   @Delete(':id')
   @ApiSecurity('JWT-auth')
   @UseGuards(new RoleGuard(Constants.ROLES.FUNDRAISER_ROLE), OwnershipGuard)
-  @ApiOperation({ summary: "Delete Fundraiser Page Image " })
-  async deleteGalleryImage(@Param('id') filePath: string, @Req() req) {
+  @ApiOperation({ summary: 'Delete Fundraiser Page Image ' })
+  async deleteGalleryImage(@Param('id') filePath: string, @Req() req): Promise<ResponseStructure> {
     return await this.fundraiserPageService.deleteGalleryImage(req.user, filePath);
   }
 }

@@ -35,22 +35,21 @@ export class AdminService {
 
     private mailerService: MailerService,
     private fundraiserService: FundraiserService,
-  ) { }
+  ) {}
 
   async getAdminDashboardData(): Promise<ResponseStructure> {
     try {
-
-      const totalFundraisers = await this.fundraiserRepository.countFundraisers({})
+      const totalFundraisers = await this.fundraiserRepository.countFundraisers({});
 
       const activeFundraisers = await this.fundraiserRepository.countFundraisers({ where: { status: 'active' } });
 
-      const todayDonations = await this.donationRepository.getTodayDonations()
+      const todayDonations = await this.donationRepository.getTodayDonations();
 
       const thisMonthDonations = await this.donationRepository.getThisMonthDonations();
 
       const totalDonations = await this.donationRepository.getTotalDonations();
 
-      return { message: "Dashboard Data received successfully", data: { totalDonations, totalFundraisers, activeFundraisers, todayDonations, thisMonthDonations }, success: true };
+      return { message: 'Dashboard Data received successfully', data: { totalDonations, totalFundraisers, activeFundraisers, todayDonations, thisMonthDonations }, success: true };
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }
@@ -69,14 +68,14 @@ export class AdminService {
         ...(donation_id ? { donation_id_frontend: donation_id } : {}),
         ...(from_date || to_date
           ? {
-            donation_date: Between(from_date ? new Date(from_date) : new Date('1970-01-01'), to_date ? incrementDate(new Date(to_date)) : new Date()),
-          }
+              donation_date: Between(from_date ? new Date(from_date) : new Date('1970-01-01'), to_date ? incrementDate(new Date(to_date)) : new Date()),
+            }
           : {}), // Only add filter if either from_date or to_date is provided
       };
 
       const donationsData = await this.donationRepository.getAllDonations({ relations: { fundraiser: true }, where: conditions, order: { donation_id_frontend: 'ASC' } });
 
-      return { message: "Donations Received Successfully", data: donationsData, success: true }
+      return { message: 'Donations Received Successfully', data: donationsData, success: true };
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }
@@ -84,11 +83,9 @@ export class AdminService {
 
   async createdByAdmin(generatePasswordDto: GeneratePasswordDto, password: string): Promise<ResponseStructure> {
     try {
-
       const createdNew = await this.fundraiserRepository.createFundraiserByAdmin(generatePasswordDto, password);
 
-      return { message: "Password Generated Successfully", data: createdNew, statusCode: 201 }
-
+      return { message: 'Password Generated Successfully', data: createdNew, statusCode: 201 };
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }
@@ -108,11 +105,10 @@ export class AdminService {
       await this.fundraiserRepository.UpdateFundraiser(id, { status: fundraiser.status });
 
       if (fundraiser.status === 'active') {
-        return { message: "Status changed to active ", success: true };
+        return { message: 'Status changed to active ', success: true };
       } else {
-        return { message: "Status changed to inactive", success: true };
+        return { message: 'Status changed to inactive', success: true };
       }
-
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }
@@ -132,7 +128,7 @@ export class AdminService {
 
       await this.fundraiserRepository.deleteFundraiser(id);
 
-      return { message: "Fundraiser deleted successfully", success: true }
+      return { message: 'Fundraiser deleted successfully', success: true };
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }
@@ -144,7 +140,7 @@ export class AdminService {
 
       const filteredUsers = fundraisers?.filter((fundraiser) => fundraiser?.role !== 'ADMIN');
 
-      return { message: "Fundraisers data fetched successfully", data: filteredUsers, success: true }
+      return { message: 'Fundraisers data fetched successfully', data: filteredUsers, success: true };
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }
@@ -176,14 +172,13 @@ export class AdminService {
         await this.mailerService?.sendMail(dto);
 
         return this.createdByAdmin(body, randomPassword);
-
       }
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }
   }
 
-  async addOfflineDonation(body) {
+  async addOfflineDonation(body): Promise<ResponseStructure> {
     try {
       //same code from donate service here admin passes data in body
 
@@ -199,27 +194,27 @@ export class AdminService {
       });
 
       if (!fundraiser) {
-        throw new NotFoundException("Fundraiser not found");
+        throw new NotFoundException('Fundraiser not found');
       }
 
       if (fundraiser?.status == 'inactive') {
-        throw new ForbiddenException("Fundraiser is inactive");
+        throw new ForbiddenException('Fundraiser is inactive');
       }
 
-      await this.donationRepository.createDonationOffline(body, fundraiser)
+      await this.donationRepository.createDonationOffline(body, fundraiser);
 
       let fundraiserPage = await this.fundraiserPageRepository.getFundraiserPage({
         where: { id: fundraiser.fundraiser_page.id },
       });
 
       if (!fundraiserPage) {
-        throw new NotFoundException("Fundraiser page not found");
+        throw new NotFoundException('Fundraiser page not found');
       }
 
       //getting existing fundraiserPage supporters and pushing new supporters
-      let supportersOfFundraiser = await this.donationRepository.getDonorNames(fundraiser)
+      let supportersOfFundraiser = await this.donationRepository.getDonorNames(fundraiser);
 
-      const total_amount_raised = await this.donationRepository.getRaisedAmount(fundraiser)
+      const total_amount_raised = await this.donationRepository.getRaisedAmount(fundraiser);
 
       const total_donations = await this.donationRepository.getTotalDonor(fundraiser);
 
@@ -234,7 +229,6 @@ export class AdminService {
       });
 
       return { message: 'Donation added successfully' };
-
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }
@@ -249,20 +243,18 @@ export class AdminService {
       });
 
       if (fundRaiserPage == null) {
-
         const fundraiserPage = await this.fundraiserPageRepository.createFundraiserPage(fundRaiser);
 
-        return { message: "Fundraiser page successfully created", data: fundraiserPage, success: true };
+        return { message: 'Fundraiser page successfully created', data: fundraiserPage, success: true };
       } else {
-        throw new ConflictException("Fundraiser Page already exists");
+        throw new ConflictException('Fundraiser Page already exists');
       }
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }
   }
 
-
-  async update(body, files, PageId) {
+  async update(body, files, PageId): Promise<ResponseStructure> {
     try {
       //finding fundraiserPage using id from parmameters and updating data using body data
       let fundRaiserPageNew = await this.fundraiserPageRepository.getFundraiserPage({
@@ -270,7 +262,7 @@ export class AdminService {
       });
 
       if (!fundRaiserPageNew) {
-        throw new NotFoundException("Fundraiser Page not found");
+        throw new NotFoundException('Fundraiser Page not found');
       }
 
       await this.fundraiserPageRepository.UpdateFundraiserPage(PageId, body);
@@ -290,21 +282,22 @@ export class AdminService {
       await this.fundraiserPageRepository.UpdateFundraiserPage(PageId, {
         gallery: fundraiserGallery,
       });
+      return { message: 'FundraiserPage updated successfully' };
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }
   }
 
-  async deleteFundraiserPage(id) {
+  async deleteFundraiserPage(id): Promise<ResponseStructure> {
     try {
-      return await this.fundraiserPageRepository.deleteFundraiserPage(id);
+      await this.fundraiserPageRepository.deleteFundraiserPage(id);
+      return { message: 'Fundraiser page deleted successfully' };
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
-
     }
   }
 
-  async downloadExcelforDonations(res) {
+  async downloadExcelforDonations(res): Promise<any> {
     try {
       const donations = await this.donationRepository.find();
 
@@ -315,5 +308,4 @@ export class AdminService {
       await ErrorResponseUtility.errorResponse(error);
     }
   }
-
 }

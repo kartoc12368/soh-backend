@@ -11,10 +11,7 @@ import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class LocalStrategy extends PassportStrategy(Strategy) {
-  constructor(
-    private fundraiserService: FundraiserService,
-    private fundraiserRepository: FundRaiserRepository,
-  ) {
+  constructor(private fundraiserRepository: FundRaiserRepository) {
     super({
       usernameField: 'email',
       passwordField: 'password',
@@ -22,24 +19,23 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(email: string, password: string): Promise<Fundraiser> {
-
     const fundraiser: Fundraiser = await this.fundraiserRepository.findFundRaiserByEmail(email);
 
-    const fundraiserPassword = await this.fundraiserRepository.findOne({
+    const fundraiserPassword = await this.fundraiserRepository.getFundraiser({
       where: { email: email },
       select: ['password'],
     });
 
-    if (fundraiser && (await bcrypt.compare(password, fundraiserPassword.password))) {
+    if (fundraiser && (await bcrypt.compare(password, fundraiserPassword?.password))) {
       // console.log(fundraiser)
       return fundraiser;
     }
 
     if (fundraiser == undefined) {
-      throw new UnauthorizedException('fundraiser not found:' + email);
+      throw new UnauthorizedException('Fundraiser not found:' + email);
     }
 
-    if (!(await bcrypt.compare(password, fundraiserPassword.password))) {
+    if (!(await bcrypt?.compare(password, fundraiserPassword?.password))) {
       throw new UnauthorizedException('Invalid password');
     }
     return null;

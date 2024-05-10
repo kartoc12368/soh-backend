@@ -1,7 +1,9 @@
-import { ConflictException, Injectable, InternalServerErrorException, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
+import * as path from 'path';
+import { of } from 'rxjs';
 
 import { Donation } from 'src/shared/entity/donation.entity';
-import { FundraiserPage } from 'src/shared/entity/fundraiser-page.entity';
 import { Fundraiser } from 'src/shared/entity/fundraiser.entity';
 
 import { ChangePasswordDto } from './dto/change-password.dto';
@@ -13,23 +15,11 @@ import { FundraiserPageRepository } from '../fundraiser-page/fundraiser-page.rep
 import { FundRaiserRepository } from './fundraiser.repository';
 
 import { incrementDate } from 'src/shared/utility/date.utility';
-
-import { Between, FindOptionsWhere } from 'typeorm';
-
-import { v4 as uuidv4 } from 'uuid';
-
-import * as bcrypt from 'bcrypt';
-
-import * as exceljs from 'exceljs';
-
-import * as fs from 'fs';
-
-import * as path from 'path';
-
-import { of } from 'rxjs';
 import { ResponseStructure } from 'src/shared/interface/response-structure.interface';
 import { ErrorResponseUtility } from 'src/shared/utility/error-response.utility';
 import { downloadDonationsExcel } from 'src/shared/utility/excel.utility';
+
+import { Between, FindOptionsWhere } from 'typeorm';
 
 @Injectable()
 export class FundraiserService {
@@ -124,7 +114,7 @@ export class FundraiserService {
     }
   }
 
-  async findProfileImage(res, imagename) {
+  async findProfileImage(res, imagename): Promise<any> {
     try {
       return of(res.sendFile(path.join(process.cwd(), 'uploads/profileImages/' + imagename)));
     } catch (error) {
@@ -132,7 +122,7 @@ export class FundraiserService {
     }
   }
 
-  async findFundraiserPageImage(res, imagename) {
+  async findFundraiserPageImage(res, imagename): Promise<any> {
     try {
       return of(res.sendFile(path.join(process.cwd(), 'uploads/fundraiserPageImages/' + imagename)));
     } catch (error) {
@@ -140,7 +130,7 @@ export class FundraiserService {
     }
   }
 
-  async createFundraiserPage(user) {
+  async createFundraiserPage(user): Promise<ResponseStructure> {
     try {
       let fundRaiser = await this.fundRaiserRepository.findFundRaiserByEmail(user.email);
       if (!fundRaiser) {
@@ -161,7 +151,7 @@ export class FundraiserService {
     }
   }
 
-  async getDonationFundraiser(dto: FindDonationsDto, req) {
+  async getDonationFundraiser(dto: FindDonationsDto, req): Promise<ResponseStructure> {
     try {
       const { payment_option, payment_status, donation_id, from_date, to_date } = dto;
 
@@ -181,7 +171,8 @@ export class FundraiserService {
       };
       console.log(conditions);
 
-      return await this.donationRepository.getAllDonations({ relations: { fundraiser: true }, where: conditions, order: { donation_id_frontend: 'ASC' } });
+      const donations = await this.donationRepository.getAllDonations({ relations: { fundraiser: true }, where: conditions, order: { donation_id_frontend: 'ASC' } });
+      return { message: 'Donations fetched successfully', data: donations };
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }

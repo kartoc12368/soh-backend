@@ -6,25 +6,26 @@ import { Public } from 'src/shared/decorators/public.decorator';
 import { DonationService } from './donation.service';
 
 import { DonateDto } from './dto/donate.dto';
+import { ResponseStructure } from 'src/shared/interface/response-structure.interface';
 
 @ApiTags('Donation')
 @Controller()
 export class DonationController {
-  constructor(private readonly donationService: DonationService) { }
+  constructor(private readonly donationService: DonationService) {}
 
   //donate without fundraiser-page
   @Post('/donate')
-  @ApiOperation({ summary: "Donate Generally to NGO" })
+  @ApiOperation({ summary: 'Donate Generally to NGO' })
   @Public()
-  async donate(@Body(ValidationPipe) body: DonateDto) {
+  async donate(@Body(ValidationPipe) body: DonateDto): Promise<ResponseStructure> {
     return await this.donationService.donate(body);
   }
 
   //donate with reference from fundraiser-page
   @Post('/fundraiser-page/:id/donate')
-  @ApiOperation({ summary: "Donate Specifically to Fundraiser" })
+  @ApiOperation({ summary: 'Donate Specifically to Fundraiser' })
   @Public()
-  async donateToFundRaiser(@Body(ValidationPipe) body: DonateDto, @Param('id', ParseUUIDPipe) id: string) {
+  async donateToFundRaiser(@Body(ValidationPipe) body: DonateDto, @Param('id', ParseUUIDPipe) id: string): Promise<ResponseStructure> {
     return await this.donationService.donate(body, id);
   }
 }
