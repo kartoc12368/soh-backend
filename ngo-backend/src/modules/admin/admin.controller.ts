@@ -13,6 +13,7 @@ import { RoleGuard } from 'src/shared/helper/role.guard';
 import { Constants } from 'src/shared/utility/constants';
 
 import { FindDonationsDto } from '../fundraiser/dto/find-donation.dto';
+import { Response } from 'express';
 
 
 
@@ -23,7 +24,7 @@ import { FindDonationsDto } from '../fundraiser/dto/find-donation.dto';
 export class AdminController {
   constructor(
     private readonly adminService: AdminService,
-    private fundraiserPageService: FundraiserPageService,
+    private readonly fundraiserPageService: FundraiserPageService,
   ) { }
 
   @Get('/adminDashboard')
@@ -83,7 +84,7 @@ export class AdminController {
   @Get('/fundraiserPages')
   @ApiOperation({ summary: "Get All Fundraiser Pages" })
   async getAllFundraiserPages() {
-    return await this.adminService.getAllFundraiserPages();
+    return await this.fundraiserPageService.getAllFundraiserPages();
   }
 
   @Put('fundraiserPage/updatePage/:id')
@@ -92,10 +93,9 @@ export class AdminController {
     return await this.fundraiserPageService.update(body, id);
   }
 
-  //download and save to local excel for donations data
   @Get('/donations/download')
   @ApiOperation({ summary: "Download Excel for all donations" })
-  async downloadExcel(@Res() res) {
+  async downloadExcel(@Res() res: Response) {
     return await this.adminService.downloadExcelforDonations(res);
   }
 

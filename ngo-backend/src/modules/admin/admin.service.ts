@@ -1,4 +1,5 @@
-import { ForbiddenException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import * as path from 'path';
 
 import { Donation } from 'src/shared/entity/donation.entity';
 import { FundraiserPage } from 'src/shared/entity/fundraiser-page.entity';
@@ -11,26 +12,19 @@ import { FundRaiserRepository } from '../fundraiser/fundraiser.repository';
 import { MailerService } from 'src/shared/utility/mailer/mailer.service';
 import { FundraiserService } from '../fundraiser/fundraiser.service';
 
-import { Constants } from 'src/shared/utility/constants';
-import { sendEmailDto } from 'src/shared/utility/mailer/mail.interface';
+import { ResponseStructure } from 'src/shared/interface/response-structure.interface';
 import { incrementDate } from 'src/shared/utility/date.utility';
+import { sendEmailDto } from 'src/shared/utility/mailer/mail.interface';
 
-import { Between, DataSource, FindOptionsWhere } from 'typeorm';
+import { Between, FindOptionsWhere } from 'typeorm';
 
 import { FindDonationsDto } from '../fundraiser/dto/find-donation.dto';
 
-import * as bcrypt from 'bcrypt';
-
-import * as path from 'path';
-
 import { of } from 'rxjs';
 
-import { v4 as uuidv4 } from 'uuid';
-
-import * as exceljs from 'exceljs';
-
-import * as fs from 'fs';
-import { ResponseStructure } from 'src/shared/interface/response-structure.interface';
+import { ErrorResponseUtility } from 'src/shared/utility/error-response.utility';
+import { GeneratePasswordDto } from './dto/generate-password.dto';
+import { downloadDonationsExcel } from 'src/shared/utility/excel.utility';
 
 @Injectable()
 export class AdminService {
@@ -41,75 +35,24 @@ export class AdminService {
 
     private mailerService: MailerService,
     private fundraiserService: FundraiserService,
-
-    private dataSource: DataSource,
   ) { }
 
   async getAdminDashboardData(): Promise<ResponseStructure> {
     try {
-      const totalDonations = await this.getTotalDonations();
 
-      const totalFundraisers = await this.fundraiserRepository.count();
+      const totalFundraisers = await this.fundraiserRepository.countFundraisers({})
 
-      const activeFundraisers = await this.fundraiserRepository.count({ where: { status: 'active' } });
+      const activeFundraisers = await this.fundraiserRepository.countFundraisers({ where: { status: 'active' } });
 
-      const todayDonations = await this.getTodayDonations();
+      const todayDonations = await this.donationRepository.getTodayDonations()
 
-      const thisMonthDonations = await this.getThisMonthDonations();
+      const thisMonthDonations = await this.donationRepository.getThisMonthDonations();
+
+      const totalDonations = await this.donationRepository.getTotalDonations();
 
       return { message: "Dashboard Data received successfully", data: { totalDonations, totalFundraisers, activeFundraisers, todayDonations, thisMonthDonations }, success: true };
     } catch (error) {
-      throw new InternalServerErrorException();
-    }
-  }
-
-  async getTodayDonations() {
-    try {
-      let todayDonations = 0;
-
-      const donations = await this.dataSource
-        .getRepository(Donation)
-        .createQueryBuilder('donation')
-        .where('DATE(donation.created_at)=:date', { date: new Date() })
-        .andWhere('donation.payment_status=:payment_status', { payment_status: 'success' })
-        .getMany();
-
-      for (let index = 0; index < donations.length; index++) {
-
-        const element = donations[index].amount;
-
-        todayDonations = todayDonations + element;
-      }
-
-      return todayDonations;
-    } catch (error) {
-      console.log(error);
-    }
-  }
-
-  async getThisMonthDonations() {
-    try {
-      let thisMonthDonations = 0;
-
-      const donations = await this.dataSource
-        .getRepository(Donation)
-        .createQueryBuilder('donation')
-        .where("date_part('month',donation.created_at)=:date", {
-          date: new Date().getMonth() + 1,
-        })
-        .andWhere('donation.payment_status=:payment_status', { payment_status: 'success' })
-        .getMany();
-
-      for (let index = 0; index < donations.length; index++) {
-
-        const element = donations[index].amount;
-
-        thisMonthDonations = thisMonthDonations + element;
-      }
-
-      return thisMonthDonations;
-    } catch (error) {
-      console.log(error);
+      await ErrorResponseUtility.errorResponse(error);
     }
   }
 
@@ -131,44 +74,29 @@ export class AdminService {
           : {}), // Only add filter if either from_date or to_date is provided
       };
 
-      console.log(conditions);
+      const donationsData = await this.donationRepository.getAllDonations({ relations: { fundraiser: true }, where: conditions, order: { donation_id_frontend: 'ASC' } });
 
-      const donationsData = await this.donationRepository.find({ relations: { fundraiser: true }, where: conditions, order: { donation_id_frontend: 'ASC' } });
       return { message: "Donations Received Successfully", data: donationsData, success: true }
     } catch (error) {
-      throw new InternalServerErrorException();
+      await ErrorResponseUtility.errorResponse(error);
     }
   }
 
-  async createdByAdmin(createUserDto: any, password: string): Promise<ResponseStructure> {
+  async createdByAdmin(generatePasswordDto: GeneratePasswordDto, password: string): Promise<ResponseStructure> {
     try {
-      const hashedPassword = await bcrypt.hash(password, 10);
 
-      let fundraiser: Fundraiser = new Fundraiser();
-
-      fundraiser.firstName = createUserDto.firstName;
-      fundraiser.email = createUserDto.email;
-      fundraiser.mobile_number = createUserDto.mobile_number;
-      fundraiser.password = hashedPassword;
-      fundraiser.role = Constants.ROLES.FUNDRAISER_ROLE;
-      fundraiser.status = 'active';
-
-      const createdNew = await this.fundraiserRepository.save(fundraiser);
+      const createdNew = await this.fundraiserRepository.createFundraiserByAdmin(generatePasswordDto, password);
 
       return { message: "Password Generated Successfully", data: createdNew, statusCode: 201 }
 
     } catch (error) {
-      console.log(error);
-
-      // return 'Please contact saveRepository';
+      await ErrorResponseUtility.errorResponse(error);
     }
   }
 
   async changeFundraiserStatus(id: string): Promise<ResponseStructure> {
     try {
-      const fundraiser = await this.fundraiserRepository.findOne({
-        where: { fundraiser_id: id },
-      });
+      const fundraiser = await this.fundraiserRepository.getFundraiser({ where: { fundraiser_id: id } });
 
       if (!fundraiser) {
         throw new NotFoundException('Fundraiser not found');
@@ -177,7 +105,7 @@ export class AdminService {
       fundraiser.status = fundraiser.status === 'active' ? 'inactive' : 'active';
 
       // Save the updated fundraiser
-      await this.fundraiserRepository.update(id, { status: fundraiser.status });
+      await this.fundraiserRepository.UpdateFundraiser(id, { status: fundraiser.status });
 
       if (fundraiser.status === 'active') {
         return { message: "Status changed to active ", success: true };
@@ -186,62 +114,48 @@ export class AdminService {
       }
 
     } catch (error) {
-      console.log(error);
-
-      // return 'Please contact statusmanager';
+      await ErrorResponseUtility.errorResponse(error);
     }
   }
 
   async deleteFundraiser(id: string): Promise<ResponseStructure> {
     try {
-      let user = await this.fundraiserRepository.findOne({
-        where: { fundraiser_id: id },
-      });
+      const fundraiser = await this.fundraiserRepository.getFundraiser({ where: { fundraiser_id: id } });
 
-      if (user.role == 'ADMIN') {
+      if (fundraiser.role == 'ADMIN') {
         throw new ForbiddenException('NOT ALLOWED');
       }
-
-      const fundraiser = await this.fundraiserRepository.findOne({
-        where: { fundraiser_id: id },
-      });
 
       if (!fundraiser) {
         throw new NotFoundException('Fundraiser not found');
       }
 
-      await this.fundraiserRepository.delete(id);
+      await this.fundraiserRepository.deleteFundraiser(id);
 
       return { message: "Fundraiser deleted successfully", success: true }
     } catch (error) {
-      console.log(error);
-
-      // return 'Please contact deleteFundraiser';
+      await ErrorResponseUtility.errorResponse(error);
     }
   }
 
   async getAllFundraiser(): Promise<ResponseStructure> {
     try {
-      const fundraisers = await this?.fundraiserRepository?.find({ relations: ['fundraiser_page'], order: { f_id: 'ASC' } });
+      const fundraisers = await this.fundraiserRepository.getAllFundraisers({ relations: ['fundraiser_page'], order: { f_id: 'ASC' } });
 
       const filteredUsers = fundraisers?.filter((fundraiser) => fundraiser?.role !== 'ADMIN');
 
       return { message: "Fundraisers data fetched successfully", data: filteredUsers, success: true }
     } catch (error) {
-      console.log(error);
-
-      // return 'Please contact getAllFundraiser';
+      await ErrorResponseUtility.errorResponse(error);
     }
   }
 
   async generatePasswordByEmail(body): Promise<ResponseStructure> {
     try {
-      const isFundraiserExists = await this?.fundraiserRepository?.findOne({
-        where: { email: body.email },
-      });
+      const isFundraiserExists = await this.fundraiserRepository.getFundraiser({ where: { email: body.email } });
 
       if (isFundraiserExists && isFundraiserExists.role == 'FUNDRAISER') {
-        return new NotFoundException('Email already in use');
+        throw new NotFoundException('Email already in use');
       } else {
         //generating random password in randomPassword variable
         var randomPassword = Math?.random()?.toString(36)?.slice(-8);
@@ -259,240 +173,146 @@ export class AdminService {
           placeholderReplacements: body2,
         };
 
-        await this?.mailerService?.sendMail(dto);
+        await this.mailerService?.sendMail(dto);
 
-        return this?.createdByAdmin(body, randomPassword);
+        return this.createdByAdmin(body, randomPassword);
 
       }
     } catch (error) {
-      console.log(error);
+      await ErrorResponseUtility.errorResponse(error);
     }
   }
 
   async addOfflineDonation(body) {
-    console.log(body)
     try {
       //same code from donate service here admin passes data in body
-      let donation: Donation = new Donation();
 
-      if (body.email) {
-
-        let fundraiser: Fundraiser = await this.fundraiserRepository.findOne({
-          where: { email: body.email },
-          relations: ['fundraiser_page'],
-        });
-
-        if (fundraiser.status == 'active') {
-
-          donation = { ...body, payment_type: 'offline', payment_status: 'success', fundraiser: fundraiser };
-
-          await this.donationRepository.save(donation);
-
-          let fundraiserPage = await this.fundraiserPageRepository.findOne({
-            where: { id: fundraiser.fundraiser_page.id },
-          });
-
-          //getting existing fundraiserPage supporters anf pushing new supporters
-          let supportersOfFundraiser = await this.fundraiserService.getDonorNames(fundraiser)
-
-          if (fundraiser != null) {
-            const total_amount_raised = await this.fundraiserService.getRaisedAmount(fundraiser)
-
-            const total_donations = await this.fundraiserService.getTotalDonor(fundraiser);
-
-            await this.fundraiserRepository.update(fundraiser.fundraiser_id, {
-              total_amount_raised: total_amount_raised,
-              total_donations: total_donations,
-            });
-
-            await this.fundraiserPageRepository.update(fundraiserPage.id, {
-              raised_amount: total_amount_raised,
-              supporters: supportersOfFundraiser,
-            });
-          } else {
-            return 'Fundraiser Page Not Found';
-          }
-
-          return { message: 'Donation added successfully' };
-        } else {
-          return 'Fundraiser not active';
-        }
-      }
-      else {
-        donation = { ...body, payment_type: 'offline', payment_status: 'success' };
-
-        await this.donationRepository.save(donation);
+      if (!body.email) {
+        await this.donationRepository.createDonationOffline(body);
 
         return { message: 'Donation added successfully' };
       }
-    } catch (error) {
-      console.log(error);
 
-      return 'Please contact addOfflineDonation';
+      let fundraiser: Fundraiser = await this.fundraiserRepository.getFundraiser({
+        where: { email: body.email },
+        relations: ['fundraiser_page'],
+      });
+
+      if (!fundraiser) {
+        throw new NotFoundException("Fundraiser not found");
+      }
+
+      if (fundraiser?.status == 'inactive') {
+        throw new ForbiddenException("Fundraiser is inactive");
+      }
+
+      await this.donationRepository.createDonationOffline(body, fundraiser)
+
+      let fundraiserPage = await this.fundraiserPageRepository.getFundraiserPage({
+        where: { id: fundraiser.fundraiser_page.id },
+      });
+
+      if (!fundraiserPage) {
+        throw new NotFoundException("Fundraiser page not found");
+      }
+
+      //getting existing fundraiserPage supporters and pushing new supporters
+      let supportersOfFundraiser = await this.donationRepository.getDonorNames(fundraiser)
+
+      const total_amount_raised = await this.donationRepository.getRaisedAmount(fundraiser)
+
+      const total_donations = await this.donationRepository.getTotalDonor(fundraiser);
+
+      await this.fundraiserRepository.UpdateFundraiser(fundraiser.fundraiser_id, {
+        total_amount_raised: total_amount_raised,
+        total_donations: total_donations,
+      });
+
+      await this.fundraiserPageRepository.UpdateFundraiserPage(fundraiserPage.id, {
+        raised_amount: total_amount_raised,
+        supporters: supportersOfFundraiser,
+      });
+
+      return { message: 'Donation added successfully' };
+
+    } catch (error) {
+      await ErrorResponseUtility.errorResponse(error);
     }
   }
 
-  async createFundraiserPageByEmail(body) {
+  async createFundraiserPageByEmail(body): Promise<ResponseStructure> {
     try {
-      let fundRaiser = await this.fundraiserService.findFundRaiserByEmail(body.email);
+      let fundRaiser = await this.fundraiserRepository.findFundRaiserByEmail(body.email);
 
-      let fundRaiserPage = await this.fundraiserPageRepository.findOne({
+      let fundRaiserPage = await this.fundraiserPageRepository.getFundraiserPage({
         where: { fundraiser: { fundraiser_id: fundRaiser.fundraiser_id } },
       });
 
       if (fundRaiserPage == null) {
-        const fundraiserPage: FundraiserPage = new FundraiserPage();
 
-        fundraiserPage.supporters = [];
+        const fundraiserPage = await this.fundraiserPageRepository.createFundraiserPage(fundRaiser);
 
-        fundraiserPage.gallery = [];
-
-        fundraiserPage.fundraiser = fundRaiser;
-
-        await this.fundraiserPageRepository.save(fundraiserPage);
-
-        return fundraiserPage;
+        return { message: "Fundraiser page successfully created", data: fundraiserPage, success: true };
       } else {
-        return 'Fundraiser Page already exists';
+        throw new ConflictException("Fundraiser Page already exists");
       }
     } catch (error) {
-      throw new NotFoundException('Fundraiser does not exist');
+      await ErrorResponseUtility.errorResponse(error);
     }
   }
 
-  async getAllDonations() {
-    try {
-      return await this.donationRepository.find({ relations: ['fundraiser'] });
-    } catch (error) {
-      console.log(error);
-    }
-  }
-
-  async getAllFundraiserPages() {
-    try {
-      return await this.fundraiserPageRepository.find();
-    } catch (error) {
-      console.log(error);
-    }
-  }
 
   async update(body, files, PageId) {
     try {
       //finding fundraiserPage using id from parmameters and updating data using body data
-      let fundRaiserPageNew = await this.fundraiserPageRepository.findOne({
+      let fundRaiserPageNew = await this.fundraiserPageRepository.getFundraiserPage({
         where: { id: PageId },
       });
 
-      await this.fundraiserPageRepository.update(PageId, body);
+      if (!fundRaiserPageNew) {
+        throw new NotFoundException("Fundraiser Page not found");
+      }
+
+      await this.fundraiserPageRepository.UpdateFundraiserPage(PageId, body);
 
       //accessing existing galley of fundraiserPage and pushing new uploaded files
-      const fundraiserGallery = fundRaiserPageNew.gallery;
+      const fundraiserGallery = fundRaiserPageNew?.gallery;
 
-      for (let i = 0; i < files.length; i++) {
-        fundraiserGallery.push(files[i]);
+      // if (!files?.length) {
+      //   throw new NotFoundException("File not Uploaded");
+      // }
+
+      for (let i = 0; i < files?.length; i++) {
+        fundraiserGallery?.push(files[i]);
       }
 
       //saving new data of fundraiserPage with gallery
-      await this.fundraiserPageRepository.update(PageId, {
+      await this.fundraiserPageRepository.UpdateFundraiserPage(PageId, {
         gallery: fundraiserGallery,
       });
     } catch (error) {
-      console.log(error);
-
-      throw new NotFoundException('Not Found');
+      await ErrorResponseUtility.errorResponse(error);
     }
   }
-
-  async getTotalDonations() {
-    try {
-      const Donations = await this.donationRepository.find({ where: { payment_status: 'success' } });
-
-      let totalDonations = 0;
-
-      for (let i = 0; i < Donations.length; i++) {
-        totalDonations = totalDonations + Donations[i].amount;
-      }
-
-      return totalDonations;
-    } catch (error) {
-      console.log(error);
-      return 'Please contact getTotalDonationsService';
-    }
-  }
-
-  async uploadCertificate(file, id) {
-    try {
-      let donation = await this.donationRepository.findOne({ where: { donation_id: id } });
-
-      return await this.donationRepository.update(donation.donation_id, { certificate: file.filename });
-    } catch (error) {
-      console.log(error);
-    }
-  }
-
-  async findCerificate(res, imagename) {
-    try {
-      return of(res.sendFile(path.join(process.cwd(), '/uploads/80G Certificates/' + imagename)));
-    } catch (error) {
-      console.log(error);
-    }
-  }
-
-
 
   async deleteFundraiserPage(id) {
-    return await this.fundraiserPageRepository.delete(id);
+    try {
+      return await this.fundraiserPageRepository.deleteFundraiserPage(id);
+    } catch (error) {
+      await ErrorResponseUtility.errorResponse(error);
+
+    }
   }
 
   async downloadExcelforDonations(res) {
     try {
       const donations = await this.donationRepository.find();
 
-      const workbook = new exceljs.Workbook();
-
-      const sheet = workbook.addWorksheet('donations');
-
-      sheet.columns = [
-        { header: 'Donation Id', key: 'donation_id_frontend' },
-        { header: 'Donation Date', key: 'created_at' },
-        { header: 'Donor Name', key: 'donor_name' },
-        { header: 'Donation Amount', key: 'amount' },
-        { header: 'Payment Type', key: 'payment_type' },
-        { header: 'Payment Status', key: 'payment_status' },
-        { header: '80G Certificate', key: 'certificate' },
-      ];
-
-      donations.forEach((value, idx) => {
-        sheet.addRow({
-          donation_id_frontend: value.donation_id_frontend,
-          created_at: value.created_at,
-          donor_name: value.donor_name,
-          amount: value.amount,
-          payment_type: value.payment_type,
-          payment_status: value.payment_status,
-          certificate: value.certificate,
-        });
-      });
-
-      const downloadsFolder = path.join(__dirname, '../../../', 'downloads');
-
-      if (!fs.existsSync(downloadsFolder)) {
-        try {
-          fs.mkdirSync(downloadsFolder);
-        } catch (error) {
-          console.error('Error creating downloads folder:', error);
-        }
-      }
-
-      const filename = `${uuidv4()}.xlsx`;
-
-      const filePath = path.join(downloadsFolder, filename);
-
-      await workbook.xlsx.writeFile(filePath);
+      const filename = await downloadDonationsExcel(donations);
 
       return of(res.sendFile(path.join(process.cwd(), 'downloads/' + filename)));
     } catch (error) {
-      console.error('Error creating Excel file:', error);
+      await ErrorResponseUtility.errorResponse(error);
     }
   }
 

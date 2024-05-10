@@ -23,7 +23,7 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
 
   async validate(email: string, password: string): Promise<Fundraiser> {
 
-    const fundraiser: Fundraiser = await this.fundraiserService.findFundRaiserByEmail(email);
+    const fundraiser: Fundraiser = await this.fundraiserRepository.findFundRaiserByEmail(email);
 
     const fundraiserPassword = await this.fundraiserRepository.findOne({
       where: { email: email },

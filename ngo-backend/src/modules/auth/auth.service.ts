@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 
 import { ForgottenPassword } from 'src/shared/entity/forgot-password.entity';
@@ -13,6 +13,8 @@ import { ForgottenPasswordRepository } from './forgot-password.repository';
 import { sendEmailDto } from 'src/shared/utility/mailer/mail.interface';
 
 import * as bcrypt from 'bcrypt';
+import { ErrorResponseUtility } from 'src/shared/utility/error-response.utility';
+import { ResponseStructure } from 'src/shared/interface/response-structure.interface';
 
 @Injectable()
 export class AuthService {
@@ -20,7 +22,6 @@ export class AuthService {
     private forgottenPasswordRepository: ForgottenPasswordRepository,
     private fundraiserRepository: FundRaiserRepository,
 
-    private fundraiserService: FundraiserService,
     private jwtService: JwtService,
     private mailerService: MailerService,
 
@@ -31,43 +32,46 @@ export class AuthService {
       //jwt token
       const fundraiser: Fundraiser = user;
 
-      if ((fundraiser.role == 'FUNDRAISER' && (await this.fundraiserService.getFundRaiserStatusByEmail(fundraiser.email)) == 'active') || fundraiser.role == 'ADMIN') {
-        const userPassword = await this.fundraiserRepository.findOne({ where: { email: fundraiser.email }, select: ['password'] });
+      const fundraiserStatus = await this.fundraiserRepository.getFundRaiserStatusByEmail(fundraiser?.email);
+      if (!fundraiserStatus) {
+        throw new NotFoundException('Fundraiser not found');
+      }
 
-        if (fundraiser && (await bcrypt.compare(loginDto.password, userPassword.password))) {
+      if ((fundraiser?.role == 'FUNDRAISER' && (fundraiserStatus == 'active')) || fundraiser?.role == 'ADMIN') {
+        const userPassword = await this.fundraiserRepository.getFundraiser({ where: { email: fundraiser.email }, select: ['password'] });
+
+        if (fundraiser && (await bcrypt?.compare(loginDto?.password, userPassword?.password))) {
 
           const payload = {
-            firstName: fundraiser.firstName,
-            email: fundraiser.email,
-            role: fundraiser.role,
-            fundraiserId: fundraiser.fundraiser_id,
-            profileImage: fundraiser.profileImage,
+            firstName: fundraiser?.firstName,
+            email: fundraiser?.email,
+            role: fundraiser?.role,
+            fundraiserId: fundraiser?.fundraiser_id,
+            profileImage: fundraiser?.profileImage,
           };
 
           return { token: this.jwtService.sign(payload) };
-          // return this.authService.issueTokens(user, response); // Issue tokens on login
         } else {
-          return null;
+          throw new UnauthorizedException('Invalid Password');
         }
 
       } else {
-        return 'Please contact the administrator';
+        throw new UnauthorizedException("Please Sign Up")
       }
     } catch (error) {
-      console.log(error);
+      await ErrorResponseUtility.errorResponse(error);
     }
   }
 
   async sendEmailForgotPassword(email: string) {
     try {
-      console.log("hello")
-      const user = await this.fundraiserService.findFundRaiserByEmail(email);
+      const user = await this.fundraiserRepository.findFundRaiserByEmail(email);
 
       if (!user) {
-        throw new NotFoundException('User not found');
+        throw new NotFoundException('Fundraiser not found');
       }
 
-      var randomstring = Math.random().toString(36).slice(-8);
+      var randomstring = Math?.random()?.toString(36)?.slice(-8);
 
       var body2 = {
         firstName: user.firstName,
@@ -83,19 +87,13 @@ export class AuthService {
 
       await this.mailerService.sendMail(dto);
 
-      let forgotPassword = new ForgottenPassword();
-
-      forgotPassword.email = email;
-
-      forgotPassword.newPasswordToken = randomstring;
-
-      await this.forgottenPasswordRepository.save(forgotPassword);
+      await this.forgottenPasswordRepository.createForgottenPassword(email, randomstring);
 
       setTimeout(async () => {
         try {
-          var user2 = await this.forgottenPasswordRepository.findOne({ where: { email: email } });
+          var user2 = await this.forgottenPasswordRepository.getOtp({ where: { email: email } });
 
-          await this.forgottenPasswordRepository.remove(user2);
+          await this.forgottenPasswordRepository.deleteOtp(user2);
         } catch {
           return true;
         }
@@ -104,32 +102,34 @@ export class AuthService {
       return 'true';
 
     } catch (error) {
-      console.log(error);
+      await ErrorResponseUtility.errorResponse(error);
     }
   }
 
-  async setNewPassword(body) {
+  async setNewPassword(body): Promise<ResponseStructure> {
     try {
-      var fundraiser = await this.forgottenPasswordRepository.findOne({ where: { newPasswordToken: body.otp } });
+      var fundraiser = await this.forgottenPasswordRepository.getOtp({ where: { newPasswordToken: body.otp } });
 
       if (!fundraiser) {
         throw new NotFoundException('Invalid Otp');
-      } else {
-        var user_new = await this.fundraiserService.findFundRaiserByEmail(fundraiser.email);
-
-        const password = body.newPassword;
-
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        var status = await this.fundraiserRepository.update(user_new.fundraiser_id, { password: hashedPassword });
-
-        if (status) {
-          await this.forgottenPasswordRepository.remove(fundraiser);
-        }
-        return 'Success';
       }
+
+      var user_new = await this.fundraiserRepository.findFundRaiserByEmail(fundraiser.email);
+
+      const password = body.newPassword;
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      var status = await this.fundraiserRepository.UpdateFundraiser(user_new.fundraiser_id, { password: hashedPassword });
+
+      if (status) {
+        await this.forgottenPasswordRepository.deleteOtp(fundraiser);
+      }
+
+      return { message: "Password Reset Successfully" }
+
     } catch (error) {
-      console.log(error);
+      await ErrorResponseUtility.errorResponse(error);
     }
   }
 }
