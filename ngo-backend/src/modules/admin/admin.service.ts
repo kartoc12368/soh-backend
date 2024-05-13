@@ -18,6 +18,7 @@ import { FindDonationsDto } from '../fundraiser/dto/find-donation.dto';
 import { of } from 'rxjs';
 
 import { MailerService } from '@nestjs-modules/mailer';
+import { sendEmailDto } from 'src/shared/interface/mail.interface';
 import { ErrorResponseUtility } from 'src/shared/utility/error-response.utility';
 import { downloadDonationsExcel } from 'src/shared/utility/excel.utility';
 import { SendMailerUtility } from 'src/shared/utility/send-mailer.utility';
@@ -157,7 +158,7 @@ export class AdminService {
           password: randomPassword,
         };
 
-        const dto = {
+        const dto: sendEmailDto = {
           recipients: [{ name: body.firstName, address: body.email }],
         };
 

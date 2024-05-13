@@ -1,5 +1,5 @@
 export async function resetPassword(data) {
-  console.log(data);
+  const todayDate = await new Date().getFullYear();
   const content = `<!DOCTYPE html>
   <html lang="en-US">
     <head>
@@ -95,6 +95,11 @@ export async function resetPassword(data) {
           display: inline-block;
           border-radius: 50px;
         }
+
+        .mcnPreviewText {
+          display: none !important;
+      }
+
       </style>
     </head>
   
@@ -105,6 +110,10 @@ export async function resetPassword(data) {
       class="body"
       leftmargin="0"
     >
+    <!--[if !gte mso 9]><!-->
+    <span class="mcnPreviewText" style="display:none; font-size:0px; line-height:0px; max-height:0px; max-width:0px; opacity:0; overflow:hidden; visibility:hidden; mso-hide:all;">OTP to Reset your Fundraiser Account Password, OTP expires in 15 minutes.&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;</span>
+    <!--<![endif]-->
+
       <table
         cellspacing="0"
         border="0"
@@ -162,6 +171,8 @@ export async function resetPassword(data) {
                           <strong class="st1">Name</strong>${data.firstName}
                           <strong class="st2">OTP</strong>${data.otp}
                         </p>
+                        <span class="s1"></span>
+                        <p>OTP expires in <strong>15</strong> minutes.</p>
   
                       </td>
                     </tr>
@@ -176,12 +187,7 @@ export async function resetPassword(data) {
               </tr>
               <tr>
                 <td style="text-align: center">
-                  <p class="p3">© <strong><script>
-                      const d = new Date();
-                      let year = d.getFullYear();
-                      document.write(year);
-                      </script>
-                      Support Our Heroes</strong></p>
+                <p class="p3">© <strong>${todayDate} Support Our Heroes</strong></p>
                 </td>
               </tr>
               <tr>

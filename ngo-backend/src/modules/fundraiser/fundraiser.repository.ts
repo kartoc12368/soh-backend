@@ -5,7 +5,7 @@ import * as bcrypt from 'bcrypt';
 import { Fundraiser } from 'src/shared/entity/fundraiser.entity';
 import { ErrorResponseUtility } from 'src/shared/utility/error-response.utility';
 import { GeneratePasswordDto } from '../admin/dto/generate-password.dto';
-import { Constants } from 'src/shared/utility/constants';
+import { RoleEnum } from 'src/shared/enums/role.enum';
 
 @Injectable()
 export class FundRaiserRepository extends Repository<Fundraiser> {
@@ -77,7 +77,7 @@ export class FundRaiserRepository extends Repository<Fundraiser> {
       fundraiser.email = generatePasswordDto?.email;
       fundraiser.mobile_number = generatePasswordDto?.mobile_number;
       fundraiser.password = hashedPassword;
-      fundraiser.role = Constants?.ROLES?.FUNDRAISER_ROLE;
+      fundraiser.role = RoleEnum.FUNDRAISER_ROLE;
       fundraiser.status = 'active';
 
       return await this.save(fundraiser);

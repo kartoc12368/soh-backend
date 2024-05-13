@@ -1,5 +1,6 @@
 export async function sendPassword(data) {
-  console.log(data);
+  const todayDate = await new Date().getFullYear();
+
   const content = `<!DOCTYPE html>
   <html lang="en-US">
     <head>
@@ -95,6 +96,10 @@ export async function sendPassword(data) {
           display: inline-block;
           border-radius: 50px;
         }
+        .mcnPreviewText {
+          display: none !important;
+      }
+
       </style>
     </head>
   
@@ -105,6 +110,11 @@ export async function sendPassword(data) {
       class="body"
       leftmargin="0"
     >
+
+    <!--[if !gte mso 9]><!-->
+    <span class="mcnPreviewText" style="display:none; font-size:0px; line-height:0px; max-height:0px; max-width:0px; opacity:0; overflow:hidden; visibility:hidden; mso-hide:all;">Welcome to Support Our Heroes. Please find credentials to login to dashboard.&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;&nbsp;&#847;</span>
+    <!--<![endif]-->
+
       <table
         cellspacing="0"
         border="0"
@@ -176,12 +186,7 @@ export async function sendPassword(data) {
               </tr>
               <tr>
                 <td style="text-align: center">
-                  <p class="p3">© <strong><script>
-                      const d = new Date();
-                      let year = d.getFullYear();
-                      document.write(year);
-                      </script>
-                      Support Our Heroes</strong></p>
+                  <p class="p3">© <strong>${todayDate} Support Our Heroes</strong></p>
                 </td>
               </tr>
               <tr>

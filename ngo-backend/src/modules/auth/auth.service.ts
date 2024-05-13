@@ -73,6 +73,12 @@ export class AuthService {
         throw new NotFoundException('Fundraiser not found');
       }
 
+      const otpExists = await this.forgottenPasswordRepository.getOtp({ where: { email: email } });
+
+      if (otpExists) {
+        throw new UnauthorizedException('OTP already sent');
+      }
+
       const randomstring = Math?.random()?.toString(36)?.slice(-8);
 
       const body2 = {
@@ -80,7 +86,7 @@ export class AuthService {
         otp: randomstring,
       };
 
-      const dto = {
+      const dto: sendEmailDto = {
         recipients: [{ name: fundraiser?.firstName, address: fundraiser?.email }],
       };
 

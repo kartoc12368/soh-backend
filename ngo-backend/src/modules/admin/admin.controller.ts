@@ -10,14 +10,14 @@ import { FundraiserPageService } from '../fundraiser-page/fundraiser-page.servic
 import { AdminService } from './admin.service';
 
 import { RoleGuard } from 'src/shared/helper/role.guard';
-import { Constants } from 'src/shared/utility/constants';
 
 import { Response } from 'express';
 import { ResponseStructure } from 'src/shared/interface/response-structure.interface';
 import { FindDonationsDto } from '../fundraiser/dto/find-donation.dto';
+import { RoleEnum } from 'src/shared/enums/role.enum';
 
 @Controller('admin')
-@UseGuards(new RoleGuard(Constants.ROLES.ADMIN_ROLE))
+@UseGuards(new RoleGuard(RoleEnum.ADMIN_ROLE))
 @ApiTags('Admin')
 @ApiSecurity('JWT-auth')
 export class AdminController {

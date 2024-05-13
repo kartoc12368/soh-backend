@@ -8,11 +8,11 @@ import { OwnershipGuard } from 'src/shared/helper/ownership.guard';
 import { RoleGuard } from 'src/shared/helper/role.guard';
 
 import { Public } from 'src/shared/decorators/public.decorator';
-import { Constants } from 'src/shared/utility/constants';
 import { storageForFundraiserPage } from 'src/shared/utility/storage.utility';
 
 import { UpdateFundraiserPageDto } from './dto/update-fundraiser-page.dto';
 import { ResponseStructure } from 'src/shared/interface/response-structure.interface';
+import { RoleEnum } from 'src/shared/enums/role.enum';
 
 @ApiTags('Fundraiser-Page')
 @Controller('fundraiser-page')
@@ -21,7 +21,7 @@ export class FundraiserPageController {
 
   @Post('/updatePage/upload/:id')
   @ApiSecurity('JWT-auth')
-  @UseGuards(new RoleGuard(Constants.ROLES.FUNDRAISER_ROLE), OwnershipGuard)
+  @UseGuards(new RoleGuard(RoleEnum.FUNDRAISER_ROLE), OwnershipGuard)
   @UseInterceptors(FileInterceptor('file', storageForFundraiserPage))
   @ApiOperation({ summary: 'Upload Image By Fundraiser for the page' })
   async uploadFile(@UploadedFile() file, @Param('id', ParseUUIDPipe) PageId: string): Promise<ResponseStructure> {
@@ -31,7 +31,7 @@ export class FundraiserPageController {
 
   @Put('/updatePage/:id')
   @ApiSecurity('JWT-auth')
-  @UseGuards(new RoleGuard(Constants.ROLES.FUNDRAISER_ROLE), OwnershipGuard)
+  @UseGuards(new RoleGuard(RoleEnum.FUNDRAISER_ROLE), OwnershipGuard)
   @ApiOperation({ summary: 'Update Fundraiser Page by fundraiser' })
   async updatePage(@Body() body: UpdateFundraiserPageDto, @Param('id', ParseUUIDPipe) id: string): Promise<ResponseStructure> {
     return await this.fundraiserPageService.updateFundraiserPage(body, id);
@@ -46,7 +46,7 @@ export class FundraiserPageController {
 
   @Delete(':id')
   @ApiSecurity('JWT-auth')
-  @UseGuards(new RoleGuard(Constants.ROLES.FUNDRAISER_ROLE), OwnershipGuard)
+  @UseGuards(new RoleGuard(RoleEnum.FUNDRAISER_ROLE), OwnershipGuard)
   @ApiOperation({ summary: 'Delete Fundraiser Page Image ' })
   async deleteGalleryImage(@Param('id') filePath: string, @Req() req): Promise<ResponseStructure> {
     return await this.fundraiserPageService.deleteGalleryImage(req?.user, filePath);
