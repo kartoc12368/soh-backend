@@ -3,7 +3,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 
-import { MailerModule } from 'src/shared/utility/mailer/mailer.module';
 import { AdminModule } from '../admin/admin.module';
 import { FundraiserModule } from '../fundraiser/fundraiser.module';
 
@@ -14,6 +13,7 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 
 import { ForgottenPasswordRepository } from './forgot-password.repository';
+import { MailerModule } from '@nestjs-modules/mailer';
 @Module({
   imports: [
     FundraiserModule,
@@ -34,4 +34,4 @@ import { ForgottenPasswordRepository } from './forgot-password.repository';
   controllers: [AuthController],
   providers: [LocalStrategy, JwtStrategy, AuthService, ForgottenPasswordRepository],
 })
-export class AuthModule { }
+export class AuthModule {}

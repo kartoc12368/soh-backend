@@ -20,7 +20,7 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(email: string, password: string): Promise<ResponseStructure> {
+  async validate(email: string, password: string): Promise<any> {
     try {
       const fundraiser: Fundraiser = await this.fundraiserRepository.findFundRaiserByEmail(email);
 
@@ -34,7 +34,7 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
       });
 
       if (fundraiser && (await bcrypt?.compare(password, fundraiserPassword?.password))) {
-        return { message: 'Logged In Successfully', data: fundraiser, success: true };
+        return fundraiser;
       }
 
       // if (fundraiser == undefined) {

@@ -1,20 +1,18 @@
 import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 
-import { ForgottenPassword } from 'src/shared/entity/forgot-password.entity';
 import { Fundraiser } from 'src/shared/entity/fundraiser.entity';
-
-import { MailerService } from 'src/shared/utility/mailer/mailer.service';
-import { FundraiserService } from '../fundraiser/fundraiser.service';
 
 import { FundRaiserRepository } from '../fundraiser/fundraiser.repository';
 import { ForgottenPasswordRepository } from './forgot-password.repository';
 
-import { sendEmailDto } from 'src/shared/utility/mailer/mail.interface';
+import { sendEmailDto } from 'src/shared/interface/mail.interface';
 
 import * as bcrypt from 'bcrypt';
-import { ErrorResponseUtility } from 'src/shared/utility/error-response.utility';
 import { ResponseStructure } from 'src/shared/interface/response-structure.interface';
+import { ErrorResponseUtility } from 'src/shared/utility/error-response.utility';
+import { MailerService } from '@nestjs-modules/mailer';
+import { SendMailerUtility } from 'src/shared/utility/send-mailer.utility';
 
 @Injectable()
 export class AuthService {
@@ -40,11 +38,13 @@ export class AuthService {
       if (!fundraiserStatus) {
         throw new NotFoundException('Fundraiser status not found');
       }
-
+      console.log(fundraiser, 'h');
       if ((fundraiser?.role == 'FUNDRAISER' && fundraiserStatus == 'active') || fundraiser?.role == 'ADMIN') {
+        console.log(fundraiser);
         const userPassword = await this.fundraiserRepository.getFundraiser({ where: { email: fundraiser?.email }, select: ['password'] });
 
-        if (fundraiser && (await bcrypt?.compare(loginDto?.password, userPassword?.password))) {
+        if (fundraiser && (await bcrypt.compare(loginDto?.password, userPassword?.password))) {
+          console.log(fundraiser);
           const payload = {
             firstName: fundraiser?.firstName,
             email: fundraiser?.email,
@@ -73,27 +73,24 @@ export class AuthService {
         throw new NotFoundException('Fundraiser not found');
       }
 
-      var randomstring = Math?.random()?.toString(36)?.slice(-8);
+      const randomstring = Math?.random()?.toString(36)?.slice(-8);
 
-      var body2 = {
+      const body2 = {
         firstName: fundraiser?.firstName,
         otp: randomstring,
       };
 
-      const dto: sendEmailDto = {
+      const dto = {
         recipients: [{ name: fundraiser?.firstName, address: fundraiser?.email }],
-        subject: 'Reset Password',
-        html: '<p>Hi {firstName}, Reset password using:{otp} </p><p>Otp expires in<strong>10</strong>minutes</p>',
-        placeholderReplacements: body2,
       };
 
-      await this.mailerService.sendMail(dto);
+      await new SendMailerUtility(this.mailerService).resetPassword(dto, body2);
 
       await this.forgottenPasswordRepository.createForgottenPassword(email, randomstring);
 
       setTimeout(async () => {
         try {
-          var user2 = await this.forgottenPasswordRepository.getOtp({ where: { email: email } });
+          const user2 = await this.forgottenPasswordRepository.getOtp({ where: { email: email } });
 
           if (!user2) {
             throw new NotFoundException('Otp Not Found for user');
@@ -113,13 +110,13 @@ export class AuthService {
 
   async setNewPassword(body): Promise<ResponseStructure> {
     try {
-      var fundraiser = await this.forgottenPasswordRepository.getOtp({ where: { newPasswordToken: body?.otp } });
+      const fundraiser = await this.forgottenPasswordRepository.getOtp({ where: { newPasswordToken: body?.otp } });
 
       if (!fundraiser) {
         throw new NotFoundException('Invalid Otp');
       }
 
-      var user_new = await this.fundraiserRepository.findFundRaiserByEmail(fundraiser?.email);
+      const user_new = await this.fundraiserRepository.findFundRaiserByEmail(fundraiser?.email);
 
       if (!user_new) {
         throw new NotFoundException('Fundraiser not found');
@@ -129,7 +126,7 @@ export class AuthService {
 
       const hashedPassword = await bcrypt?.hash(password, 10);
 
-      var status = await this.fundraiserRepository.UpdateFundraiser(user_new?.fundraiser_id, { password: hashedPassword });
+      const status = await this.fundraiserRepository.UpdateFundraiser(user_new?.fundraiser_id, { password: hashedPassword });
 
       if (status) {
         await this.forgottenPasswordRepository.deleteOtp(fundraiser);

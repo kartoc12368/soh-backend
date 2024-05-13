@@ -31,7 +31,7 @@ export class FundRaiserRepository extends Repository<Fundraiser> {
 
   async getFundRaiserStatusByEmail(email: string) {
     try {
-      var fundraiser = await this.findOne({ where: { email: email } });
+      const fundraiser = await this.findOne({ where: { email: email } });
 
       return fundraiser.status;
     } catch (error) {

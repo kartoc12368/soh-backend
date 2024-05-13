@@ -8,12 +8,8 @@ import { DonationRepository } from '../donation/donation.repository';
 import { FundraiserPageRepository } from '../fundraiser-page/fundraiser-page.repository';
 import { FundRaiserRepository } from '../fundraiser/fundraiser.repository';
 
-import { MailerService } from 'src/shared/utility/mailer/mailer.service';
-import { FundraiserService } from '../fundraiser/fundraiser.service';
-
 import { ResponseStructure } from 'src/shared/interface/response-structure.interface';
 import { incrementDate } from 'src/shared/utility/date.utility';
-import { sendEmailDto } from 'src/shared/utility/mailer/mail.interface';
 
 import { Between, FindOptionsWhere } from 'typeorm';
 
@@ -21,8 +17,10 @@ import { FindDonationsDto } from '../fundraiser/dto/find-donation.dto';
 
 import { of } from 'rxjs';
 
+import { MailerService } from '@nestjs-modules/mailer';
 import { ErrorResponseUtility } from 'src/shared/utility/error-response.utility';
 import { downloadDonationsExcel } from 'src/shared/utility/excel.utility';
+import { SendMailerUtility } from 'src/shared/utility/send-mailer.utility';
 import { GeneratePasswordDto } from './dto/generate-password.dto';
 
 @Injectable()
@@ -152,22 +150,18 @@ export class AdminService {
         throw new NotFoundException('Email already in use');
       } else {
         //generating random password in randomPassword variable
-        var randomPassword = Math?.random()?.toString(36)?.slice(-8);
+        const randomPassword = Math?.random()?.toString(36)?.slice(-8);
 
-        var body2 = {
+        const body2 = {
           firstName: body?.firstName,
           password: randomPassword,
         };
 
-        const dto: sendEmailDto = {
-          // from: {name:"Lucy", address:"lucy@example.com"},
+        const dto = {
           recipients: [{ name: body.firstName, address: body.email }],
-          subject: 'FundRaiser Password',
-          html: '<p>Hi {firstName}, Login to Portal using:{password} </p><p><strong>Cheers!</strong></p>',
-          placeholderReplacements: body2,
         };
 
-        await this.mailerService.sendMail(dto);
+        await new SendMailerUtility(this.mailerService).generatePassword(dto, body2);
 
         return this.createdByAdmin(body, randomPassword);
       }

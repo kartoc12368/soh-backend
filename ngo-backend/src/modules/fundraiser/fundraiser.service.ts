@@ -39,7 +39,7 @@ export class FundraiserService {
 
       const fundraiser2 = await this.fundRaiserRepository.getFundraiser({ where: { email: fundraiser?.email }, select: ['password', 'fundraiser_id'] });
 
-      var isSame = await bcrypt.compare(changePasswordDto.oldPassword, fundraiser2.password);
+      const isSame = await bcrypt.compare(changePasswordDto.oldPassword, fundraiser2.password);
 
       if (!isSame) {
         throw new UnauthorizedException('Old password is incorrect');

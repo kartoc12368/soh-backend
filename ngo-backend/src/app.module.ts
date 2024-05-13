@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
@@ -8,7 +9,7 @@ import { DonationModule } from './modules/donation/donation.module';
 import { FundraiserPageModule } from './modules/fundraiser-page/fundraiser-page.module';
 import { FundraiserModule } from './modules/fundraiser/fundraiser.module';
 import { PaymentModule } from './modules/payment/payment.module';
-import { MailerModule } from './shared/utility/mailer/mailer.module';
+import { MailerModule } from '@nestjs-modules/mailer';
 
 import { TypeOrmConfigService } from './config/typeorm.config.service';
 
@@ -16,8 +17,27 @@ import { TypeOrmConfigService } from './config/typeorm.config.service';
   imports: [
     ConfigModule.forRoot({ isGlobal: true, envFilePath: '.local.env' }),
     TypeOrmModule.forRootAsync({ useClass: TypeOrmConfigService }),
+    MailerModule.forRoot({
+      transport: {
+        service: 'gmail',
+        host: process.env?.MAIL_HOST,
+        port: Number(process.env?.MAIL_PORT),
+        secure: false,
+        auth: {
+          user: process.env?.MAIL_USER,
+          pass: process.env?.MAIL_PASSWORD,
+        },
+      },
+      defaults: { from: { name: process.env?.APP_NAME, address: process.env?.MAIL_USER } },
+      template: {
+        dir: 'src/shared/email_templates',
+        adapter: new HandlebarsAdapter(),
+        options: {
+          strict: true,
+        },
+      },
+    }),
     AuthModule,
-    MailerModule,
     FundraiserModule,
     DonationModule,
     AdminModule,
@@ -25,4 +45,4 @@ import { TypeOrmConfigService } from './config/typeorm.config.service';
     PaymentModule,
   ],
 })
-export class AppModule { }
+export class AppModule {}
