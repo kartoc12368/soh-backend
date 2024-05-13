@@ -1,14 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 
-import { Donation } from 'src/shared/entity/donation.entity';
 import { Fundraiser } from 'src/shared/entity/fundraiser.entity';
 
+import { ResponseStructure } from 'src/shared/interface/response-structure.interface';
+import { ErrorResponseUtility } from 'src/shared/utility/error-response.utility';
 import { FundraiserPageRepository } from '../fundraiser-page/fundraiser-page.repository';
 import { FundRaiserRepository } from '../fundraiser/fundraiser.repository';
 import { DonationRepository } from './donation.repository';
-import { FundraiserService } from '../fundraiser/fundraiser.service';
-import { ErrorResponseUtility } from 'src/shared/utility/error-response.utility';
-import { ResponseStructure } from 'src/shared/interface/response-structure.interface';
 
 @Injectable()
 export class DonationService {
@@ -33,8 +31,10 @@ export class DonationService {
       if (!fundraiserPage) {
         throw new NotFoundException('Fundraiser Page not found');
       }
+
       //getting fundraiser to update its dashboard content
       let fundraiser: Fundraiser = await this.fundRaiserRepository.getFundraiser({ where: { fundraiser_id: fundraiserPage?.fundraiser?.fundraiser_id } });
+
       if (!fundraiser) {
         throw new NotFoundException('Fundraiser not found, Page is expired');
       }
@@ -54,14 +54,14 @@ export class DonationService {
     //getting fundraiserPage using id from params if any
     try {
       //getting fundraiser to update its dashboard content
-      let fundraiser: Fundraiser = await this.fundRaiserRepository.getFundraiser({ where: { fundraiser_id: body.fundraiser.fundraiser_id }, relations: ['fundraiser_page'] });
+      let fundraiser: Fundraiser = await this.fundRaiserRepository.getFundraiser({ where: { fundraiser_id: body?.fundraiser?.fundraiser_id }, relations: ['fundraiser_page'] });
 
       if (!fundraiser) {
         throw new NotFoundException('Fundraiser not found');
       }
 
       let fundraiserPage = await this.fundRaiserPageRepository.getFundraiserPage({
-        where: { id: fundraiser?.fundraiser_page.id },
+        where: { id: fundraiser?.fundraiser_page?.id },
       });
 
       if (!fundraiserPage) {
@@ -69,11 +69,11 @@ export class DonationService {
       }
 
       //getting existing fundraiserPage supporters and pushing new supporters
-      let supportersOfFundraiser = await this.donationRepository.getDonorNames(body.fundraiser);
+      let supportersOfFundraiser = await this.donationRepository.getDonorNames(body?.fundraiser);
 
-      const total_amount_raised = await this.donationRepository.getRaisedAmount(body.fundraiser);
+      const total_amount_raised = await this.donationRepository.getRaisedAmount(body?.fundraiser);
 
-      const total_donations = await this.donationRepository.getTotalDonor(body.fundraiser);
+      const total_donations = await this.donationRepository.getTotalDonor(body?.fundraiser);
 
       await this.fundRaiserRepository.UpdateFundraiser(fundraiser?.fundraiser_id, {
         total_amount_raised: total_amount_raised,

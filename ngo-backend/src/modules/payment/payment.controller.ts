@@ -17,7 +17,7 @@ export class PaymentController {
   @Public()
   async checkout(@Body() body: PaymentDto, @Param('reference') reference: string): Promise<ResponseStructure> {
     console.log(reference);
-    return await this.paymentService.checkout(body.amount, reference);
+    return await this.paymentService.checkout(body?.amount, reference);
   }
 
   @Post('/paymentVerfications')

@@ -21,6 +21,10 @@ export class FundraiserPageService {
     try {
       let fundraiserPage = await this.fundraiserPageRepository.getFundraiserPage({ where: { id: PageId } });
 
+      if (!fundraiserPage) {
+        throw new NotFoundException('Fundraiser Page not found');
+      }
+
       //accessing existing galley of fundraiserPage and pushing new uploaded files
       const fundraiserGallery = fundraiserPage?.gallery;
       fundraiserGallery?.push(file?.filename);
@@ -33,7 +37,7 @@ export class FundraiserPageService {
     }
   }
 
-  async update(body, pageId): Promise<ResponseStructure> {
+  async updateFundraiserPage(body, pageId): Promise<ResponseStructure> {
     try {
       //finding fundraiserPage using id from parmameters and updating data using body data
       let fundraiserPage = await this.fundraiserPageRepository.getFundraiserPage({ where: { id: pageId } });
@@ -77,21 +81,21 @@ export class FundraiserPageService {
     try {
       const filepath = `uploads/fundraiserPageImages/${filePath}`;
 
-      let fundRaiser: Fundraiser = await this.fundraiserRepository.getFundraiser({ where: { fundraiser_id: user.id }, relations: ['fundraiser_page'] });
+      let fundRaiser: Fundraiser = await this.fundraiserRepository.getFundraiser({ where: { fundraiser_id: user?.id }, relations: ['fundraiser_page'] });
       if (!fundRaiser) {
         throw new NotFoundException('Fundraiser not found');
       }
 
-      let fundraiserPage: FundraiserPage = await this.fundraiserPageRepository.getFundraiserPage({ where: { id: fundRaiser.fundraiser_page.id } });
+      let fundraiserPage: FundraiserPage = await this.fundraiserPageRepository.getFundraiserPage({ where: { id: fundRaiser?.fundraiser_page?.id } });
       if (!fundraiserPage) {
         throw new NotFoundException('Fundraiser Page not found');
       }
 
-      const galleryNew = fundraiserPage.gallery.filter(function (image) {
+      const galleryNew = fundraiserPage?.gallery?.filter(function (image) {
         return image !== filePath;
       });
 
-      await this.fundraiserPageRepository.UpdateFundraiserPage(fundraiserPage.id, { gallery: galleryNew });
+      await this.fundraiserPageRepository.UpdateFundraiserPage(fundraiserPage?.id, { gallery: galleryNew });
 
       await fs.promises.unlink(filepath);
 
@@ -104,6 +108,11 @@ export class FundraiserPageService {
   async getAllFundraiserPages(): Promise<ResponseStructure> {
     try {
       const fundraiserPages = await this.fundraiserPageRepository.getAllFundraiserPages();
+
+      if (!fundraiserPages) {
+        throw new NotFoundException('Fundraiser Page not found');
+      }
+
       return { message: 'Fetched all fundraiser Pages', data: fundraiserPages };
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);

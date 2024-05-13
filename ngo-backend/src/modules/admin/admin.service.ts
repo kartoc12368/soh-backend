@@ -2,7 +2,6 @@ import { ConflictException, ForbiddenException, Injectable, NotFoundException } 
 import * as path from 'path';
 
 import { Donation } from 'src/shared/entity/donation.entity';
-import { FundraiserPage } from 'src/shared/entity/fundraiser-page.entity';
 import { Fundraiser } from 'src/shared/entity/fundraiser.entity';
 
 import { DonationRepository } from '../donation/donation.repository';
@@ -23,8 +22,8 @@ import { FindDonationsDto } from '../fundraiser/dto/find-donation.dto';
 import { of } from 'rxjs';
 
 import { ErrorResponseUtility } from 'src/shared/utility/error-response.utility';
-import { GeneratePasswordDto } from './dto/generate-password.dto';
 import { downloadDonationsExcel } from 'src/shared/utility/excel.utility';
+import { GeneratePasswordDto } from './dto/generate-password.dto';
 
 @Injectable()
 export class AdminService {
@@ -34,12 +33,11 @@ export class AdminService {
     private fundraiserPageRepository: FundraiserPageRepository,
 
     private mailerService: MailerService,
-    private fundraiserService: FundraiserService,
   ) {}
 
   async getAdminDashboardData(): Promise<ResponseStructure> {
     try {
-      const totalFundraisers = await this.fundraiserRepository.countFundraisers({});
+      const totalFundraisers = await this.fundraiserRepository.countFundraisers();
 
       const activeFundraisers = await this.fundraiserRepository.countFundraisers({ where: { status: 'active' } });
 
@@ -99,12 +97,12 @@ export class AdminService {
         throw new NotFoundException('Fundraiser not found');
       }
       // Toggle the status based on its current value
-      fundraiser.status = fundraiser.status === 'active' ? 'inactive' : 'active';
+      fundraiser.status = fundraiser?.status === 'active' ? 'inactive' : 'active';
 
       // Save the updated fundraiser
       await this.fundraiserRepository.UpdateFundraiser(id, { status: fundraiser.status });
 
-      if (fundraiser.status === 'active') {
+      if (fundraiser?.status === 'active') {
         return { message: 'Status changed to active ', success: true };
       } else {
         return { message: 'Status changed to inactive', success: true };
@@ -118,12 +116,12 @@ export class AdminService {
     try {
       const fundraiser = await this.fundraiserRepository.getFundraiser({ where: { fundraiser_id: id } });
 
-      if (fundraiser.role == 'ADMIN') {
-        throw new ForbiddenException('NOT ALLOWED');
-      }
-
       if (!fundraiser) {
         throw new NotFoundException('Fundraiser not found');
+      }
+
+      if (fundraiser?.role == 'ADMIN') {
+        throw new ForbiddenException('NOT ALLOWED');
       }
 
       await this.fundraiserRepository.deleteFundraiser(id);
@@ -150,14 +148,14 @@ export class AdminService {
     try {
       const isFundraiserExists = await this.fundraiserRepository.getFundraiser({ where: { email: body.email } });
 
-      if (isFundraiserExists && isFundraiserExists.role == 'FUNDRAISER') {
+      if (isFundraiserExists && isFundraiserExists?.role == 'FUNDRAISER') {
         throw new NotFoundException('Email already in use');
       } else {
         //generating random password in randomPassword variable
         var randomPassword = Math?.random()?.toString(36)?.slice(-8);
 
         var body2 = {
-          firstName: body.firstName,
+          firstName: body?.firstName,
           password: randomPassword,
         };
 
@@ -169,7 +167,7 @@ export class AdminService {
           placeholderReplacements: body2,
         };
 
-        await this.mailerService?.sendMail(dto);
+        await this.mailerService.sendMail(dto);
 
         return this.createdByAdmin(body, randomPassword);
       }
@@ -189,7 +187,7 @@ export class AdminService {
       }
 
       let fundraiser: Fundraiser = await this.fundraiserRepository.getFundraiser({
-        where: { email: body.email },
+        where: { email: body?.email },
         relations: ['fundraiser_page'],
       });
 
@@ -204,7 +202,7 @@ export class AdminService {
       await this.donationRepository.createDonationOffline(body, fundraiser);
 
       let fundraiserPage = await this.fundraiserPageRepository.getFundraiserPage({
-        where: { id: fundraiser.fundraiser_page.id },
+        where: { id: fundraiser?.fundraiser_page?.id },
       });
 
       if (!fundraiserPage) {
@@ -236,10 +234,14 @@ export class AdminService {
 
   async createFundraiserPageByEmail(body): Promise<ResponseStructure> {
     try {
-      let fundRaiser = await this.fundraiserRepository.findFundRaiserByEmail(body.email);
+      let fundRaiser = await this.fundraiserRepository.findFundRaiserByEmail(body?.email);
+
+      if (!fundRaiser) {
+        throw new NotFoundException('Fundraiser not found');
+      }
 
       let fundRaiserPage = await this.fundraiserPageRepository.getFundraiserPage({
-        where: { fundraiser: { fundraiser_id: fundRaiser.fundraiser_id } },
+        where: { fundraiser: { fundraiser_id: fundRaiser?.fundraiser_id } },
       });
 
       if (fundRaiserPage == null) {
@@ -254,39 +256,39 @@ export class AdminService {
     }
   }
 
-  async update(body, files, PageId): Promise<ResponseStructure> {
-    try {
-      //finding fundraiserPage using id from parmameters and updating data using body data
-      let fundRaiserPageNew = await this.fundraiserPageRepository.getFundraiserPage({
-        where: { id: PageId },
-      });
+  // async updateFundraiserPage(body, files, PageId): Promise<ResponseStructure> {
+  //   try {
+  //     //finding fundraiserPage using id from parmameters and updating data using body data
+  //     let fundRaiserPageNew = await this.fundraiserPageRepository.getFundraiserPage({
+  //       where: { id: PageId },
+  //     });
 
-      if (!fundRaiserPageNew) {
-        throw new NotFoundException('Fundraiser Page not found');
-      }
+  //     if (!fundRaiserPageNew) {
+  //       throw new NotFoundException('Fundraiser Page not found');
+  //     }
 
-      await this.fundraiserPageRepository.UpdateFundraiserPage(PageId, body);
+  //     await this.fundraiserPageRepository.UpdateFundraiserPage(PageId, body);
 
-      //accessing existing galley of fundraiserPage and pushing new uploaded files
-      const fundraiserGallery = fundRaiserPageNew?.gallery;
+  //     //accessing existing galley of fundraiserPage and pushing new uploaded files
+  //     const fundraiserGallery = fundRaiserPageNew?.gallery;
 
-      // if (!files?.length) {
-      //   throw new NotFoundException("File not Uploaded");
-      // }
+  //     // if (!files?.length) {
+  //     //   throw new NotFoundException("File not Uploaded");
+  //     // }
 
-      for (let i = 0; i < files?.length; i++) {
-        fundraiserGallery?.push(files[i]);
-      }
+  //     for (let i = 0; i < files?.length; i++) {
+  //       fundraiserGallery?.push(files[i]);
+  //     }
 
-      //saving new data of fundraiserPage with gallery
-      await this.fundraiserPageRepository.UpdateFundraiserPage(PageId, {
-        gallery: fundraiserGallery,
-      });
-      return { message: 'FundraiserPage updated successfully' };
-    } catch (error) {
-      await ErrorResponseUtility.errorResponse(error);
-    }
-  }
+  //     //saving new data of fundraiserPage with gallery
+  //     await this.fundraiserPageRepository.UpdateFundraiserPage(PageId, {
+  //       gallery: fundraiserGallery,
+  //     });
+  //     return { message: 'FundraiserPage updated successfully' };
+  //   } catch (error) {
+  //     await ErrorResponseUtility.errorResponse(error);
+  //   }
+  // }
 
   async deleteFundraiserPage(id): Promise<ResponseStructure> {
     try {
@@ -299,9 +301,17 @@ export class AdminService {
 
   async downloadExcelforDonations(res): Promise<any> {
     try {
-      const donations = await this.donationRepository.find();
+      const donations = await this.donationRepository.getAllDonations();
+
+      if (!donations) {
+        throw new NotFoundException('Donations not found');
+      }
 
       const filename = await downloadDonationsExcel(donations);
+
+      if (!filename) {
+        throw new NotFoundException('Filename not found');
+      }
 
       return of(res.sendFile(path.join(process.cwd(), 'downloads/' + filename)));
     } catch (error) {

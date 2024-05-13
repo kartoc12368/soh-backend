@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 
 import { FundRaiserRepository } from 'src/modules/fundraiser/fundraiser.repository';
@@ -8,6 +8,8 @@ import { Fundraiser } from 'src/shared/entity/fundraiser.entity';
 import { Strategy } from 'passport-local';
 
 import * as bcrypt from 'bcrypt';
+import { ResponseStructure } from 'src/shared/interface/response-structure.interface';
+import { ErrorResponseUtility } from 'src/shared/utility/error-response.utility';
 
 @Injectable()
 export class LocalStrategy extends PassportStrategy(Strategy) {
@@ -18,26 +20,34 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(email: string, password: string): Promise<Fundraiser> {
-    const fundraiser: Fundraiser = await this.fundraiserRepository.findFundRaiserByEmail(email);
+  async validate(email: string, password: string): Promise<ResponseStructure> {
+    try {
+      const fundraiser: Fundraiser = await this.fundraiserRepository.findFundRaiserByEmail(email);
 
-    const fundraiserPassword = await this.fundraiserRepository.getFundraiser({
-      where: { email: email },
-      select: ['password'],
-    });
+      if (!fundraiser) {
+        throw new NotFoundException('Fundraiser not found:' + email);
+      }
 
-    if (fundraiser && (await bcrypt.compare(password, fundraiserPassword?.password))) {
-      // console.log(fundraiser)
-      return fundraiser;
+      const fundraiserPassword = await this.fundraiserRepository.getFundraiser({
+        where: { email: email },
+        select: ['password'],
+      });
+
+      if (fundraiser && (await bcrypt?.compare(password, fundraiserPassword?.password))) {
+        return { message: 'Logged In Successfully', data: fundraiser, success: true };
+      }
+
+      // if (fundraiser == undefined) {
+      //   throw new UnauthorizedException('Fundraiser not found:' + email);
+      // }
+
+      if (!(await bcrypt?.compare(password, fundraiserPassword?.password))) {
+        throw new UnauthorizedException('Invalid password');
+      }
+
+      return { message: 'Invalid Login' };
+    } catch (error) {
+      await ErrorResponseUtility.errorResponse(error);
     }
-
-    if (fundraiser == undefined) {
-      throw new UnauthorizedException('Fundraiser not found:' + email);
-    }
-
-    if (!(await bcrypt?.compare(password, fundraiserPassword?.password))) {
-      throw new UnauthorizedException('Invalid password');
-    }
-    return null;
   }
 }

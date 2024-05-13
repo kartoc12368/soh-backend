@@ -29,11 +29,15 @@ export class FundraiserService {
     private donationRepository: DonationRepository,
   ) {}
 
-  async changePassword(req, changePasswordDto: ChangePasswordDto): Promise<ResponseStructure> {
+  async changePassword(user, changePasswordDto: ChangePasswordDto): Promise<ResponseStructure> {
     try {
-      const fundraiser: Fundraiser = req.user;
+      const fundraiser: Fundraiser = user;
 
-      const fundraiser2 = await this.fundRaiserRepository.getFundraiser({ where: { email: fundraiser.email }, select: ['password', 'fundraiser_id'] });
+      if (!fundraiser) {
+        throw new NotFoundException('Fundraiser not found');
+      }
+
+      const fundraiser2 = await this.fundRaiserRepository.getFundraiser({ where: { email: fundraiser?.email }, select: ['password', 'fundraiser_id'] });
 
       var isSame = await bcrypt.compare(changePasswordDto.oldPassword, fundraiser2.password);
 
@@ -44,7 +48,7 @@ export class FundraiserService {
       if (changePasswordDto.newPassword === changePasswordDto.confirmPassword) {
         const hashedPassword = await bcrypt.hash(changePasswordDto.newPassword, 10);
 
-        await this.fundRaiserRepository.UpdateFundraiser(fundraiser2.fundraiser_id, { password: hashedPassword });
+        await this.fundRaiserRepository.UpdateFundraiser(fundraiser2?.fundraiser_id, { password: hashedPassword });
 
         return { message: 'Password updated successfully' };
       } else {
@@ -56,37 +60,47 @@ export class FundraiserService {
   }
 
   async getLoggedInFundraiser(user): Promise<ResponseStructure> {
-    const id = user;
-
     try {
-      const fundraiser = await this.fundRaiserRepository.getFundraiser({ where: { email: id.email }, relations: ['fundraiser_page'] });
+      const fundRaiser: Fundraiser = user;
+
+      const fundraiser = await this.fundRaiserRepository.getFundraiser({ where: { email: fundRaiser?.email }, relations: ['fundraiser_page'] });
+
+      if (!fundraiser) {
+        throw new NotFoundException('Fundraiser not found');
+      }
+
       return { message: 'Fundraiser Fetched Successfully', data: fundraiser, success: true };
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }
   }
 
-  async updateFundRaiserById(req, updateFundRaiserDto: UpdateFundraiserDto): Promise<ResponseStructure> {
+  async updateFundRaiserById(user, updateFundRaiserDto: UpdateFundraiserDto): Promise<ResponseStructure> {
     try {
-      const fundRaiser = await this.fundRaiserRepository.getFundraiser({ where: { fundraiser_id: req.user.id } });
-
-      await this.fundRaiserRepository.update(fundRaiser.fundraiser_id, updateFundRaiserDto);
-
-      return { message: 'Fundraiser Updated Successfully' };
-    } catch (error) {
-      await ErrorResponseUtility.errorResponse(error);
-    }
-  }
-
-  async getFundraiserPage(user): Promise<ResponseStructure> {
-    try {
-      let fundRaiser: Fundraiser = await this.fundRaiserRepository.getFundraiser({ where: { fundraiser_id: user.id } });
+      const fundRaiser = await this.fundRaiserRepository.getFundraiser({ where: { fundraiser_id: user?.id } });
 
       if (!fundRaiser) {
         throw new NotFoundException('Fundraiser not found');
       }
 
-      let fundraiserPage = await this.fundraiserPageRepository.getFundraiserPage({ select: ['fundraiser'], where: { fundraiser: { fundraiser_id: fundRaiser.fundraiser_id } } });
+      await this.fundRaiserRepository.UpdateFundraiser(fundRaiser?.fundraiser_id, updateFundRaiserDto);
+
+      return { message: 'Fundraiser Updated Successfully' };
+    } catch (error) {
+      console.log(error);
+      // await ErrorResponseUtility.errorResponse(error);
+    }
+  }
+
+  async getFundraiserPage(user): Promise<ResponseStructure> {
+    try {
+      let fundRaiser: Fundraiser = await this.fundRaiserRepository.getFundraiser({ where: { fundraiser_id: user?.id } });
+
+      if (!fundRaiser) {
+        throw new NotFoundException('Fundraiser not found');
+      }
+
+      let fundraiserPage = await this.fundraiserPageRepository.getFundraiserPage({ select: ['fundraiser'], where: { fundraiser: { fundraiser_id: fundRaiser?.fundraiser_id } } });
 
       if (!fundraiserPage) {
         throw new NotFoundException('Fundraiser Page not found');
@@ -100,15 +114,15 @@ export class FundraiserService {
 
   async uploadProfileImage(fundraiser, file): Promise<ResponseStructure> {
     try {
-      let fundRaiser = await this.fundRaiserRepository.findFundRaiserByEmail(fundraiser.email);
+      let fundRaiser = await this.fundRaiserRepository.findFundRaiserByEmail(fundraiser?.email);
 
       if (!fundRaiser) {
         throw new NotFoundException('Fundraiser not found');
       }
 
-      await this.fundRaiserRepository.UpdateFundraiser(fundRaiser.fundraiser_id, { profileImage: file.filename });
+      await this.fundRaiserRepository.UpdateFundraiser(fundRaiser?.fundraiser_id, { profileImage: file?.filename });
 
-      return { message: 'Profile image updated successfully', data: { profileImage: file.filename } };
+      return { message: 'Profile image updated successfully', data: { profileImage: file?.filename } };
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }
@@ -132,12 +146,12 @@ export class FundraiserService {
 
   async createFundraiserPage(user): Promise<ResponseStructure> {
     try {
-      let fundRaiser = await this.fundRaiserRepository.findFundRaiserByEmail(user.email);
+      let fundRaiser = await this.fundRaiserRepository.findFundRaiserByEmail(user?.email);
       if (!fundRaiser) {
         throw new NotFoundException('Fundraiser not found');
       }
 
-      let fundRaiserPage = await this.fundraiserPageRepository.getFundraiserPage({ where: { fundraiser: { fundraiser_id: fundRaiser.fundraiser_id } } });
+      let fundRaiserPage = await this.fundraiserPageRepository.getFundraiserPage({ where: { fundraiser: { fundraiser_id: fundRaiser?.fundraiser_id } } });
 
       if (fundRaiserPage == null) {
         const fundraiserPage = await this.fundraiserPageRepository.createFundraiserPage(fundRaiser);
@@ -151,7 +165,7 @@ export class FundraiserService {
     }
   }
 
-  async getDonationFundraiser(dto: FindDonationsDto, req): Promise<ResponseStructure> {
+  async getDonationFundraiser(dto: FindDonationsDto, user): Promise<ResponseStructure> {
     try {
       const { payment_option, payment_status, donation_id, from_date, to_date } = dto;
 
@@ -161,7 +175,7 @@ export class FundraiserService {
         ...conditions,
         ...(payment_option ? { payment_type: payment_option } : {}),
         ...(payment_status ? { payment_status: payment_status } : {}),
-        ...(req.user.id ? { fundraiser: { fundraiser_id: req.user.id } } : {}),
+        ...(user?.id ? { fundraiser: { fundraiser_id: user?.id } } : {}),
         ...(donation_id ? { donation_id_frontend: donation_id } : {}),
         ...(from_date || to_date
           ? {
@@ -169,7 +183,6 @@ export class FundraiserService {
             }
           : {}), // Only add filter if either from_date or to_date is provided
       };
-      console.log(conditions);
 
       const donations = await this.donationRepository.getAllDonations({ relations: { fundraiser: true }, where: conditions, order: { donation_id_frontend: 'ASC' } });
       return { message: 'Donations fetched successfully', data: donations };
@@ -185,6 +198,10 @@ export class FundraiserService {
       });
 
       const filename = await downloadDonationsExcel(donations);
+
+      if (!filename) {
+        throw new NotFoundException('Filename not found');
+      }
 
       return of(res.sendFile(path?.join(process.cwd(), 'downloads/' + filename)));
     } catch (error) {

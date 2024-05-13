@@ -24,21 +24,21 @@ export class FundraiserController {
   @UseGuards(new RoleGuard(Constants.ROLES.FUNDRAISER_ROLE))
   @ApiOperation({ summary: 'change Password Fundraiser using old password' })
   async changePassword(@Req() req, @Body() changePasswordDto: ChangePasswordDto): Promise<ResponseStructure> {
-    return await this.fundraiserService.changePassword(req, changePasswordDto);
+    return await this.fundraiserService.changePassword(req?.user, changePasswordDto);
   }
 
   @Get()
   @UseGuards(new RoleGuard(Constants.ROLES.FUNDRAISER_ROLE))
   @ApiOperation({ summary: 'Get Logged In Fundraiser Data' })
   async getFundraiser(@Req() req): Promise<ResponseStructure> {
-    return await this.fundraiserService.getLoggedInFundraiser(req.user);
+    return await this.fundraiserService.getLoggedInFundraiser(req?.user);
   }
 
   @Put('/update')
   @UseGuards(new RoleGuard(Constants.ROLES.FUNDRAISER_ROLE))
   @ApiOperation({ summary: 'Update Fundraiser Profile' })
   async updateFundraiser(@Req() req, @Body(ValidationPipe) body: UpdateFundraiserDto): Promise<ResponseStructure> {
-    this.fundraiserService.updateFundRaiserById(req, body);
+    this.fundraiserService.updateFundRaiserById(req?.user, body);
     return { message: 'Successfully updated' };
   }
 
@@ -46,14 +46,14 @@ export class FundraiserController {
   @UseGuards(new RoleGuard(Constants.ROLES.FUNDRAISER_ROLE))
   @ApiOperation({ summary: 'Get Fundraiser-page of current Fundraiser' })
   async getAllFundraiserPages(@Req() req): Promise<ResponseStructure> {
-    return this.fundraiserService.getFundraiserPage(req.user);
+    return this.fundraiserService.getFundraiserPage(req?.user);
   }
 
   @Get('/fundraiser-page/:image')
   @Public()
   @ApiOperation({ summary: 'Fetch Fundraiser Page Images' })
   async getFundraiserPageImage(@Param() body, @Res() res): Promise<ResponseStructure> {
-    return await this.fundraiserService.findFundraiserPageImage(res, body.image);
+    return await this.fundraiserService.findFundraiserPageImage(res, body?.image);
   }
 
   @Post('upload')
@@ -75,14 +75,14 @@ export class FundraiserController {
   @UseGuards(new RoleGuard(Constants.ROLES.FUNDRAISER_ROLE))
   @ApiOperation({ summary: 'Create Fundraiser Page from Fundraiser side' })
   async createPage(@Req() req): Promise<ResponseStructure> {
-    return await this.fundraiserService.createFundraiserPage(req.user);
+    return await this.fundraiserService.createFundraiserPage(req?.user);
   }
 
   @Get('/donations')
   @UseGuards(new RoleGuard(Constants.ROLES.FUNDRAISER_ROLE))
   @ApiOperation({ summary: 'Get All Donations specific to current fundraiser with filter' })
   async findAll(@Query() query: FindDonationsDto, @Req() req): Promise<ResponseStructure> {
-    return await this.fundraiserService.getDonationFundraiser(query, req);
+    return await this.fundraiserService.getDonationFundraiser(query, req?.user);
   }
 
   @Get('/donations/download')

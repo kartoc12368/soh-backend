@@ -4,6 +4,7 @@
 /build
 /uploads
 /downloads
+/.vscode
 
 # Logs
 logs

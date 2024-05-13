@@ -34,8 +34,7 @@ export class FundraiserPageController {
   @UseGuards(new RoleGuard(Constants.ROLES.FUNDRAISER_ROLE), OwnershipGuard)
   @ApiOperation({ summary: 'Update Fundraiser Page by fundraiser' })
   async updatePage(@Body() body: UpdateFundraiserPageDto, @Param('id', ParseUUIDPipe) id: string): Promise<ResponseStructure> {
-    console.log('hello');
-    return await this.fundraiserPageService.update(body, id);
+    return await this.fundraiserPageService.updateFundraiserPage(body, id);
   }
 
   @Get(':id')
@@ -50,6 +49,6 @@ export class FundraiserPageController {
   @UseGuards(new RoleGuard(Constants.ROLES.FUNDRAISER_ROLE), OwnershipGuard)
   @ApiOperation({ summary: 'Delete Fundraiser Page Image ' })
   async deleteGalleryImage(@Param('id') filePath: string, @Req() req): Promise<ResponseStructure> {
-    return await this.fundraiserPageService.deleteGalleryImage(req.user, filePath);
+    return await this.fundraiserPageService.deleteGalleryImage(req?.user, filePath);
   }
 }

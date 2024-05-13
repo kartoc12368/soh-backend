@@ -31,13 +31,18 @@ export class AuthService {
       //jwt token
       const fundraiser: Fundraiser = user;
 
-      const fundraiserStatus = await this.fundraiserRepository.getFundRaiserStatusByEmail(fundraiser?.email);
-      if (!fundraiserStatus) {
+      if (!fundraiser) {
         throw new NotFoundException('Fundraiser not found');
       }
 
+      const fundraiserStatus = await this.fundraiserRepository.getFundRaiserStatusByEmail(fundraiser?.email);
+
+      if (!fundraiserStatus) {
+        throw new NotFoundException('Fundraiser status not found');
+      }
+
       if ((fundraiser?.role == 'FUNDRAISER' && fundraiserStatus == 'active') || fundraiser?.role == 'ADMIN') {
-        const userPassword = await this.fundraiserRepository.getFundraiser({ where: { email: fundraiser.email }, select: ['password'] });
+        const userPassword = await this.fundraiserRepository.getFundraiser({ where: { email: fundraiser?.email }, select: ['password'] });
 
         if (fundraiser && (await bcrypt?.compare(loginDto?.password, userPassword?.password))) {
           const payload = {
@@ -62,21 +67,21 @@ export class AuthService {
 
   async sendEmailForgotPassword(email: string): Promise<ResponseStructure> {
     try {
-      const user = await this.fundraiserRepository.findFundRaiserByEmail(email);
+      const fundraiser = await this.fundraiserRepository.findFundRaiserByEmail(email);
 
-      if (!user) {
+      if (!fundraiser) {
         throw new NotFoundException('Fundraiser not found');
       }
 
       var randomstring = Math?.random()?.toString(36)?.slice(-8);
 
       var body2 = {
-        firstName: user.firstName,
+        firstName: fundraiser?.firstName,
         otp: randomstring,
       };
 
       const dto: sendEmailDto = {
-        recipients: [{ name: user.firstName, address: user.email }],
+        recipients: [{ name: fundraiser?.firstName, address: fundraiser?.email }],
         subject: 'Reset Password',
         html: '<p>Hi {firstName}, Reset password using:{otp} </p><p>Otp expires in<strong>10</strong>minutes</p>',
         placeholderReplacements: body2,
@@ -89,6 +94,10 @@ export class AuthService {
       setTimeout(async () => {
         try {
           var user2 = await this.forgottenPasswordRepository.getOtp({ where: { email: email } });
+
+          if (!user2) {
+            throw new NotFoundException('Otp Not Found for user');
+          }
 
           await this.forgottenPasswordRepository.deleteOtp(user2);
         } catch {
@@ -104,19 +113,23 @@ export class AuthService {
 
   async setNewPassword(body): Promise<ResponseStructure> {
     try {
-      var fundraiser = await this.forgottenPasswordRepository.getOtp({ where: { newPasswordToken: body.otp } });
+      var fundraiser = await this.forgottenPasswordRepository.getOtp({ where: { newPasswordToken: body?.otp } });
 
       if (!fundraiser) {
         throw new NotFoundException('Invalid Otp');
       }
 
-      var user_new = await this.fundraiserRepository.findFundRaiserByEmail(fundraiser.email);
+      var user_new = await this.fundraiserRepository.findFundRaiserByEmail(fundraiser?.email);
 
-      const password = body.newPassword;
+      if (!user_new) {
+        throw new NotFoundException('Fundraiser not found');
+      }
 
-      const hashedPassword = await bcrypt.hash(password, 10);
+      const password = body?.newPassword;
 
-      var status = await this.fundraiserRepository.UpdateFundraiser(user_new.fundraiser_id, { password: hashedPassword });
+      const hashedPassword = await bcrypt?.hash(password, 10);
+
+      var status = await this.fundraiserRepository.UpdateFundraiser(user_new?.fundraiser_id, { password: hashedPassword });
 
       if (status) {
         await this.forgottenPasswordRepository.deleteOtp(fundraiser);

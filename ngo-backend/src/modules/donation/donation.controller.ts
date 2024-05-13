@@ -22,7 +22,7 @@ export class DonationController {
   }
 
   //donate with reference from fundraiser-page
-  @Post('/fundraiser-page/:id/donate')
+  @Post('/fundraiser-page/donate/:id')
   @ApiOperation({ summary: 'Donate Specifically to Fundraiser' })
   @Public()
   async donateToFundRaiser(@Body(ValidationPipe) body: DonateDto, @Param('id', ParseUUIDPipe) id: string): Promise<ResponseStructure> {

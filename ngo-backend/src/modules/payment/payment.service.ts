@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { DonationRepository } from '../donation/donation.repository';
 
@@ -21,8 +21,8 @@ export class PaymentService {
   async getInstance(): Promise<any> {
     try {
       const instance = new Razorpay({
-        key_id: process.env.RAZORPAY_API_KEY,
-        key_secret: process.env.RAZORPAY_API_SECRET,
+        key_id: process?.env?.RAZORPAY_API_KEY,
+        key_secret: process?.env?.RAZORPAY_API_SECRET,
       });
 
       return instance;
@@ -35,6 +35,10 @@ export class PaymentService {
     try {
       let donation = await this.donationRepository.getOneDonation({ where: { reference_payment: reference } });
 
+      if (!donation) {
+        throw new NotFoundException('Donation with this reference does not exist');
+      }
+
       amount *= 100;
 
       const options = {
@@ -46,7 +50,7 @@ export class PaymentService {
 
       const response = await (await this?.getInstance())?.orders?.create(options);
 
-      await this.donationRepository.UpdateOneDonation(donation.donation_id, { order_id: response.id });
+      await this.donationRepository.UpdateOneDonation(donation?.donation_id, { order_id: response?.id });
 
       console.log(response);
 
@@ -75,6 +79,10 @@ export class PaymentService {
         // Database comes here
         const donation = await this.donationRepository.getOneDonation({ where: { order_id: razorpay_order_id }, relations: ['fundraiser'] });
 
+        if (!donation) {
+          throw new NotFoundException('Donation with this order_id does not exist');
+        }
+
         await this.donationRepository.UpdateOneDonation(donation?.donation_id, {
           payment_order_id: razorpay_order_id,
           payment_status: 'success',
@@ -84,7 +92,7 @@ export class PaymentService {
 
         if (id) {
           res.redirect(`http://localhost:3000/paymentsuccess/${id}/?reference=${razorpay_payment_id}`);
-          const saveDonation = await this.donationService.saveDonation(donation);
+          await this.donationService.saveDonation(donation);
         } else {
           res.redirect(`http://localhost:3000/paymentsuccess/?reference=${razorpay_payment_id}`);
         }

@@ -155,7 +155,7 @@ export class DonationRepository extends Repository<Donation> {
     }
   }
 
-  async getAllDonations(obj: object) {
+  async getAllDonations(obj?: object) {
     try {
       // return await this.find({ relations: ['fundraiser'] });
       return await this.find(obj);

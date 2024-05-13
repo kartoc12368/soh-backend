@@ -2,12 +2,10 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 
-
 import { Fundraiser } from 'src/shared/entity/fundraiser.entity';
 import { ErrorResponseUtility } from 'src/shared/utility/error-response.utility';
 import { GeneratePasswordDto } from '../admin/dto/generate-password.dto';
 import { Constants } from 'src/shared/utility/constants';
-
 
 @Injectable()
 export class FundRaiserRepository extends Repository<Fundraiser> {
@@ -41,7 +39,6 @@ export class FundRaiserRepository extends Repository<Fundraiser> {
     }
   }
 
-
   async getAllFundraisers(obj: object) {
     try {
       return await this.find(obj);
@@ -50,24 +47,20 @@ export class FundRaiserRepository extends Repository<Fundraiser> {
     }
   }
 
-
   async UpdateFundraiser(id, setObj: Object) {
     try {
-
       return await this.update(id, setObj);
-
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }
   }
 
-  async countFundraisers(obj: object) {
+  async countFundraisers(obj?: object) {
     try {
       return await this.count(obj);
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }
-
   }
 
   async createFundraiserByAdmin(generatePasswordDto: GeneratePasswordDto, password: string) {
@@ -75,7 +68,7 @@ export class FundRaiserRepository extends Repository<Fundraiser> {
       const hashedPassword = await bcrypt?.hash(password, 10);
 
       if (!hashedPassword) {
-        throw new NotFoundException("Hashed Password not found");
+        throw new NotFoundException('Hashed Password not found');
       }
 
       let fundraiser: Fundraiser = new Fundraiser();
@@ -88,7 +81,6 @@ export class FundRaiserRepository extends Repository<Fundraiser> {
       fundraiser.status = 'active';
 
       return await this.save(fundraiser);
-
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }
@@ -101,5 +93,4 @@ export class FundRaiserRepository extends Repository<Fundraiser> {
       await ErrorResponseUtility.errorResponse(error);
     }
   }
-
 }

@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Post, Put, Query, Req, Res, UseGuards, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Post, Put, Query, Res, UseGuards, ValidationPipe } from '@nestjs/common';
 import { ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 
 import { UpdateFundraiserPageDto } from '../fundraiser-page/dto/update-fundraiser-page.dto';
@@ -12,9 +12,9 @@ import { AdminService } from './admin.service';
 import { RoleGuard } from 'src/shared/helper/role.guard';
 import { Constants } from 'src/shared/utility/constants';
 
-import { FindDonationsDto } from '../fundraiser/dto/find-donation.dto';
 import { Response } from 'express';
 import { ResponseStructure } from 'src/shared/interface/response-structure.interface';
+import { FindDonationsDto } from '../fundraiser/dto/find-donation.dto';
 
 @Controller('admin')
 @UseGuards(new RoleGuard(Constants.ROLES.ADMIN_ROLE))
@@ -89,7 +89,7 @@ export class AdminController {
   @Put('fundraiserPage/updatePage/:id')
   @ApiOperation({ summary: 'Update Page Content of Fundraiser-Page' })
   async updatePage(@Body() body: UpdateFundraiserPageDto, @Param('id', ParseUUIDPipe) id: string): Promise<ResponseStructure> {
-    return await this.fundraiserPageService.update(body, id);
+    return await this.fundraiserPageService.updateFundraiserPage(body, id);
   }
 
   @Get('/donations/download')

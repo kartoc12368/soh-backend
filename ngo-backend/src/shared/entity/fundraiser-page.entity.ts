@@ -41,7 +41,7 @@ export class FundraiserPage {
   })
   public updated_at: Date;
 
-  @OneToOne(() => Fundraiser, (fundraiser) => fundraiser.fundraiser_page, { onDelete: 'CASCADE', })
-  @JoinColumn({ name: 'fundraiser_uuid', referencedColumnName: 'fundraiser_id', })
+  @OneToOne(() => Fundraiser, (fundraiser) => fundraiser.fundraiser_page, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'fundraiser_uuid', referencedColumnName: 'fundraiser_id' })
   fundraiser: Fundraiser;
 }

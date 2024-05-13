@@ -8,19 +8,19 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(private configService: ConfigService) {
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      jwtFromRequest: ExtractJwt?.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: configService.get('JWT_SECRET'),
+      secretOrKey: configService?.get('JWT_SECRET'),
     });
   }
 
   async validate(payload: any) {
     return {
-      id: payload.fundraiserId,
-      firstName: payload.firstName,
-      email: payload.email,
-      role: payload.role,
-      profileImage: payload.profileImage,
+      id: payload?.fundraiserId,
+      firstName: payload?.firstName,
+      email: payload?.email,
+      role: payload?.role,
+      profileImage: payload?.profileImage,
     };
   }
 }
