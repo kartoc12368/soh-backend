@@ -26,15 +26,15 @@ export class DonationService {
         return { message: 'Donation received successfully' };
       }
 
-      let fundraiserPage = await this.fundRaiserPageRepository.getFundraiserPage(id);
-
+      let fundraiserPage = await this.fundRaiserPageRepository.getFundraiserPage({ where: { id: id }, relations: ['fundraiser'] });
+      console.log(fundraiserPage);
       if (!fundraiserPage) {
         throw new NotFoundException('Fundraiser Page not found');
       }
 
       //getting fundraiser to update its dashboard content
       let fundraiser: Fundraiser = await this.fundRaiserRepository.getFundraiser({ where: { fundraiser_id: fundraiserPage?.fundraiser?.fundraiser_id } });
-
+      console.log(fundraiser);
       if (!fundraiser) {
         throw new NotFoundException('Fundraiser not found, Page is expired');
       }
