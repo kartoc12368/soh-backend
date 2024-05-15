@@ -11,7 +11,7 @@ import { FundraiserPageModule } from './modules/fundraiser-page/fundraiser-page.
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true, envFilePath: '.local.env' }),
+    ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env.local' }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({

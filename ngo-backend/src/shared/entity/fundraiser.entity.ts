@@ -1,9 +1,19 @@
-import { Column, CreateDateColumn, Entity, Generated, OneToMany, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  Generated,
+  OneToMany,
+  OneToOne,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 
 import { IsNumber, IsString } from 'class-validator';
 
 import { Donation } from './donation.entity';
 import { FundraiserPage } from './fundraiser-page.entity';
+import { Constants } from '../utility/constants';
 
 @Entity()
 export class Fundraiser {
@@ -28,7 +38,11 @@ export class Fundraiser {
   @Column({ select: false })
   password: string;
 
-  @Column()
+  @Column({
+    type: 'enum',
+    enum: Constants.ROLES,
+    default: Constants.ROLES.FUNDRAISER_ROLE,
+  })
   role: string;
 
   @Column({})
