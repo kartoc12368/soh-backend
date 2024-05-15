@@ -1,12 +1,12 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 
-import { Fundraiser } from 'src/shared/entity/fundraiser.entity';
-
-import { ResponseStructure } from 'src/shared/interface/response-structure.interface';
-import { ErrorResponseUtility } from 'src/shared/utility/error-response.utility';
 import { FundraiserPageRepository } from '../fundraiser-page/fundraiser-page.repository';
 import { FundRaiserRepository } from '../fundraiser/fundraiser.repository';
 import { DonationRepository } from './donation.repository';
+
+import { Fundraiser } from 'src/shared/entity/fundraiser.entity';
+import { ResponseStructure } from 'src/shared/interface/response-structure.interface';
+import { ErrorResponseUtility } from 'src/shared/utility/error-response.utility';
 
 @Injectable()
 export class DonationService {
@@ -27,22 +27,22 @@ export class DonationService {
       }
 
       let fundraiserPage = await this.fundRaiserPageRepository.getFundraiserPage({ where: { id: id }, relations: ['fundraiser'] });
-      console.log(fundraiserPage);
       if (!fundraiserPage) {
         throw new NotFoundException('Fundraiser Page not found');
       }
 
       //getting fundraiser to update its dashboard content
       let fundraiser: Fundraiser = await this.fundRaiserRepository.getFundraiser({ where: { fundraiser_id: fundraiserPage?.fundraiser?.fundraiser_id } });
-      console.log(fundraiser);
       if (!fundraiser) {
         throw new NotFoundException('Fundraiser not found, Page is expired');
       }
 
       //checking if status is active then only fundraiser data is available in donation database
-      if (fundraiser?.status == 'active') {
-        await this.donationRepository.createDonationOnline(body, reference, fundraiser);
+      if (fundraiser?.status == 'inactive') {
+        throw new BadRequestException('Fundraiser Status is inactive');
       }
+
+      await this.donationRepository.createDonationOnline(body, reference, fundraiser);
 
       return { message: 'Donation received successfully', data: { reference: reference, id: id } };
     } catch (error) {
@@ -51,7 +51,6 @@ export class DonationService {
   }
 
   async saveDonation(body): Promise<ResponseStructure> {
-    //getting fundraiserPage using id from params if any
     try {
       //getting fundraiser to update its dashboard content
       let fundraiser: Fundraiser = await this.fundRaiserRepository.getFundraiser({ where: { fundraiser_id: body?.fundraiser?.fundraiser_id }, relations: ['fundraiser_page'] });
@@ -69,7 +68,7 @@ export class DonationService {
       }
 
       //getting existing fundraiserPage supporters and pushing new supporters
-      let supportersOfFundraiser = await this.donationRepository.getDonorNames(body?.fundraiser);
+      const supportersOfFundraiser = await this.donationRepository.getDonorNames(body?.fundraiser);
 
       const total_amount_raised = await this.donationRepository.getRaisedAmount(body?.fundraiser);
 
@@ -80,7 +79,7 @@ export class DonationService {
         total_donations: total_donations,
       });
 
-      await this.fundRaiserPageRepository.UpdateFundraiserPage(fundraiser?.fundraiser_page.id, { raised_amount: total_amount_raised, supporters: supportersOfFundraiser });
+      await this.fundRaiserPageRepository.UpdateFundraiserPage(fundraiser?.fundraiser_page?.id, { raised_amount: total_amount_raised, supporters: supportersOfFundraiser });
       return { message: 'Donation updated successfully to Page' };
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);

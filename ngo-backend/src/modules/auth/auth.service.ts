@@ -1,27 +1,27 @@
 import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { MailerService } from '@nestjs-modules/mailer';
 import { JwtService } from '@nestjs/jwt';
+import * as bcrypt from 'bcrypt';
 
 import { Fundraiser } from 'src/shared/entity/fundraiser.entity';
 
 import { FundRaiserRepository } from '../fundraiser/fundraiser.repository';
 import { ForgottenPasswordRepository } from './forgot-password.repository';
 
-import { sendEmailDto } from 'src/shared/interface/mail.interface';
-
-import * as bcrypt from 'bcrypt';
+import { SendEmailDto } from 'src/shared/interface/mail.interface';
 import { ResponseStructure } from 'src/shared/interface/response-structure.interface';
+
 import { ErrorResponseUtility } from 'src/shared/utility/error-response.utility';
-import { MailerService } from '@nestjs-modules/mailer';
 import { SendMailerUtility } from 'src/shared/utility/send-mailer.utility';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private forgottenPasswordRepository: ForgottenPasswordRepository,
-    private fundraiserRepository: FundRaiserRepository,
+    private readonly forgottenPasswordRepository: ForgottenPasswordRepository,
+    private readonly fundraiserRepository: FundRaiserRepository,
 
-    private jwtService: JwtService,
-    private mailerService: MailerService,
+    private readonly jwtService: JwtService,
+    private readonly mailerService: MailerService,
   ) {}
 
   async login(user, loginDto): Promise<ResponseStructure> {
@@ -38,13 +38,11 @@ export class AuthService {
       if (!fundraiserStatus) {
         throw new NotFoundException('Fundraiser status not found');
       }
-      console.log(fundraiser, 'h');
+
       if ((fundraiser?.role == 'FUNDRAISER' && fundraiserStatus == 'active') || fundraiser?.role == 'ADMIN') {
-        console.log(fundraiser);
         const userPassword = await this.fundraiserRepository.getFundraiser({ where: { email: fundraiser?.email }, select: ['password'] });
 
         if (fundraiser && (await bcrypt.compare(loginDto?.password, userPassword?.password))) {
-          console.log(fundraiser);
           const payload = {
             firstName: fundraiser?.firstName,
             email: fundraiser?.email,
@@ -73,38 +71,35 @@ export class AuthService {
         throw new NotFoundException('Fundraiser not found');
       }
 
-      const otpExists = await this.forgottenPasswordRepository.getOtp({ where: { email: email } });
+      const otpExists = await this.forgottenPasswordRepository.getFundraiserByOtp({ where: { email: email } });
 
       if (otpExists) {
         throw new UnauthorizedException('OTP already sent');
       }
 
-      const randomstring = Math?.random()?.toString(36)?.slice(-8);
+      const OTP = Math?.random()?.toString(36)?.slice(-8);
 
-      const body2 = {
+      const sendEmailDto: SendEmailDto = {
         firstName: fundraiser?.firstName,
-        otp: randomstring,
-      };
-
-      const dto: sendEmailDto = {
+        otp: OTP,
         recipients: [{ name: fundraiser?.firstName, address: fundraiser?.email }],
       };
 
-      await new SendMailerUtility(this.mailerService).resetPassword(dto, body2);
+      await new SendMailerUtility(this.mailerService).resetPassword(sendEmailDto);
 
-      await this.forgottenPasswordRepository.createForgottenPassword(email, randomstring);
+      await this.forgottenPasswordRepository.createForgottenPassword(email, OTP);
 
       setTimeout(async () => {
         try {
-          const user2 = await this.forgottenPasswordRepository.getOtp({ where: { email: email } });
+          const fundraiserOtp = await this.forgottenPasswordRepository.getFundraiserByOtp({ where: { email: email } });
 
-          if (!user2) {
+          if (!fundraiser) {
             throw new NotFoundException('Otp Not Found for user');
           }
 
-          await this.forgottenPasswordRepository.deleteOtp(user2);
-        } catch {
-          return true;
+          await this.forgottenPasswordRepository.deleteOtp(fundraiserOtp);
+        } catch (error) {
+          await ErrorResponseUtility.errorResponse(error);
         }
       }, 600000);
 
@@ -116,7 +111,7 @@ export class AuthService {
 
   async setNewPassword(body): Promise<ResponseStructure> {
     try {
-      const fundraiser = await this.forgottenPasswordRepository.getOtp({ where: { newPasswordToken: body?.otp } });
+      const fundraiser = await this.forgottenPasswordRepository.getFundraiserByOtp({ where: { newPasswordToken: body?.otp } });
 
       if (!fundraiser) {
         throw new NotFoundException('Invalid Otp');

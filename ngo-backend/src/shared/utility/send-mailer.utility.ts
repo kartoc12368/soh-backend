@@ -1,13 +1,12 @@
 import { MailerService } from '@nestjs-modules/mailer';
-import { sendEmailDto } from '../interface/mail.interface';
 import { sendPassword } from '../email_templates/password.html';
 import { resetPassword } from '../email_templates/reset-password.html';
 
 export class SendMailerUtility {
   constructor(private readonly mailerService: MailerService) {}
 
-  async generatePassword(dto, data) {
-    const { recipients } = dto;
+  async generatePassword(data) {
+    const { recipients } = data;
     await this.mailerService.sendMail({
       subject: `Support Our Heroes - Fundraiser Password`,
       to: recipients,
@@ -15,8 +14,8 @@ export class SendMailerUtility {
     });
   }
 
-  async resetPassword(dto, data) {
-    const { recipients } = dto;
+  async resetPassword(data) {
+    const { recipients } = data;
     await this.mailerService.sendMail({
       subject: `Support Our Heroes - Reset Password`,
       to: recipients,

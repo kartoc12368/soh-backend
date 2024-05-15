@@ -50,7 +50,6 @@ export class Donation {
   })
   payment_status: string;
 
-
   @Column({ nullable: true })
   order_id: string;
 
@@ -63,7 +62,7 @@ export class Donation {
   @Column({ nullable: true, default: null })
   payment_signature: string;
 
-  @Column({ nullable: true, type: "date" })
+  @Column({ nullable: true, type: 'date' })
   donation_date: Date;
 
   @Column({ nullable: true })

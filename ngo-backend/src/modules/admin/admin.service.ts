@@ -1,5 +1,8 @@
 import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { MailerService } from '@nestjs-modules/mailer';
+import { Between, FindOptionsWhere } from 'typeorm';
 import * as path from 'path';
+import { of } from 'rxjs';
 
 import { Donation } from 'src/shared/entity/donation.entity';
 import { Fundraiser } from 'src/shared/entity/fundraiser.entity';
@@ -8,30 +11,25 @@ import { DonationRepository } from '../donation/donation.repository';
 import { FundraiserPageRepository } from '../fundraiser-page/fundraiser-page.repository';
 import { FundRaiserRepository } from '../fundraiser/fundraiser.repository';
 
-import { ResponseStructure } from 'src/shared/interface/response-structure.interface';
 import { incrementDate } from 'src/shared/utility/date.utility';
-
-import { Between, FindOptionsWhere } from 'typeorm';
-
-import { FindDonationsDto } from '../fundraiser/dto/find-donation.dto';
-
-import { of } from 'rxjs';
-
-import { MailerService } from '@nestjs-modules/mailer';
-import { sendEmailDto } from 'src/shared/interface/mail.interface';
 import { ErrorResponseUtility } from 'src/shared/utility/error-response.utility';
 import { downloadDonationsExcel } from 'src/shared/utility/excel.utility';
 import { SendMailerUtility } from 'src/shared/utility/send-mailer.utility';
+
+import { ResponseStructure } from 'src/shared/interface/response-structure.interface';
+import { SendEmailDto } from 'src/shared/interface/mail.interface';
+
+import { FindDonationsDto } from '../fundraiser/dto/find-donation.dto';
 import { GeneratePasswordDto } from './dto/generate-password.dto';
 
 @Injectable()
 export class AdminService {
   constructor(
-    private fundraiserRepository: FundRaiserRepository,
-    private donationRepository: DonationRepository,
-    private fundraiserPageRepository: FundraiserPageRepository,
+    private readonly fundraiserRepository: FundRaiserRepository,
+    private readonly donationRepository: DonationRepository,
+    private readonly fundraiserPageRepository: FundraiserPageRepository,
 
-    private mailerService: MailerService,
+    private readonly mailerService: MailerService,
   ) {}
 
   async getAdminDashboardData(): Promise<ResponseStructure> {
@@ -99,7 +97,7 @@ export class AdminService {
       fundraiser.status = fundraiser?.status === 'active' ? 'inactive' : 'active';
 
       // Save the updated fundraiser
-      await this.fundraiserRepository.UpdateFundraiser(id, { status: fundraiser.status });
+      await this.fundraiserRepository.UpdateFundraiser(id, { status: fundraiser?.status });
 
       if (fundraiser?.status === 'active') {
         return { message: 'Status changed to active ', success: true };
@@ -145,24 +143,21 @@ export class AdminService {
 
   async generatePasswordByEmail(body): Promise<ResponseStructure> {
     try {
-      const isFundraiserExists = await this.fundraiserRepository.getFundraiser({ where: { email: body.email } });
+      const isFundraiserExists = await this.fundraiserRepository.getFundraiser({ where: { email: body?.email } });
 
       if (isFundraiserExists && isFundraiserExists?.role == 'FUNDRAISER') {
-        throw new NotFoundException('Email already in use');
+        throw new ConflictException('Email already in use');
       } else {
         //generating random password in randomPassword variable
         const randomPassword = Math?.random()?.toString(36)?.slice(-8);
 
-        const body2 = {
+        const sendEmailDto: SendEmailDto = {
           firstName: body?.firstName,
           password: randomPassword,
-        };
-
-        const dto: sendEmailDto = {
           recipients: [{ name: body.firstName, address: body.email }],
         };
 
-        await new SendMailerUtility(this.mailerService).generatePassword(dto, body2);
+        await new SendMailerUtility(this.mailerService).generatePassword(sendEmailDto);
 
         return this.createdByAdmin(body, randomPassword);
       }
@@ -174,7 +169,6 @@ export class AdminService {
   async addOfflineDonation(body): Promise<ResponseStructure> {
     try {
       //same code from donate service here admin passes data in body
-
       if (!body.email) {
         await this.donationRepository.createDonationOffline(body);
 
@@ -205,18 +199,18 @@ export class AdminService {
       }
 
       //getting existing fundraiserPage supporters and pushing new supporters
-      let supportersOfFundraiser = await this.donationRepository.getDonorNames(fundraiser);
+      const supportersOfFundraiser = await this.donationRepository.getDonorNames(fundraiser);
 
       const total_amount_raised = await this.donationRepository.getRaisedAmount(fundraiser);
 
       const total_donations = await this.donationRepository.getTotalDonor(fundraiser);
 
-      await this.fundraiserRepository.UpdateFundraiser(fundraiser.fundraiser_id, {
+      await this.fundraiserRepository.UpdateFundraiser(fundraiser?.fundraiser_id, {
         total_amount_raised: total_amount_raised,
         total_donations: total_donations,
       });
 
-      await this.fundraiserPageRepository.UpdateFundraiserPage(fundraiserPage.id, {
+      await this.fundraiserPageRepository.UpdateFundraiserPage(fundraiserPage?.id, {
         raised_amount: total_amount_raised,
         supporters: supportersOfFundraiser,
       });

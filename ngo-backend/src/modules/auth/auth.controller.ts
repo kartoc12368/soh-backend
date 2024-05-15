@@ -6,15 +6,15 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { LoginDto } from './dto/login.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 
+import { ResponseStructure } from 'src/shared/interface/response-structure.interface';
 import { Public } from 'src/shared/decorators/public.decorator';
 
-import { ResponseStructure } from 'src/shared/interface/response-structure.interface';
 import { AuthService } from './auth.service';
 
 @ApiTags('Login')
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(private readonly authService: AuthService) {}
 
   @Post('/login')
   @UseGuards(AuthGuard('local'))

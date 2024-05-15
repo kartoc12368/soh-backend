@@ -25,7 +25,7 @@ export class ForgottenPasswordRepository extends Repository<ForgottenPassword> {
     }
   }
 
-  async getOtp(obj: object) {
+  async getFundraiserByOtp(obj: object) {
     try {
       return await this.findOne(obj);
     } catch (error) {
@@ -40,5 +40,4 @@ export class ForgottenPasswordRepository extends Repository<ForgottenPassword> {
       await ErrorResponseUtility.errorResponse(error);
     }
   }
-
 }

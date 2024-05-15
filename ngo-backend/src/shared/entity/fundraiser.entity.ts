@@ -4,6 +4,7 @@ import { IsString } from 'class-validator';
 
 import { Donation } from './donation.entity';
 import { FundraiserPage } from './fundraiser-page.entity';
+import { RoleEnum } from '../enums/role.enum';
 
 @Entity()
 export class Fundraiser {
@@ -25,14 +26,13 @@ export class Fundraiser {
   @Column({ select: false })
   password: string;
 
-  @Column()
+  @Column({ type: 'enum', enum: RoleEnum, default: RoleEnum.FUNDRAISER_ROLE })
   role: string;
 
-  @Column({})
+  @Column()
   status: string;
 
   @Column({ nullable: true })
-  @IsString()
   mobile_number: string;
 
   @Column({ nullable: true })

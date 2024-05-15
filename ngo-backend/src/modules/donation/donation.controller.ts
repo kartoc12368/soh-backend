@@ -2,11 +2,10 @@ import { Body, Controller, Param, ParseUUIDPipe, Post, ValidationPipe } from '@n
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { Public } from 'src/shared/decorators/public.decorator';
+import { ResponseStructure } from 'src/shared/interface/response-structure.interface';
 
 import { DonationService } from './donation.service';
-
 import { DonateDto } from './dto/donate.dto';
-import { ResponseStructure } from 'src/shared/interface/response-structure.interface';
 
 @ApiTags('Donation')
 @Controller()

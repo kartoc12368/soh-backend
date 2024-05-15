@@ -6,22 +6,16 @@ import { JwtAuthGuard } from './shared/helper/jwt.guard';
 
 import { AppModule } from './app.module';
 
-
-async function bootstrap() {
+async function bootstrap(): Promise<any> {
   const app = await NestFactory.create(AppModule);
 
   const reflector = app.get(Reflector);
 
   const port = process.env.PORT || 3003;
 
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      transform: true,
-    }),
-  );
   app.useGlobalGuards(new JwtAuthGuard(reflector));
   app.enableCors();
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 
   //swagger setup
   const options = new DocumentBuilder()

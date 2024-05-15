@@ -2,18 +2,16 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
+import { MailerModule } from '@nestjs-modules/mailer';
 
 import { AdminModule } from '../admin/admin.module';
 import { FundraiserModule } from '../fundraiser/fundraiser.module';
 
-import { JwtStrategy } from './strategy/jwt.strategy';
-import { LocalStrategy } from './strategy/local.strategy';
-
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-
+import { JwtStrategy } from './strategy/jwt.strategy';
+import { LocalStrategy } from './strategy/local.strategy';
 import { ForgottenPasswordRepository } from './forgot-password.repository';
-import { MailerModule } from '@nestjs-modules/mailer';
 @Module({
   imports: [
     FundraiserModule,
