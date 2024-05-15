@@ -20,8 +20,14 @@ export class AuthController {
   @UseGuards(AuthGuard('local'))
   @ApiOperation({ summary: 'Login using email and password' })
   @Public()
-  async login(@Req() req, @Body(ValidationPipe) loginDto: LoginDto, @Res({ passthrough: true }) response): Promise<ResponseStructure> {
+  async login(@Req() req, @Body(ValidationPipe) loginDto: LoginDto): Promise<ResponseStructure> {
     return await this.authService.login(req?.user, loginDto);
+  }
+
+  @Get('/refreshToken')
+  @Public()
+  async refreshTokens(@Body() body): Promise<ResponseStructure> {
+    return await this.authService.refreshToken(body.refreshToken);
   }
 
   @Get('forgot-password')

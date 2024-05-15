@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { MailerService } from '@nestjs-modules/mailer';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -13,6 +13,7 @@ import { ResponseStructure } from 'src/shared/interface/response-structure.inter
 
 import { ErrorResponseUtility } from 'src/shared/utility/error-response.utility';
 import { SendMailerUtility } from 'src/shared/utility/send-mailer.utility';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
@@ -22,6 +23,7 @@ export class AuthService {
 
     private readonly jwtService: JwtService,
     private readonly mailerService: MailerService,
+    private readonly configService: ConfigService,
   ) {}
 
   async login(user, loginDto): Promise<ResponseStructure> {
@@ -51,7 +53,7 @@ export class AuthService {
             profileImage: fundraiser?.profileImage,
           };
 
-          return { message: 'Login Successful', data: { token: this.jwtService.sign(payload) } };
+          return this.issueTokens(user); // Issue tokens on login
         } else {
           throw new UnauthorizedException('Invalid Password');
         }
@@ -137,5 +139,64 @@ export class AuthService {
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }
+  }
+
+  async refreshToken(refreshToken): Promise<ResponseStructure> {
+    console.log(refreshToken);
+    if (!refreshToken) {
+      throw new UnauthorizedException('Refresh token not found');
+    }
+
+    let payload;
+    try {
+      payload = this.jwtService.verify(refreshToken, {
+        secret: this.configService.get<string>('REFRESH_TOKEN_SECRET'),
+      });
+      console.log(payload);
+    } catch (error) {
+      throw new UnauthorizedException('Invalid or expired refresh token');
+    }
+
+    const userExists = await this.fundraiserRepository.findOne({
+      where: { fundraiser_id: payload.id },
+    });
+
+    if (!userExists) {
+      throw new BadRequestException('User no longer exists');
+    }
+
+    const expiresIn = 30; // seconds
+    const expiration = Math.floor(Date.now() / 1000) + expiresIn;
+    console.log(Date.now());
+    const accessToken = this.jwtService.sign(
+      { ...payload, exp: expiration },
+      {
+        secret: this.configService.get<string>('ACCESS_TOKEN_SECRET'),
+      },
+    );
+
+    return { message: 'Access Token successfully updated', data: { token: accessToken } };
+  }
+
+  async issueTokens(fundraiser: Fundraiser): Promise<ResponseStructure> {
+    const payload = {
+      firstName: fundraiser.firstName,
+      email: fundraiser.email,
+      role: fundraiser.role,
+      fundraiserId: fundraiser.fundraiser_id,
+      profileImage: fundraiser.profileImage,
+    };
+
+    const accessToken = this.jwtService.sign(payload, {
+      secret: this.configService.get<string>('ACCESS_TOKEN_SECRET'),
+      expiresIn: '15min',
+    });
+
+    const refreshToken = this.jwtService.sign(payload, {
+      secret: this.configService.get<string>('REFRESH_TOKEN_SECRET'),
+      expiresIn: '7d',
+    });
+
+    return { message: 'Login Successful', data: { token: accessToken, refreshToken: refreshToken } };
   }
 }
