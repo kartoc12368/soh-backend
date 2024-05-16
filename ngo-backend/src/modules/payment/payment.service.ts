@@ -9,12 +9,15 @@ import crypto from 'crypto';
 import Razorpay from 'razorpay';
 import { ErrorResponseUtility } from 'src/shared/utility/error-response.utility';
 import { ResponseStructure } from 'src/shared/interface/response-structure.interface';
+import { HttpService } from '@nestjs/axios';
+import { catchError, firstValueFrom, Observable } from 'rxjs';
+import { AxiosError, AxiosResponse } from 'axios';
 
 @Injectable()
 export class PaymentService {
   constructor(
     private donationRepository: DonationRepository,
-
+    private readonly httpService: HttpService,
     private donationService: DonationService,
   ) {}
 
@@ -104,5 +107,29 @@ export class PaymentService {
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }
+  }
+
+  async findAll() {
+    const donations = await this.donationRepository.getAllDonations({ where: { payment_status: 'pending' } });
+    console.log(donations);
+    donations.forEach(async (donation) => {
+      const { data } = await firstValueFrom(
+        this.httpService
+          .get(`https://api.razorpay.com/v1/orders/${donation.order_id}`, {
+            auth: {
+              username: process?.env?.RAZORPAY_API_KEY,
+              password: process?.env?.RAZORPAY_API_SECRET,
+            },
+          })
+          .pipe(
+            catchError((error: AxiosError) => {
+              throw 'An error happened!';
+            }),
+          ),
+      );
+      if (data?.amount_due == data?.amount) {
+        await this.donationRepository.deleteDonation(donation.donation_id);
+      }
+    });
   }
 }

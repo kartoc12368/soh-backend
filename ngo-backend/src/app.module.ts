@@ -12,6 +12,7 @@ import { FundraiserModule } from './modules/fundraiser/fundraiser.module';
 import { PaymentModule } from './modules/payment/payment.module';
 
 import { TypeOrmConfigService } from './config/typeorm.config.service';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { TypeOrmConfigService } from './config/typeorm.config.service';
     AdminModule,
     FundraiserPageModule,
     PaymentModule,
+    ScheduleModule.forRoot(),
   ],
 })
 export class AppModule {}

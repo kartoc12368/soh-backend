@@ -3,17 +3,17 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsEmail, IsNotEmpty, IsNumberString, IsString } from 'class-validator';
 
 export class GeneratePasswordDto {
-  @ApiProperty()
+  @ApiProperty({ example: 'kartavya.oc@gmail.com' })
   @IsEmail()
   @IsNotEmpty()
   email: string;
 
-  @ApiProperty()
+  @ApiProperty({ example: 'Kartavya' })
   @IsString()
   @IsNotEmpty({ message: 'First name is required' })
   firstName: string;
 
-  @ApiProperty()
+  @ApiProperty({ example: '1234567890' })
   @IsString()
   @IsNotEmpty()
   @IsNumberString()

@@ -1,34 +1,36 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 import { IsDate, IsOptional, IsString } from 'class-validator';
 
 import { Type } from 'class-transformer';
+import { PaymentType } from 'src/shared/enums/payment-type.enum';
+import { PaymentStatus } from 'src/shared/enums/payment-status.enum';
 
 export class FindDonationsDto {
-  @ApiProperty()
+  @ApiPropertyOptional({ enum: PaymentType })
   @IsString()
   @IsOptional()
-  payment_option?: string;
+  payment_option: string;
 
   @IsString()
-  @ApiProperty()
+  @ApiPropertyOptional({ enum: PaymentStatus })
   @IsOptional()
-  payment_status?: string;
+  payment_status: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
   @IsDate()
   @IsOptional()
   @Type(() => Date)
-  from_date?: string;
+  from_date: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
   @IsDate()
   @Type(() => Date)
   @IsOptional()
-  to_date?: string;
+  to_date: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
   @IsOptional()
   @Type(() => Number)
-  donation_id?: number;
+  donation_id: number;
 }

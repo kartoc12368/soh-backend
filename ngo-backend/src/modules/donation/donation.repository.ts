@@ -179,4 +179,12 @@ export class DonationRepository extends Repository<Donation> {
       await ErrorResponseUtility.errorResponse(error);
     }
   }
+
+  async deleteDonation(id: string) {
+    try {
+      return await this.delete(id);
+    } catch (error) {
+      await ErrorResponseUtility.errorResponse(error);
+    }
+  }
 }

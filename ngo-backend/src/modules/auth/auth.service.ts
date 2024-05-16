@@ -91,20 +91,6 @@ export class AuthService {
 
       await this.forgottenPasswordRepository.createForgottenPassword(email, OTP);
 
-      setTimeout(async () => {
-        try {
-          const fundraiserOtp = await this.forgottenPasswordRepository.getFundraiserByOtp({ where: { email: email } });
-
-          if (!fundraiser) {
-            throw new NotFoundException('Otp Not Found for user');
-          }
-
-          await this.forgottenPasswordRepository.deleteOtp(fundraiserOtp);
-        } catch (error) {
-          await ErrorResponseUtility.errorResponse(error);
-        }
-      }, 600000);
-
       return { message: 'Email Sent successfully', success: true };
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
@@ -198,5 +184,25 @@ export class AuthService {
     });
 
     return { message: 'Login Successful', data: { token: accessToken, refreshToken: refreshToken } };
+  }
+
+  async deleteExpiredOtp() {
+    try {
+      const otpHistory = await this.forgottenPasswordRepository.getAllOtp();
+
+      otpHistory.forEach(async (otp) => {
+        var dateUTC = new Date(otp.created_at).getTime();
+        var dateIST = new Date(dateUTC);
+        //date shifting for IST timezone (+5 hours and 30 minutes)
+        dateIST.setHours(dateIST.getHours() + 5);
+        dateIST.setMinutes(dateIST.getMinutes() + 45);
+        console.log(dateIST.toLocaleString());
+        if (dateIST.toLocaleString() < new Date().toLocaleString()) {
+          await this.forgottenPasswordRepository.deleteOtp(otp);
+        }
+      });
+    } catch (error) {
+      console.log(error);
+    }
   }
 }

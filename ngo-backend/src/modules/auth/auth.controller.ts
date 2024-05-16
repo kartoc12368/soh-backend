@@ -1,15 +1,16 @@
-import { Body, Controller, Get, Post, Req, Res, UseGuards, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Get, Headers, Post, Req, UseGuards, ValidationPipe } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { LoginDto } from './dto/login.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 
-import { ResponseStructure } from 'src/shared/interface/response-structure.interface';
 import { Public } from 'src/shared/decorators/public.decorator';
+import { ResponseStructure } from 'src/shared/interface/response-structure.interface';
 
 import { AuthService } from './auth.service';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 @ApiTags('Login')
 @Controller('auth')
@@ -25,9 +26,10 @@ export class AuthController {
   }
 
   @Get('/refreshToken')
+  @ApiOperation({ summary: 'Get access token using refresh token' })
   @Public()
-  async refreshTokens(@Body() body): Promise<ResponseStructure> {
-    return await this.authService.refreshToken(body.refreshToken);
+  async refreshTokens(@Headers('refreshToken') refreshToken: string): Promise<ResponseStructure> {
+    return await this.authService.refreshToken(refreshToken);
   }
 
   @Get('forgot-password')
@@ -43,5 +45,10 @@ export class AuthController {
   @Public()
   async setNewPassword(@Body(ValidationPipe) body: ResetPasswordDto): Promise<ResponseStructure> {
     return await this.authService.setNewPassword(body);
+  }
+
+  @Cron(CronExpression.EVERY_10_MINUTES)
+  async deleteExpiredOtp() {
+    return await this.authService.deleteExpiredOtp();
   }
 }

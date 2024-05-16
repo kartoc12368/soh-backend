@@ -40,4 +40,12 @@ export class ForgottenPasswordRepository extends Repository<ForgottenPassword> {
       await ErrorResponseUtility.errorResponse(error);
     }
   }
+
+  async getAllOtp(obj?: object) {
+    try {
+      return await this.find(obj);
+    } catch (error) {
+      await ErrorResponseUtility.errorResponse(error);
+    }
+  }
 }

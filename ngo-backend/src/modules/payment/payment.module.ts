@@ -5,8 +5,10 @@ import { PaymentController } from './payment.controller';
 
 import { DonationModule } from '../donation/donation.module';
 
+import { HttpModule } from '@nestjs/axios';
+
 @Module({
-  imports: [forwardRef(() => DonationModule)],
+  imports: [forwardRef(() => DonationModule), HttpModule],
   controllers: [PaymentController],
   providers: [PaymentService],
   exports: [PaymentService],
