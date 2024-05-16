@@ -142,40 +142,40 @@ export class AuthService {
   }
 
   async refreshToken(refreshToken): Promise<ResponseStructure> {
-    console.log(refreshToken);
-    if (!refreshToken) {
-      throw new UnauthorizedException('Refresh token not found');
-    }
-
-    let payload;
     try {
-      payload = this.jwtService.verify(refreshToken, {
+      if (!refreshToken) {
+        throw new UnauthorizedException('Refresh token not found');
+      }
+
+      const fundraiser = this.jwtService.verify(refreshToken, {
         secret: this.configService.get<string>('REFRESH_TOKEN_SECRET'),
       });
-      console.log(payload);
-    } catch (error) {
-      throw new UnauthorizedException('Invalid or expired refresh token');
-    }
 
-    const userExists = await this.fundraiserRepository.findOne({
-      where: { fundraiser_id: payload.id },
-    });
+      const payload = {
+        firstName: fundraiser.firstName,
+        email: fundraiser.email,
+        role: fundraiser.role,
+        fundraiserId: fundraiser.fundraiserId,
+        profileImage: fundraiser.profileImage,
+      };
 
-    if (!userExists) {
-      throw new BadRequestException('User no longer exists');
-    }
+      const userExists = await this.fundraiserRepository.findOne({
+        where: { fundraiser_id: payload.fundraiserId },
+      });
 
-    const expiresIn = 30; // seconds
-    const expiration = Math.floor(Date.now() / 1000) + expiresIn;
-    console.log(Date.now());
-    const accessToken = this.jwtService.sign(
-      { ...payload, exp: expiration },
-      {
+      if (!userExists) {
+        throw new BadRequestException('User no longer exists');
+      }
+
+      const accessToken = this.jwtService.sign(payload, {
         secret: this.configService.get<string>('ACCESS_TOKEN_SECRET'),
-      },
-    );
+        expiresIn: '15min',
+      });
 
-    return { message: 'Access Token successfully updated', data: { token: accessToken } };
+      return { message: 'Access Token successfully updated', data: { token: accessToken } };
+    } catch (error) {
+      await ErrorResponseUtility.errorResponse(error);
+    }
   }
 
   async issueTokens(fundraiser: Fundraiser): Promise<ResponseStructure> {
