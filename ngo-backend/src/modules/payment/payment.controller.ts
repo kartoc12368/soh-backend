@@ -29,7 +29,7 @@ export class PaymentController {
     return await this.paymentService.paymentVerification(body, res, query);
   }
 
-  @Cron(CronExpression.EVERY_10_SECONDS)
+  @Cron(CronExpression.EVERY_30_MINUTES_BETWEEN_9AM_AND_5PM)
   async findAll() {
     await this.paymentService.findAll();
   }

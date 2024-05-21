@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Post, Put, Req, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Delete, FileTypeValidator, Get, Param, ParseFilePipe, ParseUUIDPipe, Post, Put, Req, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 
@@ -24,7 +24,16 @@ export class FundraiserPageController {
   @UseGuards(new RoleGuard(RoleEnum.FUNDRAISER_ROLE), OwnershipGuard)
   @UseInterceptors(FileInterceptor('file', storageForFundraiserPage))
   @ApiOperation({ summary: 'Upload Image By Fundraiser for the page' })
-  async uploadFile(@UploadedFile() file, @Param('id', ParseUUIDPipe) PageId: string): Promise<ResponseStructure> {
+  async uploadFile(
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [new FileTypeValidator({ fileType: '.(png|jpeg|jpg)' })],
+      }),
+    )
+    file: Express.Multer.File,
+
+    @Param('id', ParseUUIDPipe) PageId: string,
+  ): Promise<ResponseStructure> {
     console.log(file.filename);
     return await this.fundraiserPageService.uploadFile(file, PageId);
   }

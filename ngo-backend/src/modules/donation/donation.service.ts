@@ -23,7 +23,7 @@ export class DonationService {
       if (!id) {
         await this.donationRepository.createDonationOnline(body, reference);
 
-        return { message: 'Donation received successfully' };
+        return { message: 'Donation received successfully', data: { reference: reference } };
       }
 
       let fundraiserPage = await this.fundRaiserPageRepository.getFundraiserPage({ where: { id: id }, relations: ['fundraiser'] });

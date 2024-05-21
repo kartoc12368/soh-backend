@@ -76,7 +76,7 @@ export class AuthService {
       const otpExists = await this.forgottenPasswordRepository.getFundraiserByOtp({ where: { email: email } });
 
       if (otpExists) {
-        throw new UnauthorizedException('OTP already sent');
+        return { message: 'Email Already Sent', success: true };
       }
 
       const OTP = Math?.random()?.toString(36)?.slice(-8);

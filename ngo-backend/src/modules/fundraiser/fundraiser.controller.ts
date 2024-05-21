@@ -1,6 +1,6 @@
-import { Body, Controller, Get, Param, Post, Put, Query, Req, Res, UploadedFile, UseGuards, UseInterceptors, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, FileTypeValidator, Get, Param, ParseFilePipe, Post, Put, Query, Req, Res, UploadedFile, UseGuards, UseInterceptors, ValidationPipe } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiOperation, ApiResponse, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { FindDonationsDto } from './dto/find-donation.dto';
@@ -10,9 +10,9 @@ import { Public } from 'src/shared/decorators/public.decorator';
 import { RoleGuard } from 'src/shared/helper/role.guard';
 import { storageForProfileImages } from 'src/shared/utility/storage.utility';
 
-import { FundraiserService } from './fundraiser.service';
-import { ResponseStructure } from 'src/shared/interface/response-structure.interface';
 import { RoleEnum } from 'src/shared/enums/role.enum';
+import { ResponseStructure } from 'src/shared/interface/response-structure.interface';
+import { FundraiserService } from './fundraiser.service';
 
 @Controller('fundRaiser')
 @ApiTags('FundRaiser')
@@ -60,7 +60,15 @@ export class FundraiserController {
   @UseGuards(new RoleGuard(RoleEnum.FUNDRAISER_ROLE))
   @UseInterceptors(FileInterceptor('file', storageForProfileImages))
   @ApiOperation({ summary: 'Upload Profile Image' })
-  async uploadProfileImage(@UploadedFile() file, @Req() req): Promise<ResponseStructure> {
+  async uploadProfileImage(
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [new FileTypeValidator({ fileType: '.(png|jpeg|jpg)' })],
+      }),
+    )
+    file: Express.Multer.File,
+    @Req() req,
+  ): Promise<ResponseStructure> {
     return await this.fundraiserService.uploadProfileImage(req.user, file);
   }
 

@@ -5,7 +5,7 @@ export async function sendPassword(data) {
   <html lang="en-US">
     <head>
       <meta content="text/html; charset=utf-8" http-equiv="Content-Type" />
-      <title>Reset Password</title>
+      <title>Fundraiser Credentials</title>
       <meta name="description" content="New Account Email Template." />
       <style type="text/css">
         a:hover {
@@ -172,7 +172,7 @@ export async function sendPassword(data) {
                           <strong class="st1">Name</strong>${data.firstName}
                           <strong class="st2">Password</strong>${data.password}
                         </p>
-  
+                        <a href="http://localhost:3000/login"></a>
                       </td>
                     </tr>
                     <tr>

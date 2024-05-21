@@ -6,18 +6,15 @@ import { DonationService } from '../donation/donation.service';
 
 import crypto from 'crypto';
 
+import axios from 'axios';
 import Razorpay from 'razorpay';
-import { ErrorResponseUtility } from 'src/shared/utility/error-response.utility';
 import { ResponseStructure } from 'src/shared/interface/response-structure.interface';
-import { HttpService } from '@nestjs/axios';
-import { catchError, firstValueFrom, Observable } from 'rxjs';
-import { AxiosError, AxiosResponse } from 'axios';
+import { ErrorResponseUtility } from 'src/shared/utility/error-response.utility';
 
 @Injectable()
 export class PaymentService {
   constructor(
     private donationRepository: DonationRepository,
-    private readonly httpService: HttpService,
     private donationService: DonationService,
   ) {}
 
@@ -93,7 +90,7 @@ export class PaymentService {
           payment_id: razorpay_payment_id,
         });
 
-        if (id) {
+        if (id != 'undefined') {
           res.redirect(`http://localhost:3000/paymentsuccess/${id}/?reference=${razorpay_payment_id}`);
           await this.donationService.saveDonation(donation);
         } else {
@@ -113,22 +110,14 @@ export class PaymentService {
     const donations = await this.donationRepository.getAllDonations({ where: { payment_status: 'pending' } });
     console.log(donations);
     donations.forEach(async (donation) => {
-      const { data } = await firstValueFrom(
-        this.httpService
-          .get(`https://api.razorpay.com/v1/orders/${donation.order_id}`, {
-            auth: {
-              username: process?.env?.RAZORPAY_API_KEY,
-              password: process?.env?.RAZORPAY_API_SECRET,
-            },
-          })
-          .pipe(
-            catchError((error: AxiosError) => {
-              throw 'An error happened!';
-            }),
-          ),
-      );
+      const { data } = await axios({
+        method: 'GET',
+        url: 'https://api.razorpay.com/v1/orders',
+        auth: { username: process?.env?.RAZORPAY_API_KEY, password: process?.env?.RAZORPAY_API_SECRET },
+      });
       if (data?.amount_due == data?.amount) {
-        await this.donationRepository.deleteDonation(donation.donation_id);
+        await this.donationRepository.UpdateOneDonation(donation?.donation_id, { payment_status: 'failed' });
+        // await this.donationRepository.deleteDonation(donation.donation_id);
       }
     });
   }

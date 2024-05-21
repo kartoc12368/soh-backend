@@ -32,7 +32,7 @@ export class AuthController {
     return await this.authService.refreshToken(refreshToken);
   }
 
-  @Get('forgot-password')
+  @Post('forgot-password')
   @ApiOperation({ summary: 'Forgot Password to get OTP on mail' })
   @Public()
   public async sendEmailForgotPassword(@Body(ValidationPipe) body: ForgotPasswordDto): Promise<ResponseStructure> {

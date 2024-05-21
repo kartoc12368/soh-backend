@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import * as path from 'path';
 import { of } from 'rxjs';
@@ -130,6 +130,9 @@ export class FundraiserService {
 
   async findProfileImage(res, imagename): Promise<any> {
     try {
+      if (imagename == 'undefined') {
+        throw new BadRequestException('imagename is undefined');
+      }
       return of(res.sendFile(path.join(process.cwd(), 'uploads/profileImages/' + imagename)));
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
