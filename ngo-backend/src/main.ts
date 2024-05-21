@@ -1,10 +1,12 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory, Reflector } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import helmet from 'helmet';
 
 import { JwtAuthGuard } from './shared/helper/jwt.guard';
 
 import { AppModule } from './app.module';
+import { ThrottlerGuard } from '@nestjs/throttler';
 
 async function bootstrap(): Promise<any> {
   const app = await NestFactory.create(AppModule);
@@ -14,6 +16,7 @@ async function bootstrap(): Promise<any> {
   const port = process.env.PORT || 3003;
 
   app.useGlobalGuards(new JwtAuthGuard(reflector));
+  app.use(helmet());
   app.enableCors();
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 

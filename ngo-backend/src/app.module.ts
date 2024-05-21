@@ -13,6 +13,8 @@ import { PaymentModule } from './modules/payment/payment.module';
 
 import { TypeOrmConfigService } from './config/typeorm.config.service';
 import { ScheduleModule } from '@nestjs/schedule';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 
 @Module({
   imports: [
@@ -38,6 +40,12 @@ import { ScheduleModule } from '@nestjs/schedule';
         },
       },
     }),
+    ThrottlerModule.forRoot([
+      {
+        ttl: Number(process.env.THROTTLE_TTL),
+        limit: Number(process.env.THROTTLE_LIMIT),
+      },
+    ]),
     AuthModule,
     FundraiserModule,
     DonationModule,
@@ -45,6 +53,12 @@ import { ScheduleModule } from '@nestjs/schedule';
     FundraiserPageModule,
     PaymentModule,
     ScheduleModule.forRoot(),
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
   ],
 })
 export class AppModule {}
