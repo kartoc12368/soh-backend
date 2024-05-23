@@ -1,8 +1,10 @@
+import { MailerModule } from '@nestjs-modules/mailer';
 import { Module } from '@nestjs/common';
-import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { MailerModule } from '@nestjs-modules/mailer';
+import { APP_GUARD } from '@nestjs/core';
+import { ScheduleModule } from '@nestjs/schedule';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 
 import { AdminModule } from './modules/admin/admin.module';
 import { AuthModule } from './modules/auth/auth.module';
@@ -12,9 +14,6 @@ import { FundraiserModule } from './modules/fundraiser/fundraiser.module';
 import { PaymentModule } from './modules/payment/payment.module';
 
 import { TypeOrmConfigService } from './config/typeorm.config.service';
-import { ScheduleModule } from '@nestjs/schedule';
-import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
-import { APP_GUARD } from '@nestjs/core';
 
 @Module({
   imports: [
@@ -32,13 +31,6 @@ import { APP_GUARD } from '@nestjs/core';
         },
       },
       defaults: { from: { name: process.env?.APP_NAME, address: process.env?.MAIL_USER } },
-      template: {
-        dir: 'src/shared/email_templates',
-        adapter: new HandlebarsAdapter(),
-        options: {
-          strict: true,
-        },
-      },
     }),
     ThrottlerModule.forRoot([
       {

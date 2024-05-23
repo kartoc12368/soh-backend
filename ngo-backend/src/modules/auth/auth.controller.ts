@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Headers, Post, Req, UseGuards, ValidationPipe } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Cron, CronExpression } from '@nestjs/schedule';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { LoginDto } from './dto/login.dto';
@@ -10,7 +11,6 @@ import { Public } from 'src/shared/decorators/public.decorator';
 import { ResponseStructure } from 'src/shared/interface/response-structure.interface';
 
 import { AuthService } from './auth.service';
-import { Cron, CronExpression } from '@nestjs/schedule';
 
 @ApiTags('Login')
 @Controller('auth')

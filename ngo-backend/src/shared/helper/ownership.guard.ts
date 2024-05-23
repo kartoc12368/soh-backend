@@ -3,10 +3,6 @@ import { CanActivate, ExecutionContext, ForbiddenException, Injectable, NotFound
 import { FundraiserPageRepository } from 'src/modules/fundraiser-page/fundraiser-page.repository';
 import { FundRaiserRepository } from 'src/modules/fundraiser/fundraiser.repository';
 
-import { FundraiserPage } from '../entity/fundraiser-page.entity';
-
-import { DataSource } from 'typeorm';
-
 import { Request } from 'express';
 
 import { Observable } from 'rxjs';
@@ -17,7 +13,6 @@ export class OwnershipGuard implements CanActivate {
   constructor(
     private readonly fundraiserPageRepository: FundraiserPageRepository,
     private readonly fundraiserRepository: FundRaiserRepository,
-    private readonly dataSource: DataSource,
   ) {}
 
   canActivate(context: ExecutionContext): boolean | Promise<boolean> | Observable<boolean> {

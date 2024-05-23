@@ -21,6 +21,9 @@ import { SendEmailDto } from 'src/shared/interface/mail.interface';
 
 import { FindDonationsDto } from '../fundraiser/dto/find-donation.dto';
 import { GeneratePasswordDto } from './dto/generate-password.dto';
+import { AddOfflineDonationDto } from './dto/offline-donation.dto';
+import { CreateFundraiserPageAdminDto } from './dto/create-fundraiserpage-admin.dto';
+import { Response } from 'express';
 
 @Injectable()
 export class AdminService {
@@ -141,7 +144,7 @@ export class AdminService {
     }
   }
 
-  async generatePasswordByEmail(body): Promise<ResponseStructure> {
+  async generatePasswordByEmail(body: GeneratePasswordDto): Promise<ResponseStructure> {
     try {
       const isFundraiserExists = await this.fundraiserRepository.getFundraiser({ where: { email: body?.email } });
 
@@ -166,10 +169,10 @@ export class AdminService {
     }
   }
 
-  async addOfflineDonation(body): Promise<ResponseStructure> {
+  async addOfflineDonation(body: AddOfflineDonationDto): Promise<ResponseStructure> {
     try {
       //same code from donate service here admin passes data in body
-      if (!body.email) {
+      if (!body?.email) {
         await this.donationRepository.createDonationOffline(body);
 
         return { message: 'Donation added successfully' };
@@ -221,7 +224,7 @@ export class AdminService {
     }
   }
 
-  async createFundraiserPageByEmail(body): Promise<ResponseStructure> {
+  async createFundraiserPageByEmail(body: CreateFundraiserPageAdminDto): Promise<ResponseStructure> {
     try {
       let fundRaiser = await this.fundraiserRepository.findFundRaiserByEmail(body?.email);
 
@@ -245,41 +248,7 @@ export class AdminService {
     }
   }
 
-  // async updateFundraiserPage(body, files, PageId): Promise<ResponseStructure> {
-  //   try {
-  //     //finding fundraiserPage using id from parmameters and updating data using body data
-  //     let fundRaiserPageNew = await this.fundraiserPageRepository.getFundraiserPage({
-  //       where: { id: PageId },
-  //     });
-
-  //     if (!fundRaiserPageNew) {
-  //       throw new NotFoundException('Fundraiser Page not found');
-  //     }
-
-  //     await this.fundraiserPageRepository.UpdateFundraiserPage(PageId, body);
-
-  //     //accessing existing galley of fundraiserPage and pushing new uploaded files
-  //     const fundraiserGallery = fundRaiserPageNew?.gallery;
-
-  //     // if (!files?.length) {
-  //     //   throw new NotFoundException("File not Uploaded");
-  //     // }
-
-  //     for (let i = 0; i < files?.length; i++) {
-  //       fundraiserGallery?.push(files[i]);
-  //     }
-
-  //     //saving new data of fundraiserPage with gallery
-  //     await this.fundraiserPageRepository.UpdateFundraiserPage(PageId, {
-  //       gallery: fundraiserGallery,
-  //     });
-  //     return { message: 'FundraiserPage updated successfully' };
-  //   } catch (error) {
-  //     await ErrorResponseUtility.errorResponse(error);
-  //   }
-  // }
-
-  async deleteFundraiserPage(id): Promise<ResponseStructure> {
+  async deleteFundraiserPage(id: string): Promise<ResponseStructure> {
     try {
       await this.fundraiserPageRepository.deleteFundraiserPage(id);
       return { message: 'Fundraiser page deleted successfully' };
@@ -288,7 +257,7 @@ export class AdminService {
     }
   }
 
-  async downloadExcelforDonations(res): Promise<any> {
+  async downloadExcelforDonations(res: Response): Promise<any> {
     try {
       const donations = await this.donationRepository.getAllDonations();
 

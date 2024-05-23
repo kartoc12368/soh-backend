@@ -1,4 +1,5 @@
 import { MailerService } from '@nestjs-modules/mailer';
+
 import { sendPassword } from '../email_templates/password.html';
 import { resetPassword } from '../email_templates/reset-password.html';
 

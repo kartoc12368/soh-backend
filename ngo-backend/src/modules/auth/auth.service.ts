@@ -165,25 +165,29 @@ export class AuthService {
   }
 
   async issueTokens(fundraiser: Fundraiser): Promise<ResponseStructure> {
-    const payload = {
-      firstName: fundraiser.firstName,
-      email: fundraiser.email,
-      role: fundraiser.role,
-      fundraiserId: fundraiser.fundraiser_id,
-      profileImage: fundraiser.profileImage,
-    };
+    try {
+      const payload = {
+        firstName: fundraiser.firstName,
+        email: fundraiser.email,
+        role: fundraiser.role,
+        fundraiserId: fundraiser.fundraiser_id,
+        profileImage: fundraiser.profileImage,
+      };
 
-    const accessToken = this.jwtService.sign(payload, {
-      secret: this.configService.get<string>('ACCESS_TOKEN_SECRET'),
-      expiresIn: '15min',
-    });
+      const accessToken = this.jwtService.sign(payload, {
+        secret: this.configService.get<string>('ACCESS_TOKEN_SECRET'),
+        expiresIn: '15min',
+      });
 
-    const refreshToken = this.jwtService.sign(payload, {
-      secret: this.configService.get<string>('REFRESH_TOKEN_SECRET'),
-      expiresIn: '7d',
-    });
+      const refreshToken = this.jwtService.sign(payload, {
+        secret: this.configService.get<string>('REFRESH_TOKEN_SECRET'),
+        expiresIn: '7d',
+      });
 
-    return { message: 'Login Successful', data: { token: accessToken, refreshToken: refreshToken } };
+      return { message: 'Login Successful', data: { token: accessToken, refreshToken: refreshToken } };
+    } catch (error) {
+      await ErrorResponseUtility.errorResponse(error);
+    }
   }
 
   async deleteExpiredOtp() {
@@ -203,6 +207,7 @@ export class AuthService {
       });
     } catch (error) {
       console.log(error);
+      await ErrorResponseUtility.errorResponse(error);
     }
   }
 }
