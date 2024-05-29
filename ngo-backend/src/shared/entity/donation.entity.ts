@@ -4,6 +4,7 @@ import { Fundraiser } from './fundraiser.entity';
 
 import { PaymentStatus } from '../enums/payment-status.enum';
 import { PaymentType } from '../enums/payment-type.enum';
+import { ProjectName } from '../enums/project.enum';
 
 @Entity()
 export class Donation {
@@ -18,6 +19,12 @@ export class Donation {
 
   @Column({ nullable: true })
   donor_name: string;
+
+  @Column({ nullable: true })
+  donor_firstName: string;
+
+  @Column({ nullable: true })
+  donor_lastName: string;
 
   @Column({ nullable: true })
   pan: string;
@@ -83,11 +90,22 @@ export class Donation {
   @Column({ nullable: true })
   donor_pincode: number;
 
-  @Column({ nullable: true })
+  @Column({
+    nullable: true,
+    type: 'enum',
+    enum: {
+      No: 'No',
+      Yes: 'Yes',
+    },
+    default: 'No',
+  })
   certificate: string;
 
   @Column({ nullable: true })
   reference_payment: string;
+
+  @Column({ nullable: true, type: 'enum', enum: ProjectName })
+  project_name: string;
 
   @CreateDateColumn({
     type: 'timestamp',

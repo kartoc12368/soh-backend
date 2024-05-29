@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 
-import { DonationRepository } from '../donation/donation.repository';
+import { DonationRepository } from '../../donation/donation.repository';
 
-import { DonationService } from '../donation/donation.service';
+import { DonationService } from '../../donation/donation.service';
 
 import crypto from 'crypto';
 
@@ -12,7 +12,7 @@ import { ResponseStructure } from 'src/shared/interface/response-structure.inter
 import { ErrorResponseUtility } from 'src/shared/utility/error-response.utility';
 
 @Injectable()
-export class PaymentService {
+export class RazorpayService {
   constructor(
     private donationRepository: DonationRepository,
     private donationService: DonationService,

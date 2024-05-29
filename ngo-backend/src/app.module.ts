@@ -11,9 +11,11 @@ import { AuthModule } from './modules/auth/auth.module';
 import { DonationModule } from './modules/donation/donation.module';
 import { FundraiserPageModule } from './modules/fundraiser-page/fundraiser-page.module';
 import { FundraiserModule } from './modules/fundraiser/fundraiser.module';
-import { PaymentModule } from './modules/payment/payment.module';
 
 import { TypeOrmConfigService } from './config/typeorm.config.service';
+import { PayUModule } from './modules/payment/payu/payu.module';
+import { RazorpayModule } from './modules/payment/razorpay/razorpay.module';
+import { EasypayModule } from './modules/payment/easypay/easypay.module';
 
 @Module({
   imports: [
@@ -43,8 +45,10 @@ import { TypeOrmConfigService } from './config/typeorm.config.service';
     DonationModule,
     AdminModule,
     FundraiserPageModule,
-    PaymentModule,
+    RazorpayModule,
+    EasypayModule,
     ScheduleModule.forRoot(),
+    PayUModule,
   ],
   providers: [
     {

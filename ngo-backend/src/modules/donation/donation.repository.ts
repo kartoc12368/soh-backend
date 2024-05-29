@@ -106,6 +106,7 @@ export class DonationRepository extends Repository<Donation> {
   async createDonationOnline(body, reference, fundraiser?) {
     try {
       let donation: Donation = new Donation();
+      console.log(body);
 
       donation = { ...body, donation_date: new Date(), reference_payment: reference, fundraiser: fundraiser };
 

@@ -12,7 +12,6 @@ import { DonateDto } from './dto/donate.dto';
 export class DonationController {
   constructor(private readonly donationService: DonationService) {}
 
-  //donate without fundraiser-page
   @Post('/donate')
   @ApiOperation({ summary: 'Donate Generally to NGO' })
   @Public()
@@ -20,7 +19,6 @@ export class DonationController {
     return await this.donationService.donate(body);
   }
 
-  //donate with reference from fundraiser-page
   @Post('/fundraiser-page/donate/:id')
   @ApiOperation({ summary: 'Donate Specifically to Fundraiser' })
   @Public()

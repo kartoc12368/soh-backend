@@ -1,36 +1,36 @@
 import { Body, Controller, Param, Post, Query, Res } from '@nestjs/common';
 
-import { PaymentService } from './payment.service';
-
 import { Public } from 'src/shared/decorators/public.decorator';
 
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { PaymentDto } from './dto/payment.dto';
+import { PaymentDto } from '../dto/payment.dto';
 import { ResponseStructure } from 'src/shared/interface/response-structure.interface';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { RazorpayService } from './razorpay.service';
 
 @ApiTags('Payment')
 @Controller('payment')
-export class PaymentController {
-  constructor(private readonly paymentService: PaymentService) {}
+export class RazorpayController {
+  constructor(private readonly razorpayService: RazorpayService) {}
 
   @Post('/checkout/:reference')
   @ApiOperation({ summary: 'Checkout page for generating order id' })
   @Public()
   async checkout(@Body() body: PaymentDto, @Param('reference') reference: string): Promise<ResponseStructure> {
     console.log(reference);
-    return await this.paymentService.checkout(body?.amount, reference);
+    return await this.razorpayService.checkout(body?.amount, reference);
   }
 
   @Post('/paymentVerfications')
   @ApiOperation({ summary: 'Payment verification and payment status update  ' })
   @Public()
   async paymentVerfications(@Body() body, @Res() res, @Query() query): Promise<ResponseStructure> {
-    return await this.paymentService.paymentVerification(body, res, query);
+    return await this.razorpayService.paymentVerification(body, res, query);
   }
 
   @Cron(CronExpression.EVERY_30_MINUTES_BETWEEN_9AM_AND_5PM)
+  // @Cron(CronExpression.EVERY_30_SECONDS)
   async findAll() {
-    await this.paymentService.findAll();
+    await this.razorpayService.findAll();
   }
 }

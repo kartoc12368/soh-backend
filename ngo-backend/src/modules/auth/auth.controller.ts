@@ -39,7 +39,6 @@ export class AuthController {
     return await this.authService.sendEmailForgotPassword(body?.email);
   }
 
-  //verify otp and update password
   @Post('reset-password')
   @ApiOperation({ summary: 'Reset Password using mail OTP' })
   @Public()
