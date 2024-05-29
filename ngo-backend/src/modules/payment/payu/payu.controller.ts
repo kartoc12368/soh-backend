@@ -7,7 +7,7 @@ import { ResponseStructure } from 'src/shared/interface/response-structure.inter
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { PayUService } from './payu.service';
 
-@ApiTags('Payment')
+@ApiTags('Payu')
 @Controller('payu')
 export class PayUController {
   constructor(private readonly payUService: PayUService) {}
@@ -15,21 +15,18 @@ export class PayUController {
   @Post('/hash')
   @Public()
   async getHash(@Body() body) {
-    console.log('hello');
     return await this.payUService.getHash(body);
   }
 
   @Post('/success')
   @Public()
   async paymentSuccess(@Body() body, @Res() res) {
-    console.log(body);
     res.redirect('http://localhost:3000/login');
   }
 
   @Post('/failed')
   @Public()
   async paymentFailed(@Body() body, @Res() res) {
-    console.log(body);
     res.redirect('http://localhost:3000/donate');
   }
 }

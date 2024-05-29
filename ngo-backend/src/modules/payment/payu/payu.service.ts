@@ -87,7 +87,7 @@ export class PayUService {
 
       return { message: 'Transaction Initialized', data: { hash: hash, transactionId: pd.txnid } };
     } catch (error) {
-      await new ErrorResponseUtility();
+      await ErrorResponseUtility.errorResponse(error);
     }
   }
 }

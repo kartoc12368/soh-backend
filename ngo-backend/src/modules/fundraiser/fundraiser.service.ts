@@ -87,8 +87,7 @@ export class FundraiserService {
 
       return { message: 'Fundraiser Updated Successfully' };
     } catch (error) {
-      console.log(error);
-      // await ErrorResponseUtility.errorResponse(error);
+      await ErrorResponseUtility.errorResponse(error);
     }
   }
 
