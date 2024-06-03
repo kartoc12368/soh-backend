@@ -1,30 +1,41 @@
+import { MailerService } from '@nestjs-modules/mailer';
 import { Injectable } from '@nestjs/common';
 import * as crypto from 'crypto';
+import e from 'express';
+import { DonationRepository } from 'src/modules/donation/donation.repository';
+import { SendEmailDto } from 'src/shared/interface/mail.interface';
 import { ErrorResponseUtility } from 'src/shared/utility/error-response.utility';
+import { SendMailerUtility } from 'src/shared/utility/send-mailer.utility';
 
 @Injectable()
 export class EasypayService {
   private merchantId: string;
   private encryptionKey: string;
-  private subMerchantId: number;
+  private subMerchantId: string;
   private paymode: string;
   private returnUrl: string;
 
-  constructor() {
+  constructor(
+    private donationRepository: DonationRepository,
+    private readonly mailerService: MailerService,
+  ) {
     this.merchantId = '100011';
     this.encryptionKey = '1000060000000000';
-    this.subMerchantId = 1234;
+    this.subMerchantId = '1234';
     this.paymode = '9';
     this.returnUrl = 'https://merchant.url/return.aspx';
   }
 
   async redirectUrl(res, body) {
+    console.log(body);
     try {
-      const amount = String(body?.amount) || '200';
+      const amount = '200';
+
+      const { mobileNumber, email } = body;
 
       // Include the payment processing logic
       const reference_no = Math.floor(Math.random() * 1000000);
-      const payment_url = await this.getPaymentUrl(amount, String(reference_no), null);
+      const payment_url = await this.getPaymentUrl(amount, String(reference_no), mobileNumber, email);
       console.log('payment_url:' + payment_url);
 
       // Redirect the user to the payment URL
@@ -64,6 +75,16 @@ export class EasypayService {
 
       const encryptedMessage = crypto.createHash('sha512').update(verificationKey).digest('hex');
       if (encryptedMessage === data.RS) {
+        const donation = await this.donationRepository.getOneDonation({ where: { reference: data?.Unique_Ref_Number } });
+
+        const sendEmailDto: SendEmailDto = {
+          firstName: donation?.donor_firstName,
+          recipients: [{ name: donation?.donor_firstName, address: donation?.donor_email }],
+          data: donation,
+        };
+
+        await new SendMailerUtility(this.mailerService).transactionSuccess(sendEmailDto);
+
         return true;
       } else {
         return false;
@@ -72,11 +93,11 @@ export class EasypayService {
       return false;
     }
   }
-  async getPaymentUrl(amount, referenceNo, optionalField = null) {
+  async getPaymentUrl(amount, referenceNo, mobileNumber, email) {
     try {
       const mandatoryField = await this.getMandatoryField(amount, referenceNo);
       console.log(mandatoryField);
-      const optionalFieldValue = await this.getOptionalField(optionalField);
+      const optionalFieldValue = await this.getOptionalField(mobileNumber, email);
       console.log('optionalFieldValue: ' + optionalFieldValue);
 
       const amountValue = await this.getAmount(amount);
@@ -84,19 +105,30 @@ export class EasypayService {
       const referenceNoValue = await this.getReferenceNo(referenceNo);
       console.log('referenceNoValue: ' + referenceNoValue);
 
-      const paymentUrl = await this.generatePaymentUrl(mandatoryField, optionalFieldValue, amountValue, referenceNoValue);
+      const paymentUrl = await this.generatePaymentUrl(mandatoryField, optionalFieldValue, amount, referenceNo, email, mobileNumber);
       return paymentUrl;
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }
   }
 
-  async generatePaymentUrl(mandatoryField, optionalField, amount, referenceNo) {
+  async generatePaymentUrl(mandatoryField, optionalField, amount, referenceNo, email, mobileNumber) {
     try {
+      const url = `https://eazypay.icicibank.com/EazyPG?merchantid=${this.merchantId}&mandatoryfields=${referenceNo}|${this.subMerchantId}|${amount}&optionalfields=${email}|${mobileNumber}&returnurl=${this.returnUrl}&ReferenceNo=${referenceNo}&submerchantid=${this.subMerchantId}&transactionamount=${amount}&paymode=${this.paymode}`;
+      console.log('unencrypted', url);
       const encryptedUrl = `https://eazypay.icicibank.com/EazyPG?merchantid=${
         this.merchantId
       }&mandatoryfields=${mandatoryField}&optionalfields=${optionalField}&returnurl=${await this.getReturnUrl()}&ReferenceNo=${referenceNo}&submerchantid=${await this.getSubMerchantId()}&transactionamount=${amount}&paymode=${await this.getPaymode()}`;
       return encryptedUrl;
+    } catch (error) {
+      await ErrorResponseUtility.errorResponse(error);
+    }
+  }
+
+  async pushUrl(body) {
+    try {
+      console.log(body);
+      return 'Success';
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }
@@ -110,12 +142,9 @@ export class EasypayService {
     }
   }
 
-  async getOptionalField(optionalField = null) {
+  async getOptionalField(email, mobileNumber) {
     try {
-      if (optionalField !== null) {
-        return await this.getEncryptValue(optionalField);
-      }
-      return null;
+      return await this.getEncryptValue(`${email}|${mobileNumber}`);
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }

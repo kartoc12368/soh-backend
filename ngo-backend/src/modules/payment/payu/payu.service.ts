@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import axios from 'axios';
 
 import crypto from 'crypto';
@@ -30,7 +30,7 @@ export class PayUService {
 
   async getHash(body) {
     try {
-      const { name, number, amount, donor_email } = body;
+      const { donor_firstName, donor_phone, amount, donor_email, txnid } = body;
       console.log(body);
 
       const apiEndpoint = process.env?.PAYU_TEST_ENDPOINT;
@@ -46,12 +46,12 @@ export class PayUService {
       // Create a map of parameters to pass to the PayU API
       const pd = {
         key: merchantKey,
-        txnid: 'TXN' + Date.now(),
+        txnid: txnid,
         amount: amount,
         productinfo: 'TestProduct',
-        firstname: name,
+        firstname: donor_firstName,
         email: donor_email,
-        phone: number,
+        phone: donor_phone,
         surl: surl,
         furl: furl,
       };
@@ -60,34 +60,21 @@ export class PayUService {
       const hash = generateHash(pd, salt);
       console.log(hash);
 
-      const formData = new URLSearchParams();
-      formData.append('key', pd.key);
-      formData.append('txnid', pd.txnid);
-      formData.append('amount', pd.amount);
-      formData.append('productinfo', pd.productinfo);
-      formData.append('firstname', pd.firstname);
-      formData.append('email', pd.email);
-      formData.append('phone', pd.phone);
-      formData.append('surl', pd.surl);
-      formData.append('furl', pd.furl);
-      formData.append('hash', hash);
-      console.log(formData, 'he');
-
-      try {
-        const result = await axios.post('https://secure.payu.in/_payment', pd, {
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-        });
-
-        console.log(result.request.res.responseUrlm, 'link');
-      } catch (err) {
-        console.log('error', err);
-      }
-
-      return { message: 'Transaction Initialized', data: { hash: hash, transactionId: pd.txnid } };
+      return { message: 'Transaction Initialized', data: { hash: hash } };
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }
+  }
+
+  async success(body) {
+    const donation = await this.donationRepository.getOneDonation({ where: { reference_payment: body?.txnid }, relations: ['fundraiser'] });
+
+    if (!donation) {
+      throw new NotFoundException('Donation with this order_id does not exist');
+    }
+
+    await this.donationRepository.UpdateOneDonation(donation?.donation_id, {
+      payment_status: 'success',
+    });
   }
 }

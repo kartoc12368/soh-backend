@@ -76,4 +76,9 @@ export class DonateDto {
   @IsOptional()
   @IsString()
   comments: string;
+
+  @ApiProperty()
+  @IsOptional()
+  @IsString()
+  txnid: string;
 }

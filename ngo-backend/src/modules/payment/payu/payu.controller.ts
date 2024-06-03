@@ -21,6 +21,8 @@ export class PayUController {
   @Post('/success')
   @Public()
   async paymentSuccess(@Body() body, @Res() res) {
+    console.log(body);
+    await this.payUService.success(body);
     res.redirect('http://localhost:3000/login');
   }
 

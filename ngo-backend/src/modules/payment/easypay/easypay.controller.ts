@@ -1,8 +1,7 @@
-import { Body, Controller, Post, Res } from '@nestjs/common';
-import { EasypayService } from './easypay.service';
-import { Public } from 'src/shared/decorators/public.decorator';
-import { DonateDto } from 'src/modules/donation/dto/donate.dto';
+import { Body, Controller, Get, Post, Res } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
+import { Public } from 'src/shared/decorators/public.decorator';
+import { EasypayService } from './easypay.service';
 
 @Controller('easypay')
 @ApiTags('Easypay')
@@ -17,6 +16,12 @@ export class EasypayController {
 
   @Post('verification')
   async verify(@Body() body) {
-    await this.easypayService.verify(body);
+    return await this.easypayService.verify(body);
+  }
+
+  @Post('push')
+  @Public()
+  async pushUrl(@Body() body) {
+    return await this.easypayService.pushUrl(body);
   }
 }
