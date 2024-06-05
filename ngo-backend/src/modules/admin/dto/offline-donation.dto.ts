@@ -7,7 +7,6 @@ export class AddOfflineDonationDto {
   @ApiPropertyOptional({ example: 'kartavya.oc@gmail.com' })
   @IsEmail()
   @IsOptional()
-  @Type(() => IsEmail)
   email: string;
 
   @ApiProperty({ example: 100 })
@@ -18,7 +17,7 @@ export class AddOfflineDonationDto {
   @ApiProperty({ example: 'Hardik' })
   @IsAlpha()
   @IsNotEmpty()
-  donor_name: string;
+  donor_first_name: string;
 
   @ApiPropertyOptional({ example: 'HARDI0110K' })
   @IsOptional()
@@ -69,12 +68,12 @@ export class AddOfflineDonationDto {
   @ApiPropertyOptional({ example: 'HDFC Bank' })
   @IsOptional()
   @IsString()
-  donor_bankName: string;
+  donor_bank_name: string;
 
   @ApiPropertyOptional({ example: 'Thaltej' })
   @IsOptional()
   @IsString()
-  donor_bankBranch: string;
+  donor_bank_branch: string;
 
   @ApiPropertyOptional({ example: '456789' })
   @IsOptional()
@@ -85,4 +84,9 @@ export class AddOfflineDonationDto {
   @IsOptional()
   @IsString()
   reference_payment: string;
+
+  @ApiPropertyOptional({ example: 'Cash' })
+  @IsOptional()
+  @IsString()
+  payment_method: string;
 }

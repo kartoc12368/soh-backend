@@ -1,9 +1,10 @@
-import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 
 import { Fundraiser } from './fundraiser.entity';
 
 import { PaymentStatus } from '../enums/payment-status.enum';
 import { PaymentType } from '../enums/payment-type.enum';
+import { ProjectName } from '../enums/project.enum';
 
 @Entity()
 export class Donation {
@@ -17,7 +18,10 @@ export class Donation {
   amount: number;
 
   @Column({ nullable: true })
-  donor_name: string;
+  donor_first_name: string;
+
+  @Column({ nullable: true })
+  donor_last_name: string;
 
   @Column({ nullable: true })
   pan: string;
@@ -75,33 +79,49 @@ export class Donation {
   donor_country: string;
 
   @Column({ nullable: true })
-  donor_bankName: string;
+  donor_bank_name: string;
 
   @Column({ nullable: true })
-  donor_bankBranch: string;
+  donor_bank_branch: string;
 
   @Column({ nullable: true })
   donor_pincode: number;
 
   @Column({ nullable: true })
+  @Column({
+    nullable: true,
+    type: 'enum',
+    enum: {
+      No: 'No',
+      Yes: 'Yes',
+    },
+    default: 'No',
+  })
   certificate: string;
 
   @Column({ nullable: true })
   reference_payment: string;
 
+  @Column({ nullable: true, type: 'enum', enum: ProjectName })
+  project_name: string;
+
+  @Column({ nullable: true })
+  payment_method: string;
+
   @CreateDateColumn({
     type: 'timestamp',
     default: () => 'CURRENT_TIMESTAMP(6)',
   })
-  public created_at: Date;
+  created_at: Date;
 
   @UpdateDateColumn({
     type: 'timestamp',
     default: () => 'CURRENT_TIMESTAMP(6)',
     onUpdate: 'CURRENT_TIMESTAMP(6)',
   })
-  public updated_at: Date;
+  updated_at: Date;
 
   @ManyToOne(() => Fundraiser, (fundraiser) => fundraiser.donations, { onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'fundraiser_id' })
   fundraiser: Fundraiser;
 }

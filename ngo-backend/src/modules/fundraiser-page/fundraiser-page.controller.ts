@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, FileTypeValidator, Get, Param, ParseFilePipe, ParseUUIDPipe, Post, Put, Req, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiSecurity, ApiTags } from '@nestjs/swagger';
 
 import { FundraiserPageService } from './fundraiser-page.service';
 
@@ -23,8 +23,13 @@ export class FundraiserPageController {
   @ApiSecurity('JWT-auth')
   @UseGuards(new RoleGuard(RoleEnum.FUNDRAISER_ROLE), OwnershipGuard)
   @UseInterceptors(FileInterceptor('file', storageForFundraiserPage))
-  @ApiOperation({ summary: 'Upload Image By Fundraiser for the page' })
-  async uploadFile(
+  @ApiOperation({ summary: 'Upload Image By Fundraiser for the page (roles: fundraiser)' })
+  @ApiResponse({ status: 201, description: 'Api success' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'Not found!' })
+  @ApiResponse({ status: 400, description: 'Bad Request' })
+  @ApiResponse({ status: 500, description: 'Internal server error!' })
+  uploadFile(
     @UploadedFile(
       new ParseFilePipe({
         validators: [new FileTypeValidator({ fileType: '.(png|jpeg|jpg)' })],
@@ -35,29 +40,44 @@ export class FundraiserPageController {
     @Param('id', ParseUUIDPipe) PageId: string,
   ): Promise<ResponseStructure> {
     console.log(file.filename);
-    return await this.fundraiserPageService.uploadFile(file, PageId);
+    return this.fundraiserPageService.uploadFile(file, PageId);
   }
 
   @Put('/updatePage/:id')
   @ApiSecurity('JWT-auth')
   @UseGuards(new RoleGuard(RoleEnum.FUNDRAISER_ROLE), OwnershipGuard)
-  @ApiOperation({ summary: 'Update Fundraiser Page by fundraiser' })
-  async updatePage(@Body() body: UpdateFundraiserPageDto, @Param('id', ParseUUIDPipe) id: string): Promise<ResponseStructure> {
-    return await this.fundraiserPageService.updateFundraiserPage(body, id);
+  @ApiOperation({ summary: 'Update Fundraiser Page by fundraiser (roles: fundraiser)' })
+  @ApiResponse({ status: 201, description: 'Api success' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'Not found!' })
+  @ApiResponse({ status: 400, description: 'Bad Request' })
+  @ApiResponse({ status: 500, description: 'Internal server error!' })
+  updatePage(@Body() body: UpdateFundraiserPageDto, @Param('id', ParseUUIDPipe) id: string): Promise<ResponseStructure> {
+    return this.fundraiserPageService.updateFundraiserPage(body, id);
   }
 
   @Get(':id')
   @Public()
-  @ApiOperation({ summary: 'Public Fundraiser Page' })
-  async getFundraiserById(@Param('id', ParseUUIDPipe) id: string): Promise<ResponseStructure> {
-    return await this.fundraiserPageService.getFundraiserById(id);
+  @ApiOperation({ summary: 'Public Fundraiser Page (roles: user)' })
+  @ApiResponse({ status: 201, description: 'Api success' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'Not found!' })
+  @ApiResponse({ status: 400, description: 'Bad Request' })
+  @ApiResponse({ status: 500, description: 'Internal server error!' })
+  getFundraiserById(@Param('id', ParseUUIDPipe) id: string): Promise<ResponseStructure> {
+    return this.fundraiserPageService.getFundraiserById(id);
   }
 
   @Delete(':id')
   @ApiSecurity('JWT-auth')
   @UseGuards(new RoleGuard(RoleEnum.FUNDRAISER_ROLE), OwnershipGuard)
-  @ApiOperation({ summary: 'Delete Fundraiser Page Image ' })
-  async deleteGalleryImage(@Param('id') filePath: string, @Req() req): Promise<ResponseStructure> {
-    return await this.fundraiserPageService.deleteGalleryImage(req?.user, filePath);
+  @ApiOperation({ summary: 'Delete Fundraiser Page Image (roles: fundraiser)' })
+  @ApiResponse({ status: 201, description: 'Api success' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'Not found!' })
+  @ApiResponse({ status: 400, description: 'Bad Request' })
+  @ApiResponse({ status: 500, description: 'Internal server error!' })
+  deleteGalleryImage(@Param('id') filePath: string, @Req() req): Promise<ResponseStructure> {
+    return this.fundraiserPageService.deleteGalleryImage(req?.user, filePath);
   }
 }

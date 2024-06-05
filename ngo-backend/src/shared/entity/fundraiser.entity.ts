@@ -1,10 +1,8 @@
 import { Column, CreateDateColumn, Entity, OneToMany, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 
-import { IsString } from 'class-validator';
-
+import { RoleEnum } from '../enums/role.enum';
 import { Donation } from './donation.entity';
 import { FundraiserPage } from './fundraiser-page.entity';
-import { RoleEnum } from '../enums/role.enum';
 
 @Entity()
 export class Fundraiser {
@@ -14,10 +12,10 @@ export class Fundraiser {
   @Column({ generated: true })
   f_id: number;
 
-  @Column()
+  @Column({ name: 'first_name' })
   firstName: string;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, name: 'last_name' })
   lastName: string;
 
   @Column({ unique: true })
@@ -41,7 +39,7 @@ export class Fundraiser {
   @Column({ nullable: true })
   city: string;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, name: 'profile_image' })
   profileImage: string;
 
   @Column({ nullable: true })
@@ -69,14 +67,14 @@ export class Fundraiser {
     type: 'timestamp',
     default: () => 'CURRENT_TIMESTAMP(6)',
   })
-  public created_at: Date;
+  created_at: Date;
 
   @UpdateDateColumn({
     type: 'timestamp',
     default: () => 'CURRENT_TIMESTAMP(6)',
     onUpdate: 'CURRENT_TIMESTAMP(6)',
   })
-  public updated_at: Date;
+  updated_at: Date;
 
   @OneToMany(() => Donation, (donation) => donation.fundraiser, { onDelete: 'SET NULL' })
   donations: Donation[];

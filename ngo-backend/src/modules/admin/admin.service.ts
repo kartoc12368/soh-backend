@@ -31,7 +31,6 @@ export class AdminService {
     private readonly fundraiserRepository: FundRaiserRepository,
     private readonly donationRepository: DonationRepository,
     private readonly fundraiserPageRepository: FundraiserPageRepository,
-
     private readonly mailerService: MailerService,
   ) {}
 
@@ -171,6 +170,7 @@ export class AdminService {
 
   async addOfflineDonation(body: AddOfflineDonationDto): Promise<ResponseStructure> {
     try {
+      console.log(body?.email);
       //same code from donate service here admin passes data in body
       if (!body?.email) {
         await this.donationRepository.createDonationOffline(body);

@@ -118,10 +118,10 @@ export class DonationRepository extends Repository<Donation> {
   async getDonorNames(user) {
     let supporters = [];
 
-    let donations = await this.find({ select: { donor_name: true }, where: { fundraiser: { fundraiser_id: user.fundraiser_id }, payment_status: 'success' } });
+    let donations = await this.find({ select: { donor_first_name: true }, where: { fundraiser: { fundraiser_id: user.fundraiser_id }, payment_status: 'success' } });
 
     for (let index = 0; index < donations.length; index++) {
-      supporters.push(donations[index].donor_name);
+      supporters.push(donations[index].donor_first_name);
     }
 
     return supporters;

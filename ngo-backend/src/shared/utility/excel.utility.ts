@@ -12,7 +12,7 @@ export async function downloadDonationsExcel(donations: Donation[]) {
   sheet.columns = [
     { header: 'Donation Id', key: 'donation_id_frontend' },
     { header: 'Donation Date', key: 'donation_date' },
-    { header: 'Donor Name', key: 'donor_name' },
+    { header: 'Donor Name', key: 'donor_first_name' },
     { header: 'Donation Amount', key: 'amount' },
     { header: 'Payment Type', key: 'payment_type' },
     { header: 'Payment Status', key: 'payment_status' },
@@ -30,7 +30,7 @@ export async function downloadDonationsExcel(donations: Donation[]) {
     sheet.addRow({
       donation_id_frontend: value?.donation_id_frontend,
       donation_date: value?.donation_date,
-      donor_name: value?.donor_name,
+      donor_first_name: value?.donor_first_name,
       amount: value?.amount,
       payment_type: value?.payment_type,
       payment_status: value?.payment_status,

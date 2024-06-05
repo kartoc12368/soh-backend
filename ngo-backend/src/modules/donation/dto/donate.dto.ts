@@ -6,14 +6,19 @@ import { IsAlpha, IsDecimal, IsEmail, IsLowercase, IsNotEmpty, IsNumberString, I
 export class DonateDto {
   @ApiProperty()
   @IsNotEmpty()
-  // @Type(() => Number)
   @Transform(({ value }) => Number.parseFloat(value))
   amount: number;
 
   @ApiProperty()
   @IsAlpha()
   @IsNotEmpty()
-  donor_name: string;
+  donor_first_name: string;
+
+  @ApiProperty()
+  @IsAlpha()
+  @IsNotEmpty()
+  @IsOptional()
+  donor_last_name: string;
 
   @ApiProperty()
   @IsOptional()
@@ -39,5 +44,40 @@ export class DonateDto {
   @ApiProperty()
   @IsOptional()
   @IsString()
+  donor_city: string;
+
+  @ApiProperty()
+  @IsOptional()
+  @IsString()
+  donor_state: string;
+
+  @ApiProperty()
+  @IsOptional()
+  @IsString()
+  donor_country: string;
+
+  @ApiProperty()
+  @IsOptional()
+  @IsString()
+  donor_pincode: string;
+
+  @ApiProperty()
+  @IsOptional()
+  @IsString()
+  project_name: string;
+
+  @ApiProperty({ enum: { Yes: 'Yes', No: 'No' } })
+  @IsOptional()
+  @IsString()
+  certificate: string;
+
+  @ApiProperty()
+  @IsOptional()
+  @IsString()
   comments: string;
+
+  @ApiProperty()
+  @IsOptional()
+  @IsString()
+  txnid: string;
 }
