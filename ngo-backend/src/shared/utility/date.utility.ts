@@ -3,3 +3,7 @@ export function incrementDate(date: Date): Date {
   newDate?.setDate(newDate?.getDate());
   return newDate;
 }
+
+export async function todayDate() {
+  return await new Date().getFullYear();
+}

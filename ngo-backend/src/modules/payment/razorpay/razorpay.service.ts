@@ -1,21 +1,23 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-
-import { DonationRepository } from '../../donation/donation.repository';
-
-import { DonationService } from '../../donation/donation.service';
-
+import { MailerService } from '@nestjs-modules/mailer';
 import crypto from 'crypto';
-
 import axios from 'axios';
 import Razorpay from 'razorpay';
+
+import { DonationRepository } from '../../donation/donation.repository';
+import { DonationService } from '../../donation/donation.service';
+
 import { ResponseStructure } from 'src/shared/interface/response-structure.interface';
 import { ErrorResponseUtility } from 'src/shared/utility/error-response.utility';
+import { SendEmailDto } from 'src/shared/interface/mail.interface';
+import { SendMailerUtility } from 'src/shared/utility/send-mailer.utility';
 
 @Injectable()
 export class RazorpayService {
   constructor(
-    private donationRepository: DonationRepository,
-    private donationService: DonationService,
+    private readonly donationRepository: DonationRepository,
+    private readonly donationService: DonationService,
+    private readonly mailerService: MailerService,
   ) {}
 
   async getInstance(): Promise<any> {
@@ -86,6 +88,14 @@ export class RazorpayService {
         throw new NotFoundException('Donation with this order_id does not exist');
       }
 
+      const sendEmailDto: SendEmailDto = {
+        firstName: donation?.donor_firstName,
+        recipients: [{ name: donation?.donor_firstName, address: 'patelkartu951@gmail.com' }],
+        data: donation,
+      };
+
+      await new SendMailerUtility(this.mailerService).transactionSuccess(sendEmailDto);
+
       await this.donationRepository.UpdateOneDonation(donation?.donation_id, {
         payment_order_id: razorpay_order_id,
         payment_status: 'success',
@@ -116,6 +126,13 @@ export class RazorpayService {
         auth: { username: process?.env?.RAZORPAY_API_KEY, password: process?.env?.RAZORPAY_API_SECRET },
       });
       if (data?.amount_due == data?.amount) {
+        const sendEmailDto: SendEmailDto = {
+          firstName: donation?.donor_firstName,
+          recipients: [{ name: donation?.donor_firstName, address: 'patelkartu951@gmail.com' }],
+          data: donation,
+        };
+
+        await new SendMailerUtility(this.mailerService).transactionFailed(sendEmailDto);
         await this.donationRepository.UpdateOneDonation(donation?.donation_id, { payment_status: 'failed' });
       }
     });

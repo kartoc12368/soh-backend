@@ -31,7 +31,6 @@ export class AdminService {
     private readonly fundraiserRepository: FundRaiserRepository,
     private readonly donationRepository: DonationRepository,
     private readonly fundraiserPageRepository: FundraiserPageRepository,
-
     private readonly mailerService: MailerService,
   ) {}
 

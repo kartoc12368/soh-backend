@@ -1,4 +1,4 @@
-import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 
 import { Fundraiser } from './fundraiser.entity';
 
@@ -60,13 +60,13 @@ export class Donation {
   @Column({ nullable: true })
   order_id: string;
 
-  @Column({ nullable: true, default: null })
+  @Column({ nullable: true })
   payment_id: string;
 
-  @Column({ nullable: true, default: null })
+  @Column({ nullable: true })
   payment_order_id: string;
 
-  @Column({ nullable: true, default: null })
+  @Column({ nullable: true })
   payment_signature: string;
 
   @Column({ nullable: true, type: 'date' })
@@ -111,15 +111,16 @@ export class Donation {
     type: 'timestamp',
     default: () => 'CURRENT_TIMESTAMP(6)',
   })
-  public created_at: Date;
+  created_at: Date;
 
   @UpdateDateColumn({
     type: 'timestamp',
     default: () => 'CURRENT_TIMESTAMP(6)',
     onUpdate: 'CURRENT_TIMESTAMP(6)',
   })
-  public updated_at: Date;
+  updated_at: Date;
 
   @ManyToOne(() => Fundraiser, (fundraiser) => fundraiser.donations, { onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'fundraiser_id' })
   fundraiser: Fundraiser;
 }

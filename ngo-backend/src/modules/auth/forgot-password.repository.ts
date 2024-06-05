@@ -17,7 +17,7 @@ export class ForgottenPasswordRepository extends Repository<ForgottenPassword> {
 
       forgotPassword.email = email;
 
-      forgotPassword.newPasswordToken = randomstring;
+      forgotPassword.new_password_token = randomstring;
 
       await this.save(forgotPassword);
     } catch (error) {

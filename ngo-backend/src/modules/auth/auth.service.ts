@@ -99,7 +99,7 @@ export class AuthService {
 
   async setNewPassword(body): Promise<ResponseStructure> {
     try {
-      const fundraiser = await this.forgottenPasswordRepository.getFundraiserByOtp({ where: { newPasswordToken: body?.otp } });
+      const fundraiser = await this.forgottenPasswordRepository.getFundraiserByOtp({ where: { new_password_token: body?.otp } });
 
       if (!fundraiser) {
         throw new NotFoundException('Invalid Otp');

@@ -31,7 +31,7 @@ export class SendMailerUtility {
     await this.mailerService.sendMail({
       subject: `Support Our Heroes - Donation Transaction Success`,
       to: recipients,
-      html: await successTransaction(data),
+      html: await successTransaction(data?.data),
     });
   }
 
@@ -40,7 +40,7 @@ export class SendMailerUtility {
     await this.mailerService.sendMail({
       subject: `Support Our Heroes - Donation Transaction Failed`,
       to: recipients,
-      html: await failedTransaction(data),
+      html: await failedTransaction(data?.data),
     });
   }
 }

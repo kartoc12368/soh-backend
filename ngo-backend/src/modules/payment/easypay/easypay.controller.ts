@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Post, Res } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
+
 import { Public } from 'src/shared/decorators/public.decorator';
 import { EasypayService } from './easypay.service';
 

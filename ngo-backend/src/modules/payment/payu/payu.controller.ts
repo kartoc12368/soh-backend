@@ -1,10 +1,8 @@
-import { Body, Controller, Param, Post, Query, Res } from '@nestjs/common';
+import { Body, Controller, Post, Res } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 
 import { Public } from 'src/shared/decorators/public.decorator';
 
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { ResponseStructure } from 'src/shared/interface/response-structure.interface';
-import { Cron, CronExpression } from '@nestjs/schedule';
 import { PayUService } from './payu.service';
 
 @ApiTags('Payu')

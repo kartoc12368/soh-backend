@@ -1,10 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import axios from 'axios';
-
 import crypto from 'crypto';
 
 import { DonationRepository } from 'src/modules/donation/donation.repository';
 import { DonationService } from 'src/modules/donation/donation.service';
+
 import { ErrorResponseUtility } from 'src/shared/utility/error-response.utility';
 
 function generateHash(params, salt) {

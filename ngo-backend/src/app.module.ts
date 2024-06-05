@@ -11,11 +11,11 @@ import { AuthModule } from './modules/auth/auth.module';
 import { DonationModule } from './modules/donation/donation.module';
 import { FundraiserPageModule } from './modules/fundraiser-page/fundraiser-page.module';
 import { FundraiserModule } from './modules/fundraiser/fundraiser.module';
-
-import { TypeOrmConfigService } from './config/typeorm.config.service';
 import { PayUModule } from './modules/payment/payu/payu.module';
 import { RazorpayModule } from './modules/payment/razorpay/razorpay.module';
 import { EasypayModule } from './modules/payment/easypay/easypay.module';
+
+import { TypeOrmConfigService } from './config/typeorm.config.service';
 
 @Module({
   imports: [
