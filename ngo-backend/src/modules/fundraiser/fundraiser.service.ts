@@ -34,7 +34,7 @@ export class FundraiserService {
       const fundraiser: Fundraiser = user;
 
       if (!fundraiser) {
-        throw new NotFoundException('Fundraiser not found');
+        throw new NotFoundException('Fundraiser Not Found');
       }
 
       const fundraiser2 = await this.fundRaiserRepository.getFundraiser({ where: { email: fundraiser?.email }, select: ['password', 'fundraiser_id'] });
@@ -42,7 +42,7 @@ export class FundraiserService {
       const isSame = await bcrypt.compare(changePasswordDto.oldPassword, fundraiser2.password);
 
       if (!isSame) {
-        throw new UnauthorizedException('Old password is incorrect');
+        throw new UnauthorizedException('Old Password Is Incorrect');
       }
 
       if (changePasswordDto.newPassword === changePasswordDto.confirmPassword) {
@@ -50,9 +50,9 @@ export class FundraiserService {
 
         await this.fundRaiserRepository.UpdateFundraiser(fundraiser2?.fundraiser_id, { password: hashedPassword });
 
-        return { message: 'Password updated successfully' };
+        return { message: 'Password Updated Successfully' };
       } else {
-        throw new UnauthorizedException('New password and confirm password do not match');
+        throw new UnauthorizedException('New Password and Confirm Password do not match');
       }
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
@@ -66,7 +66,7 @@ export class FundraiserService {
       const fundraiser = await this.fundRaiserRepository.getFundraiser({ where: { email: fundRaiser?.email }, relations: ['fundraiser_page'] });
 
       if (!fundraiser) {
-        throw new NotFoundException('Fundraiser not found');
+        throw new NotFoundException('Fundraiser Not Found');
       }
 
       return { message: 'Fundraiser Fetched Successfully', data: fundraiser, success: true };
@@ -80,7 +80,7 @@ export class FundraiserService {
       const fundRaiser = await this.fundRaiserRepository.getFundraiser({ where: { fundraiser_id: user?.id } });
 
       if (!fundRaiser) {
-        throw new NotFoundException('Fundraiser not found');
+        throw new NotFoundException('Fundraiser Not Found');
       }
 
       await this.fundRaiserRepository.UpdateFundraiser(fundRaiser?.fundraiser_id, updateFundRaiserDto);
@@ -97,13 +97,13 @@ export class FundraiserService {
       let fundRaiser: Fundraiser = await this.fundRaiserRepository.getFundraiser({ where: { fundraiser_id: user?.id } });
 
       if (!fundRaiser) {
-        throw new NotFoundException('Fundraiser not found');
+        throw new NotFoundException('Fundraiser Not Found');
       }
 
       let fundraiserPage = await this.fundraiserPageRepository.getFundraiserPage({ select: ['fundraiser'], where: { fundraiser: { fundraiser_id: fundRaiser?.fundraiser_id } } });
 
       if (!fundraiserPage) {
-        throw new NotFoundException('Fundraiser Page not found');
+        throw new NotFoundException('Fundraiser Page Not Found');
       }
 
       return { message: 'Fundraiser Page Fetched Successfully', data: fundraiserPage, success: true };
@@ -117,12 +117,12 @@ export class FundraiserService {
       let fundRaiser = await this.fundRaiserRepository.findFundRaiserByEmail(fundraiser?.email);
 
       if (!fundRaiser) {
-        throw new NotFoundException('Fundraiser not found');
+        throw new NotFoundException('Fundraiser Not Found');
       }
 
       await this.fundRaiserRepository.UpdateFundraiser(fundRaiser?.fundraiser_id, { profileImage: file?.filename });
 
-      return { message: 'Profile image updated successfully', data: { profileImage: file?.filename } };
+      return { message: 'Profile Image Updated Successfully', data: { profileImage: file?.filename } };
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }
@@ -131,7 +131,7 @@ export class FundraiserService {
   async findProfileImage(res, imagename): Promise<any> {
     try {
       if (imagename == 'undefined') {
-        throw new BadRequestException('imagename is undefined');
+        throw new BadRequestException('Imagename is undefined');
       }
       return of(res.sendFile(path.join(process.cwd(), 'uploads/profileImages/' + imagename)));
     } catch (error) {
@@ -151,7 +151,7 @@ export class FundraiserService {
     try {
       let fundRaiser = await this.fundRaiserRepository.findFundRaiserByEmail(user?.email);
       if (!fundRaiser) {
-        throw new NotFoundException('Fundraiser not found');
+        throw new NotFoundException('Fundraiser Not Found');
       }
 
       let fundRaiserPage = await this.fundraiserPageRepository.getFundraiserPage({ where: { fundraiser: { fundraiser_id: fundRaiser?.fundraiser_id } } });
@@ -159,9 +159,9 @@ export class FundraiserService {
       if (fundRaiserPage == null) {
         const fundraiserPage = await this.fundraiserPageRepository.createFundraiserPage(fundRaiser);
 
-        return { message: 'Fundraiser page successfully created', data: fundraiserPage, success: true };
+        return { message: 'Fundraiser Page Successfully Created', data: fundraiserPage, success: true };
       } else {
-        throw new ConflictException('Fundraiser Page already exists');
+        throw new ConflictException('Fundraiser Page Already Exists');
       }
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
@@ -188,7 +188,7 @@ export class FundraiserService {
       };
 
       const donations = await this.donationRepository.getAllDonations({ relations: { fundraiser: true }, where: conditions, order: { donation_id_frontend: 'ASC' } });
-      return { message: 'Donations fetched successfully', data: donations };
+      return { message: 'Donations Fetched Successfully', data: donations };
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }
@@ -203,7 +203,7 @@ export class FundraiserService {
       const filename = await downloadDonationsExcel(donations);
 
       if (!filename) {
-        throw new NotFoundException('Filename not found');
+        throw new NotFoundException('Filename Not Found');
       }
 
       return of(res.sendFile(path?.join(process.cwd(), 'downloads/' + filename)));

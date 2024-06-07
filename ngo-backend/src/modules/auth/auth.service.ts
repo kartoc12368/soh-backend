@@ -32,13 +32,13 @@ export class AuthService {
       const fundraiser: Fundraiser = user;
 
       if (!fundraiser) {
-        throw new NotFoundException('Fundraiser not found');
+        throw new NotFoundException('Fundraiser Not Found');
       }
 
       const fundraiserStatus = await this.fundraiserRepository.getFundRaiserStatusByEmail(fundraiser?.email);
 
       if (!fundraiserStatus) {
-        throw new NotFoundException('Fundraiser status not found');
+        throw new NotFoundException('Fundraiser Status Not Found');
       }
 
       if ((fundraiser?.role == 'FUNDRAISER' && fundraiserStatus == 'active') || fundraiser?.role == 'ADMIN') {
@@ -70,12 +70,12 @@ export class AuthService {
       const fundraiser = await this.fundraiserRepository.findFundRaiserByEmail(email);
 
       if (!fundraiser) {
-        throw new NotFoundException('Fundraiser not found');
+        throw new NotFoundException('Fundraiser Not Found');
       }
 
       const otpExists = await this.forgottenPasswordRepository.getFundraiserByOtp({ where: { email: email } });
 
-      if (otpExists) {
+      if (otpExists?.otp_state == 'active') {
         return { message: 'Email Already Sent', success: true };
       }
 
@@ -89,6 +89,11 @@ export class AuthService {
 
       await new SendMailerUtility(this.mailerService).resetPassword(sendEmailDto);
 
+      if (otpExists?.otp_state == 'expired') {
+        await this.forgottenPasswordRepository.updateOtp(otpExists?.id, { otp_state: 'active', otp: OTP });
+        return { message: 'Email Sent successfully', success: true };
+      }
+
       await this.forgottenPasswordRepository.createForgottenPassword(email, OTP);
 
       return { message: 'Email Sent successfully', success: true };
@@ -99,7 +104,7 @@ export class AuthService {
 
   async setNewPassword(body): Promise<ResponseStructure> {
     try {
-      const fundraiser = await this.forgottenPasswordRepository.getFundraiserByOtp({ where: { new_password_token: body?.otp } });
+      const fundraiser = await this.forgottenPasswordRepository.getFundraiserByOtp({ where: { otp: body?.otp } });
 
       if (!fundraiser) {
         throw new NotFoundException('Invalid Otp');
@@ -130,7 +135,7 @@ export class AuthService {
   async refreshToken(refreshToken): Promise<ResponseStructure> {
     try {
       if (!refreshToken) {
-        throw new UnauthorizedException('Refresh token not found');
+        throw new UnauthorizedException('Refresh Token Not Found');
       }
 
       const fundraiser = this.jwtService.verify(refreshToken, {
@@ -150,7 +155,7 @@ export class AuthService {
       });
 
       if (!userExists) {
-        throw new BadRequestException('User no longer exists');
+        throw new BadRequestException('User No Longer Exists');
       }
 
       const accessToken = this.jwtService.sign(payload, {
@@ -158,7 +163,7 @@ export class AuthService {
         expiresIn: '15min',
       });
 
-      return { message: 'Access Token successfully updated', data: { token: accessToken } };
+      return { message: 'Access Token Successfully Updated', data: { token: accessToken } };
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }
@@ -190,7 +195,7 @@ export class AuthService {
     }
   }
 
-  async deleteExpiredOtp() {
+  async expireOtp() {
     try {
       const otpHistory = await this.forgottenPasswordRepository.getAllOtp();
 
@@ -202,7 +207,7 @@ export class AuthService {
         dateIST.setMinutes(dateIST.getMinutes() + 45);
         console.log(dateIST.toLocaleString());
         if (dateIST.toLocaleString() < new Date().toLocaleString()) {
-          await this.forgottenPasswordRepository.deleteOtp(otp);
+          await this.forgottenPasswordRepository.updateOtp(otp?.id, { otp_state: 'expired' });
         }
       });
     } catch (error) {

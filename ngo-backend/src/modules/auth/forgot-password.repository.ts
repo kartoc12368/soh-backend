@@ -2,22 +2,21 @@ import { Injectable } from '@nestjs/common';
 
 import { DataSource, Repository } from 'typeorm';
 
-import { ForgottenPassword } from 'src/shared/entity/forgot-password.entity';
 import { ErrorResponseUtility } from 'src/shared/utility/error-response.utility';
+import { ResetPassword } from 'src/shared/entity/reset-password.entity';
 
 @Injectable()
-export class ForgottenPasswordRepository extends Repository<ForgottenPassword> {
+export class ForgottenPasswordRepository extends Repository<ResetPassword> {
   constructor(private dataSource: DataSource) {
-    super(ForgottenPassword, dataSource.createEntityManager());
+    super(ResetPassword, dataSource.createEntityManager());
   }
 
   async createForgottenPassword(email, randomstring) {
     try {
-      let forgotPassword = new ForgottenPassword();
+      let forgotPassword = new ResetPassword();
 
       forgotPassword.email = email;
-
-      forgotPassword.new_password_token = randomstring;
+      forgotPassword.otp = randomstring;
 
       await this.save(forgotPassword);
     } catch (error) {
@@ -44,6 +43,14 @@ export class ForgottenPasswordRepository extends Repository<ForgottenPassword> {
   async getAllOtp(obj?: object) {
     try {
       return await this.find(obj);
+    } catch (error) {
+      await ErrorResponseUtility.errorResponse(error);
+    }
+  }
+
+  async updateOtp(id, setObj: Object) {
+    try {
+      return await this.update(id, setObj);
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }

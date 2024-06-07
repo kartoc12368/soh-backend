@@ -93,7 +93,7 @@ export class AdminService {
       const fundraiser = await this.fundraiserRepository.getFundraiser({ where: { fundraiser_id: id } });
 
       if (!fundraiser) {
-        throw new NotFoundException('Fundraiser not found');
+        throw new NotFoundException('Fundraiser Not Found');
       }
       // Toggle the status based on its current value
       fundraiser.status = fundraiser?.status === 'active' ? 'inactive' : 'active';
@@ -102,9 +102,9 @@ export class AdminService {
       await this.fundraiserRepository.UpdateFundraiser(id, { status: fundraiser?.status });
 
       if (fundraiser?.status === 'active') {
-        return { message: 'Status changed to active ', success: true };
+        return { message: 'Status Changed To Active ', success: true };
       } else {
-        return { message: 'Status changed to inactive', success: true };
+        return { message: 'Status Changed To Inactive', success: true };
       }
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
@@ -116,7 +116,7 @@ export class AdminService {
       const fundraiser = await this.fundraiserRepository.getFundraiser({ where: { fundraiser_id: id } });
 
       if (!fundraiser) {
-        throw new NotFoundException('Fundraiser not found');
+        throw new NotFoundException('Fundraiser Not Found');
       }
 
       if (fundraiser?.role == 'ADMIN') {
@@ -125,7 +125,7 @@ export class AdminService {
 
       await this.fundraiserRepository.deleteFundraiser(id);
 
-      return { message: 'Fundraiser deleted successfully', success: true };
+      return { message: 'Fundraiser Deleted Successfully', success: true };
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }
@@ -137,7 +137,7 @@ export class AdminService {
 
       const filteredUsers = fundraisers?.filter((fundraiser) => fundraiser?.role !== 'ADMIN');
 
-      return { message: 'Fundraisers data fetched successfully', data: filteredUsers, success: true };
+      return { message: 'Fundraisers Data Fetched Successfully', data: filteredUsers, success: true };
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }
@@ -148,7 +148,7 @@ export class AdminService {
       const isFundraiserExists = await this.fundraiserRepository.getFundraiser({ where: { email: body?.email } });
 
       if (isFundraiserExists && isFundraiserExists?.role == 'FUNDRAISER') {
-        throw new ConflictException('Email already in use');
+        throw new ConflictException('Email Already In Use');
       } else {
         //generating random password in randomPassword variable
         const randomPassword = Math?.random()?.toString(36)?.slice(-8);
@@ -175,7 +175,7 @@ export class AdminService {
       if (!body?.email) {
         await this.donationRepository.createDonationOffline(body);
 
-        return { message: 'Donation added successfully' };
+        return { message: 'Donation Added Successfully' };
       }
 
       let fundraiser: Fundraiser = await this.fundraiserRepository.getFundraiser({
@@ -184,11 +184,11 @@ export class AdminService {
       });
 
       if (!fundraiser) {
-        throw new NotFoundException('Fundraiser not found');
+        throw new NotFoundException('Fundraiser Not Found');
       }
 
       if (fundraiser?.status == 'inactive') {
-        throw new ForbiddenException('Fundraiser is inactive');
+        throw new ForbiddenException('Fundraiser Is Inactive');
       }
 
       await this.donationRepository.createDonationOffline(body, fundraiser);
@@ -198,7 +198,7 @@ export class AdminService {
       });
 
       if (!fundraiserPage) {
-        throw new NotFoundException('Fundraiser page not found');
+        throw new NotFoundException('Fundraiser Page Not Found');
       }
 
       //getting existing fundraiserPage supporters and pushing new supporters
@@ -218,7 +218,7 @@ export class AdminService {
         supporters: supportersOfFundraiser,
       });
 
-      return { message: 'Donation added successfully' };
+      return { message: 'Donation Added Successfully' };
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }
@@ -229,7 +229,7 @@ export class AdminService {
       let fundRaiser = await this.fundraiserRepository.findFundRaiserByEmail(body?.email);
 
       if (!fundRaiser) {
-        throw new NotFoundException('Fundraiser not found');
+        throw new NotFoundException('Fundraiser Not Found');
       }
 
       let fundRaiserPage = await this.fundraiserPageRepository.getFundraiserPage({
@@ -239,9 +239,9 @@ export class AdminService {
       if (fundRaiserPage == null) {
         const fundraiserPage = await this.fundraiserPageRepository.createFundraiserPage(fundRaiser);
 
-        return { message: 'Fundraiser page successfully created', data: fundraiserPage, success: true };
+        return { message: 'Fundraiser Page Successfully Created', data: fundraiserPage, success: true };
       } else {
-        throw new ConflictException('Fundraiser Page already exists');
+        throw new ConflictException('Fundraiser Page Already Exists');
       }
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
@@ -251,7 +251,7 @@ export class AdminService {
   async deleteFundraiserPage(id: string): Promise<ResponseStructure> {
     try {
       await this.fundraiserPageRepository.deleteFundraiserPage(id);
-      return { message: 'Fundraiser page deleted successfully' };
+      return { message: 'Fundraiser Page Deleted Successfully' };
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }
@@ -262,13 +262,13 @@ export class AdminService {
       const donations = await this.donationRepository.getAllDonations();
 
       if (!donations) {
-        throw new NotFoundException('Donations not found');
+        throw new NotFoundException('Donations Not Found');
       }
 
       const filename = await downloadDonationsExcel(donations);
 
       if (!filename) {
-        throw new NotFoundException('Filename not found');
+        throw new NotFoundException('Filename Not Found');
       }
 
       return of(res.sendFile(path.join(process.cwd(), 'downloads/' + filename)));

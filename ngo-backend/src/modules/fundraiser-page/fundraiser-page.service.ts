@@ -22,7 +22,7 @@ export class FundraiserPageService {
       let fundraiserPage = await this.fundraiserPageRepository.getFundraiserPage({ where: { id: PageId } });
 
       if (!fundraiserPage) {
-        throw new NotFoundException('Fundraiser Page not found');
+        throw new NotFoundException('Fundraiser Page Not Found');
       }
 
       //accessing existing galley of fundraiserPage and pushing new uploaded files
@@ -31,7 +31,7 @@ export class FundraiserPageService {
 
       //saving new data of fundraiserPage with gallery
       await this.fundraiserPageRepository.UpdateFundraiserPage(PageId, { gallery: fundraiserGallery });
-      return { message: 'Gallery updated successfully', success: true };
+      return { message: 'Gallery Updated Successfully', success: true };
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }
@@ -43,11 +43,11 @@ export class FundraiserPageService {
       let fundraiserPage = await this.fundraiserPageRepository.getFundraiserPage({ where: { id: pageId } });
 
       if (!fundraiserPage) {
-        throw new NotFoundException('Fundraiser Page not found');
+        throw new NotFoundException('Fundraiser Page Not Found');
       }
 
       await this.fundraiserPageRepository.UpdateFundraiserPage(pageId, body);
-      return { message: 'Fundraiser Page Details updated successfully', success: true };
+      return { message: 'Fundraiser Page Details Updated Successfully', success: true };
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }
@@ -58,17 +58,17 @@ export class FundraiserPageService {
       const fundraiserPage = await this.fundraiserPageRepository.getFundraiserPage({ where: { id: id } });
 
       if (!fundraiserPage) {
-        throw new NotFoundException('Fundraiser Page not found');
+        throw new NotFoundException('Fundraiser Page Not Found');
       }
 
       const fundraiser = await this.fundraiserRepository.getFundraiser({ where: { fundraiser_page: { id: id } } });
 
       if (!fundraiser) {
-        throw new NotFoundException('Fundraiser not found and Page is expired');
+        throw new NotFoundException('Fundraiser Not Found and Page is Expired');
       }
 
       return {
-        message: 'Fundraiser Page details successfully fetched',
+        message: 'Fundraiser Page Details Successfully Fetched',
         data: { fundraiserPage, firstName: fundraiser.firstName, lastName: fundraiser.lastName, profileImage: fundraiser.profileImage },
         success: true,
       };
@@ -83,12 +83,12 @@ export class FundraiserPageService {
 
       let fundRaiser: Fundraiser = await this.fundraiserRepository.getFundraiser({ where: { fundraiser_id: user?.id }, relations: ['fundraiser_page'] });
       if (!fundRaiser) {
-        throw new NotFoundException('Fundraiser not found');
+        throw new NotFoundException('Fundraiser Not Found');
       }
 
       let fundraiserPage: FundraiserPage = await this.fundraiserPageRepository.getFundraiserPage({ where: { id: fundRaiser?.fundraiser_page?.id } });
       if (!fundraiserPage) {
-        throw new NotFoundException('Fundraiser Page not found');
+        throw new NotFoundException('Fundraiser Page Not Found');
       }
 
       const galleryNew = fundraiserPage?.gallery?.filter(function (image) {
@@ -110,7 +110,7 @@ export class FundraiserPageService {
       const fundraiserPages = await this.fundraiserPageRepository.getAllFundraiserPages();
 
       if (!fundraiserPages) {
-        throw new NotFoundException('Fundraiser Page not found');
+        throw new NotFoundException('Fundraiser Page Not Found');
       }
 
       return { message: 'Fetched all fundraiser Pages', data: fundraiserPages };

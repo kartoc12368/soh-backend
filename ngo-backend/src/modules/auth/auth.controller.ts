@@ -68,7 +68,7 @@ export class AuthController {
   }
 
   @Cron(CronExpression.EVERY_10_MINUTES)
-  deleteExpiredOtp() {
-    return this.authService.deleteExpiredOtp();
+  expireOtp() {
+    return this.authService.expireOtp();
   }
 }

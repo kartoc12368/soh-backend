@@ -23,28 +23,28 @@ export class DonationService {
       if (!id) {
         await this.donationRepository.createDonationOnline(body, reference);
 
-        return { message: 'Donation received successfully', data: { reference: reference } };
+        return { message: 'Donation Received Successfully', data: { reference: reference } };
       }
 
       let fundraiserPage = await this.fundRaiserPageRepository.getFundraiserPage({ where: { id: id }, relations: ['fundraiser'] });
       if (!fundraiserPage) {
-        throw new NotFoundException('Fundraiser Page not found');
+        throw new NotFoundException('Fundraiser Page Not Found');
       }
 
       //getting fundraiser to update its dashboard content
       let fundraiser: Fundraiser = await this.fundRaiserRepository.getFundraiser({ where: { fundraiser_id: fundraiserPage?.fundraiser?.fundraiser_id } });
       if (!fundraiser) {
-        throw new NotFoundException('Fundraiser not found, Page is expired');
+        throw new NotFoundException('Fundraiser Not Found, Page Is Expired');
       }
 
       //checking if status is active then only fundraiser data is available in donation database
       if (fundraiser?.status == 'inactive') {
-        throw new BadRequestException('Fundraiser Status is inactive');
+        throw new BadRequestException('Fundraiser Status Is Inactive');
       }
 
       await this.donationRepository.createDonationOnline(body, reference, fundraiser);
 
-      return { message: 'Donation received successfully', data: { reference: reference, id: id } };
+      return { message: 'Donation Received Successfully', data: { reference: reference, id: id } };
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }
@@ -56,7 +56,7 @@ export class DonationService {
       let fundraiser: Fundraiser = await this.fundRaiserRepository.getFundraiser({ where: { fundraiser_id: body?.fundraiser?.fundraiser_id }, relations: ['fundraiser_page'] });
 
       if (!fundraiser) {
-        throw new NotFoundException('Fundraiser not found');
+        throw new NotFoundException('Fundraiser Not Found');
       }
 
       let fundraiserPage = await this.fundRaiserPageRepository.getFundraiserPage({
@@ -64,7 +64,7 @@ export class DonationService {
       });
 
       if (!fundraiserPage) {
-        throw new NotFoundException('Fundraiser Page not found');
+        throw new NotFoundException('Fundraiser Page Not Found');
       }
 
       //getting existing fundraiserPage supporters and pushing new supporters
@@ -80,7 +80,7 @@ export class DonationService {
       });
 
       await this.fundRaiserPageRepository.UpdateFundraiserPage(fundraiser?.fundraiser_page?.id, { raised_amount: total_amount_raised, supporters: supportersOfFundraiser });
-      return { message: 'Donation updated successfully to Page' };
+      return { message: 'Donation Updated Successfully To Page' };
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }

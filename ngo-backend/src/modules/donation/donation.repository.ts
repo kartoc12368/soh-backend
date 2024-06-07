@@ -23,7 +23,7 @@ export class DonationRepository extends Repository<Donation> {
         .getMany();
 
       if (!donations?.length && donations?.length != 0) {
-        throw new NotFoundException('Donations not found');
+        throw new NotFoundException('Donations Not Found');
       }
 
       for (let index = 0; index < donations?.length; index++) {
@@ -58,6 +58,7 @@ export class DonationRepository extends Repository<Donation> {
       if (!donations?.length && donations?.length != 0) {
         throw new NotFoundException('Donations not found');
       }
+      console.log(donations.length, 'hhh');
 
       for (let index = 0; index < donations.length; index++) {
         const element = donations[index].amount;
