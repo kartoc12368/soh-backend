@@ -85,4 +85,23 @@ export class DonationService {
       await ErrorResponseUtility.errorResponse(error);
     }
   }
+
+  async updateDonation(id, body): Promise<ResponseStructure> {
+    try {
+      await this.donationRepository.UpdateOneDonation(id, body);
+
+      return { message: 'Donation Updated Successfully' };
+    } catch (error) {
+      await ErrorResponseUtility.errorResponse(error);
+    }
+  }
+  async deleteDonation(id): Promise<ResponseStructure> {
+    try {
+      await this.donationRepository.deleteDonation(id);
+
+      return { message: 'Donation Deleted Successfully' };
+    } catch (error) {
+      await ErrorResponseUtility.errorResponse(error);
+    }
+  }
 }

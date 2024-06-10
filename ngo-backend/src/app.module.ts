@@ -12,12 +12,12 @@ import { DonationModule } from './modules/donation/donation.module';
 import { FundraiserPageModule } from './modules/fundraiser-page/fundraiser-page.module';
 import { FundraiserModule } from './modules/fundraiser/fundraiser.module';
 import { PaymentModule } from './modules/payment/payment.module';
-import { dataSourceOptions } from './config/typeorm.config.service';
+import { TypeOrmConfigService } from './config/typeorm.config.service';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env.local' }),
-    TypeOrmModule.forRoot(dataSourceOptions),
+    TypeOrmModule.forRootAsync({ useClass: TypeOrmConfigService }),
     MailerModule.forRoot({
       transport: {
         service: 'gmail',

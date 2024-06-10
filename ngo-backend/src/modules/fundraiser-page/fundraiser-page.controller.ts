@@ -1,5 +1,5 @@
-import { Body, Controller, Delete, FileTypeValidator, Get, Param, ParseFilePipe, ParseUUIDPipe, Post, Put, Req, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { Body, Controller, Delete, FileTypeValidator, Get, Param, ParseFilePipe, ParseUUIDPipe, Post, Put, Req, UploadedFile, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common';
+import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { ApiOperation, ApiResponse, ApiSecurity, ApiTags } from '@nestjs/swagger';
 
 import { FundraiserPageService } from './fundraiser-page.service';
@@ -22,7 +22,7 @@ export class FundraiserPageController {
   @Post('/updatePage/upload/:id')
   @ApiSecurity('JWT-auth')
   @UseGuards(new RoleGuard(RoleEnum.FUNDRAISER_ROLE), OwnershipGuard)
-  @UseInterceptors(FileInterceptor('file', storageForFundraiserPage))
+  @UseInterceptors(FilesInterceptor('files', 20, storageForFundraiserPage))
   @ApiOperation({ summary: 'Upload Image By Fundraiser for the page (roles: fundraiser)' })
   @ApiResponse({ status: 201, description: 'Api success' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -30,17 +30,17 @@ export class FundraiserPageController {
   @ApiResponse({ status: 400, description: 'Bad Request' })
   @ApiResponse({ status: 500, description: 'Internal server error!' })
   uploadFile(
-    @UploadedFile(
+    @UploadedFiles(
       new ParseFilePipe({
         validators: [new FileTypeValidator({ fileType: '.(png|jpeg|jpg)' })],
       }),
     )
-    file: Express.Multer.File,
+    files: Express.Multer.File,
 
     @Param('id', ParseUUIDPipe) PageId: string,
   ): Promise<ResponseStructure> {
-    console.log(file.filename);
-    return this.fundraiserPageService.uploadFile(file, PageId);
+    console.log(files);
+    return this.fundraiserPageService.uploadFile(files, PageId);
   }
 
   @Put('/updatePage/:id')

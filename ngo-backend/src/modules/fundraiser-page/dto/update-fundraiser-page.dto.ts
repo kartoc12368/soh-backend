@@ -1,12 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsOptional, IsString, Min } from 'class-validator';
 
 export class UpdateFundraiserPageDto {
   @ApiProperty()
   @IsNumber()
   @IsNotEmpty()
   @IsOptional()
+  @Min(1)
   target_amount: number;
 
   @ApiProperty()

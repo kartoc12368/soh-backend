@@ -21,7 +21,11 @@ export class Fundraiser {
   @Column({ unique: true })
   email: string;
 
-  @Column({ select: false })
+  @Column('character varying', {
+    length: 255,
+    nullable: true,
+    select: false,
+  })
   password: string;
 
   @Column({ type: 'enum', enum: RoleEnum, default: RoleEnum.FUNDRAISER_ROLE })
@@ -39,7 +43,7 @@ export class Fundraiser {
   @Column({ nullable: true })
   city: string;
 
-  @Column({ nullable: true, name: 'profile_image' })
+  @Column('character varying', { name: 'profile_image', nullable: true, length: 200 })
   profileImage: string;
 
   @Column({ nullable: true })

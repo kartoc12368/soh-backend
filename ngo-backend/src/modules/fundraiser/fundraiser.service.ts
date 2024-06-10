@@ -187,7 +187,7 @@ export class FundraiserService {
           : {}), // Only add filter if either from_date or to_date is provided
       };
 
-      const donations = await this.donationRepository.getAllDonations({ relations: { fundraiser: true }, where: conditions, order: { donation_id_frontend: 'ASC' } });
+      const donations = await this.donationRepository.getAllDonations({ relations: { fundraiser: true }, where: conditions, order: { donation_id_frontend: 'DESC' } });
       return { message: 'Donations Fetched Successfully', data: donations };
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);

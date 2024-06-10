@@ -5,7 +5,7 @@ import { IsNotEmpty, IsNumber, IsNumberString, IsOptional, IsString } from 'clas
 export class UpdateFundraiserDto {
   @ApiPropertyOptional()
   @IsString()
-  @IsNotEmpty({ message: 'First Name is required' })
+  @IsNotEmpty({ message: 'First Name is Required' })
   @IsOptional()
   firstName: string;
 

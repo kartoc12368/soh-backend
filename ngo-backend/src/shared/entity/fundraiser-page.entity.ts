@@ -13,13 +13,13 @@ export class FundraiserPage {
   @Column({ default: 0 })
   raised_amount: number;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, length: 350 })
   resolution: string;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, length: 500 })
   money_raised_for: string;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, length: 500 })
   story: string;
 
   @Column('text', { array: true, nullable: true })

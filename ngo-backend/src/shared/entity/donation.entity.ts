@@ -1,4 +1,4 @@
-import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { AfterRemove, BeforeInsert, Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 
 import { Fundraiser } from './fundraiser.entity';
 
@@ -14,22 +14,28 @@ export class Donation {
   @Column({ generated: true })
   donation_id_frontend: number;
 
-  @Column()
+  @Column({ type: 'float' })
   amount: number;
 
-  @Column({ nullable: true })
+  @Column('character varying', {
+    nullable: true,
+    length: 150,
+  })
   donor_first_name: string;
 
-  @Column({ nullable: true })
+  @Column('character varying', {
+    nullable: true,
+    length: 150,
+  })
   donor_last_name: string;
 
   @Column({ nullable: true })
   pan: string;
 
-  @Column({ nullable: true })
+  @Column('character varying', { nullable: true, length: 255 })
   donor_email: string;
 
-  @Column({ nullable: true })
+  @Column('character varying', { length: 15 })
   donor_phone: string;
 
   @Column({ nullable: true })
@@ -69,10 +75,10 @@ export class Donation {
   @Column({ nullable: true, type: 'date' })
   donation_date: Date;
 
-  @Column({ nullable: true })
+  @Column('character varying', { nullable: true, length: 100 })
   donor_city: string;
 
-  @Column({ nullable: true })
+  @Column('character varying', { nullable: true, length: 100 })
   donor_state: string;
 
   @Column({ nullable: true })

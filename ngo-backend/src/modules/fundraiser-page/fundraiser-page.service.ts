@@ -17,7 +17,7 @@ export class FundraiserPageService {
     private fundraiserRepository: FundRaiserRepository,
   ) {}
 
-  async uploadFile(file, PageId: string): Promise<ResponseStructure> {
+  async uploadFile(files, PageId: string): Promise<ResponseStructure> {
     try {
       let fundraiserPage = await this.fundraiserPageRepository.getFundraiserPage({ where: { id: PageId } });
 
@@ -27,7 +27,9 @@ export class FundraiserPageService {
 
       //accessing existing galley of fundraiserPage and pushing new uploaded files
       const fundraiserGallery = fundraiserPage?.gallery;
-      fundraiserGallery?.push(file?.filename);
+      files.forEach((file) => {
+        fundraiserGallery?.push(file?.filename);
+      });
 
       //saving new data of fundraiserPage with gallery
       await this.fundraiserPageRepository.UpdateFundraiserPage(PageId, { gallery: fundraiserGallery });

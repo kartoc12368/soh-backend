@@ -1,4 +1,4 @@
-import { Body, Controller, Param, ParseUUIDPipe, Post, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Delete, Param, ParseUUIDPipe, Post, Put, ValidationPipe } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import { Public } from 'src/shared/decorators/public.decorator';
@@ -36,5 +36,27 @@ export class DonationController {
   @Public()
   donateToFundRaiser(@Body(ValidationPipe) body: DonateDto, @Param('id', ParseUUIDPipe) id: string): Promise<ResponseStructure> {
     return this.donationService.donate(body, id);
+  }
+
+  @Put('/update/:id')
+  @ApiOperation({ summary: 'Update Donation (roles: admin)' })
+  @ApiResponse({ status: 201, description: 'Api success' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'Not found!' })
+  @ApiResponse({ status: 400, description: 'Bad Request' })
+  @ApiResponse({ status: 500, description: 'Internal server error!' })
+  updateDonation(@Param('id') id: ParseUUIDPipe, @Body() body: DonateDto) {
+    this.donationService.updateDonation(id, body);
+  }
+
+  @Delete('/delete/:id')
+  @ApiOperation({ summary: 'Delete Donation (roles: admin)' })
+  @ApiResponse({ status: 201, description: 'Api success' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'Not found!' })
+  @ApiResponse({ status: 400, description: 'Bad Request' })
+  @ApiResponse({ status: 500, description: 'Internal server error!' })
+  deleteDonation(@Param('id') id: ParseUUIDPipe) {
+    this.donationService.deleteDonation(id);
   }
 }

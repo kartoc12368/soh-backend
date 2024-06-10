@@ -36,9 +36,9 @@ export class AdminService {
 
   async getAdminDashboardData(): Promise<ResponseStructure> {
     try {
-      const totalFundraisers = await this.fundraiserRepository.countFundraisers();
+      const totalFundraisers = await this.fundraiserRepository.countFundraisers({ where: { role: 'FUNDRAISER' } });
 
-      const activeFundraisers = await this.fundraiserRepository.countFundraisers({ where: { status: 'active' } });
+      const activeFundraisers = await this.fundraiserRepository.countFundraisers({ where: { status: 'active', role: 'FUNDRAISER' } });
 
       const todayDonations = await this.donationRepository.getTodayDonations();
 
@@ -70,7 +70,7 @@ export class AdminService {
           : {}), // Only add filter if either from_date or to_date is provided
       };
 
-      const donationsData = await this.donationRepository.getAllDonations({ relations: { fundraiser: true }, where: conditions, order: { donation_id_frontend: 'ASC' } });
+      const donationsData = await this.donationRepository.getAllDonations({ relations: { fundraiser: true }, where: conditions, order: { donation_id_frontend: 'DESC' } });
 
       return { message: 'Donations Received Successfully', data: donationsData, success: true };
     } catch (error) {
@@ -133,7 +133,7 @@ export class AdminService {
 
   async getAllFundraiser(): Promise<ResponseStructure> {
     try {
-      const fundraisers = await this.fundraiserRepository.getAllFundraisers({ relations: ['fundraiser_page'], order: { f_id: 'ASC' } });
+      const fundraisers = await this.fundraiserRepository.getAllFundraisers({ relations: ['fundraiser_page'], order: { f_id: 'DESC' } });
 
       const filteredUsers = fundraisers?.filter((fundraiser) => fundraiser?.role !== 'ADMIN');
 
