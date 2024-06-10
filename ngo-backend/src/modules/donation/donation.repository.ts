@@ -18,10 +18,11 @@ export class DonationRepository extends Repository<Donation> {
       const donations = await this.dataSource
         .getRepository(Donation)
         .createQueryBuilder('donation')
-        .where('DATE(donation.created_at)=:date', { date: new Date() })
+        .where('DATE(donation.donation_date)=:date', { date: new Date() })
         .andWhere('donation.payment_status=:payment_status', { payment_status: 'success' })
         .getMany();
 
+      console.log(donations, 'donate');
       if (!donations?.length && donations?.length != 0) {
         throw new NotFoundException('Donations Not Found');
       }
@@ -49,7 +50,7 @@ export class DonationRepository extends Repository<Donation> {
       const donations = await this.dataSource
         .getRepository(Donation)
         .createQueryBuilder('donation')
-        .where("date_part('month',donation.created_at)=:date", {
+        .where("date_part('month',donation.donation_date)=:date", {
           date: new Date().getMonth() + 1,
         })
         .andWhere('donation.payment_status=:payment_status', { payment_status: 'success' })

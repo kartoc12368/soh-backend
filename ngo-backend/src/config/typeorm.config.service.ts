@@ -15,7 +15,7 @@ export class TypeOrmConfigService implements TypeOrmOptionsFactory {
       database: process.env?.DATABASE_NAME,
       logging: false,
       entities: [__dirname + '/../**/entity/*.entity{.ts,.js}'],
-      synchronize: true,
+      synchronize: false,
       ssl: {
         rejectUnauthorized: false,
       },

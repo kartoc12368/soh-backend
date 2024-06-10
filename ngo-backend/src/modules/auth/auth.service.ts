@@ -58,7 +58,7 @@ export class AuthService {
           throw new UnauthorizedException('Invalid Password');
         }
       } else {
-        throw new UnauthorizedException('Please Sign Up');
+        throw new UnauthorizedException('Fundraiser Status is Inactive');
       }
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);

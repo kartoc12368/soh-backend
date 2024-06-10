@@ -6,6 +6,6 @@ export class PaymentDto {
   @ApiProperty()
   @IsDecimal()
   @IsNotEmpty()
-  @Min(1)
+  // @Min(1)
   amount: number;
 }

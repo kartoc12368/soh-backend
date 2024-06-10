@@ -42,7 +42,7 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
       // }
 
       if (!(await bcrypt?.compare(password, fundraiserPassword?.password))) {
-        throw new UnauthorizedException('Invalid password');
+        throw new UnauthorizedException('Invalid Password');
       }
 
       return { message: 'Invalid Login' };

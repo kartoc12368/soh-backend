@@ -26,7 +26,7 @@ export class ErrorResponseUtility {
     }
 
     if (error.message.includes('invalid signature')) {
-      throw new UnauthorizedException('Invalid or expired refresh token');
+      throw new UnauthorizedException('Invalid or Expired Refresh Token');
     }
 
     const errorMessage = error?.message || error?.errors?.[0]?.message;
