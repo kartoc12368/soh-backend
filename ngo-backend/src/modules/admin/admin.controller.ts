@@ -154,7 +154,7 @@ export class AdminController {
   @ApiResponse({ status: 404, description: 'Not found!' })
   @ApiResponse({ status: 400, description: 'Bad Request' })
   @ApiResponse({ status: 500, description: 'Internal server error!' })
-  downloadExcel(@Res() res: Response): Promise<any> {
-    return this.adminService.downloadExcelforDonations(res);
+  downloadExcel(@Res() res: Response, @Query() dto: FindDonationsDto): Promise<any> {
+    return this.adminService.downloadExcelforDonations(res, dto);
   }
 }

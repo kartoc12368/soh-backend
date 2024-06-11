@@ -46,7 +46,7 @@ export class AdminService {
 
       const totalDonations = await this.donationRepository.getTotalDonations();
 
-      return { message: 'Dashboard Data received successfully', data: { totalDonations, totalFundraisers, activeFundraisers, todayDonations, thisMonthDonations }, success: true };
+      return { message: 'Dashboard Data Received Successfully', data: { totalDonations, totalFundraisers, activeFundraisers, todayDonations, thisMonthDonations }, success: true };
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }
@@ -70,7 +70,7 @@ export class AdminService {
           : {}), // Only add filter if either from_date or to_date is provided
       };
 
-      const donationsData = await this.donationRepository.getAllDonations({ relations: { fundraiser: true }, where: conditions, order: { donation_id_frontend: 'DESC' } });
+      const donationsData = await this.donationRepository.getAllDonations({ relations: { fundraiser: true }, where: conditions, order: { donation_date: 'DESC' } });
 
       return { message: 'Donations Received Successfully', data: donationsData, success: true };
     } catch (error) {
@@ -102,9 +102,9 @@ export class AdminService {
       await this.fundraiserRepository.UpdateFundraiser(id, { status: fundraiser?.status });
 
       if (fundraiser?.status === 'active') {
-        return { message: 'Status Changed To Active ', success: true };
+        return { message: 'Status Changed To Active ', success: true, data: { status: 1 } };
       } else {
-        return { message: 'Status Changed To Inactive', success: true };
+        return { message: 'Status Changed To Inactive', success: true, data: { status: 0 } };
       }
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
@@ -148,7 +148,7 @@ export class AdminService {
       const isFundraiserExists = await this.fundraiserRepository.getFundraiser({ where: { email: body?.email } });
 
       if (isFundraiserExists && isFundraiserExists?.role == 'FUNDRAISER') {
-        throw new ConflictException('Email Already In Use');
+        throw new ConflictException('Fundraiser Already Exists');
       } else {
         //generating random password in randomPassword variable
         const randomPassword = Math?.random()?.toString(36)?.slice(-8);
@@ -257,15 +257,15 @@ export class AdminService {
     }
   }
 
-  async downloadExcelforDonations(res: Response): Promise<any> {
+  async downloadExcelforDonations(res: Response, dto): Promise<any> {
     try {
-      const donations = await this.donationRepository.getAllDonations();
+      const donations = await this.getDonationsAdmin(dto);
 
       if (!donations) {
         throw new NotFoundException('Donations Not Found');
       }
 
-      const filename = await downloadDonationsExcel(donations);
+      const filename = await downloadDonationsExcel(donations.data);
 
       if (!filename) {
         throw new NotFoundException('Filename Not Found');

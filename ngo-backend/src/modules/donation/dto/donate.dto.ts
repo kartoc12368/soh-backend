@@ -8,7 +8,6 @@ export class DonateDto {
   @ApiProperty({ example: '100' })
   @IsNotEmpty()
   @Transform(({ value }) => Number.parseFloat(value))
-  @Min(1)
   amount: number;
 
   @ApiProperty({ example: 'Kartavya' })
