@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-import { IsNotEmpty, IsString, Length } from 'class-validator';
+import { Equals, IsNotEmpty, IsString, Length, MinLength } from 'class-validator';
 
 export class ChangePasswordDto {
   @ApiProperty({ example: 'Oneclick1@' })
@@ -12,12 +12,12 @@ export class ChangePasswordDto {
   @ApiProperty({ example: 'Oneclick2@' })
   @IsString()
   @IsNotEmpty({ message: 'New Password is Required' })
-  @Length(8)
+  @MinLength(6)
   newPassword: string;
 
   @ApiProperty({ example: 'Oneclick2@' })
   @IsString()
   @IsNotEmpty({ message: 'Confirm Password is Required' })
-  @Length(8)
+  @MinLength(6)
   confirmPassword: string;
 }

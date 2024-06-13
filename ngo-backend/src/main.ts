@@ -21,8 +21,8 @@ async function bootstrap(): Promise<any> {
 
   //swagger setup
   const options = new DocumentBuilder()
-    .setTitle('NGO Website')
-    .setDescription('Ngo Website Api Documentation')
+    .setTitle('Support Our Heroes')
+    .setDescription('Support Our Heroes Fundraising and Donation Feature Api Documentation')
     .setVersion('1.0')
     .addBearerAuth(
       {

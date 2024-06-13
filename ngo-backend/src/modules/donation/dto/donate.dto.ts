@@ -1,13 +1,16 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 
-import { IsAlpha, IsDecimal, IsEmail, IsEnum, IsLowercase, IsNotEmpty, IsNumberString, IsOptional, IsString, Min } from 'class-validator';
+import { IsAlpha, IsDecimal, IsEmail, IsEnum, IsLowercase, IsNotEmpty, IsNumberString, IsOptional, IsString, Max, Min } from 'class-validator';
 import { ProjectName } from 'src/shared/enums/project.enum';
 
 export class DonateDto {
-  @ApiProperty({ example: '100' })
+  @ApiProperty({ example: 100, maximum: 100000000, minimum: 1, type: 'float' })
   @IsNotEmpty()
   @Transform(({ value }) => Number.parseFloat(value))
+  @Min(1)
+  @Max(100000000)
+  @IsDecimal()
   amount: number;
 
   @ApiProperty({ example: 'Kartavya' })
@@ -15,13 +18,13 @@ export class DonateDto {
   @IsNotEmpty()
   donor_first_name: string;
 
-  @ApiProperty({ example: 'Patel' })
+  @ApiProperty({ example: 'Patel', required: false })
   @IsAlpha()
   @IsNotEmpty()
   @IsOptional()
   donor_last_name: string;
 
-  @ApiProperty({ example: 'GAUPP1234E' })
+  @ApiProperty({ example: 'GAUPP1234E', required: false })
   @IsOptional()
   @IsString()
   pan: string;
@@ -37,50 +40,43 @@ export class DonateDto {
   @IsNumberString()
   donor_phone: string;
 
-  @ApiProperty({ example: '407-412, President Plaza, opposite TITANIUM SQUARE, Jay Ambe Nagar, Patel Society, Jai Ambe Nagar, Thaltej, Ahmedabad, Gujarat 380054  ' })
+  @ApiProperty({ example: '407-412, President Plaza, opposite TITANIUM SQUARE, Jay Ambe Nagar, Patel Society, Jai Ambe Nagar, Thaltej, Ahmedabad, Gujarat 380054  ', required: false })
   @IsOptional()
   @IsString()
   donor_address: string;
 
-  @ApiProperty({ example: 'Ahmedabad' })
+  @ApiProperty({ example: 'Ahmedabad', required: false })
   @IsOptional()
   @IsString()
   donor_city: string;
 
-  @ApiProperty({ example: 'Gujarat' })
+  @ApiProperty({ example: 'Gujarat', required: false })
   @IsOptional()
   @IsString()
   donor_state: string;
 
-  @ApiProperty({ example: 'India' })
+  @ApiProperty({ example: 'India', required: false })
   @IsOptional()
   @IsString()
   donor_country: string;
 
-  @ApiProperty({ example: '380054' })
+  @ApiProperty({ example: '380054', required: false })
   @IsOptional()
   @IsString()
   donor_pincode: string;
 
-  @ApiProperty({ example: 'pithu' })
+  @ApiProperty({ example: 'pithu', required: false })
   @IsOptional()
-  @IsString()
   @IsEnum(ProjectName)
   project_name: string;
 
-  @ApiProperty({ enum: { Yes: 'Yes', No: 'No' } })
+  @ApiProperty({ enum: { Yes: 'Yes', No: 'No' }, default: 'No' })
   @IsOptional()
-  @IsString()
   @IsEnum({ enum: { Yes: 'Yes', No: 'No' } })
   certificate: string;
 
-  @ApiProperty({ example: 'Make it anonymous' })
+  @ApiProperty({ example: 'Make it anonymous', required: false })
   @IsOptional()
   @IsString()
   comments: string;
-
-  @ApiProperty({ example: 'tyuh78hj' })
-  @IsOptional()
-  @IsString()
-  txnid: string;
 }

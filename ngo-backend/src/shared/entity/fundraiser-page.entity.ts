@@ -10,9 +10,6 @@ export class FundraiserPage {
   @Column({ default: 0 })
   target_amount: number;
 
-  @Column({ default: 0 })
-  raised_amount: number;
-
   @Column({ nullable: true, length: 350 })
   resolution: string;
 
@@ -21,12 +18,6 @@ export class FundraiserPage {
 
   @Column({ nullable: true, length: 500 })
   story: string;
-
-  @Column('text', { array: true, nullable: true })
-  supporters: string[];
-
-  @Column('text', { array: true, nullable: true })
-  gallery: string[];
 
   @CreateDateColumn({
     type: 'timestamp',

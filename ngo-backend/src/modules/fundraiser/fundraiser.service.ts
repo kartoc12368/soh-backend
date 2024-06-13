@@ -20,6 +20,7 @@ import { ErrorResponseUtility } from 'src/shared/utility/error-response.utility'
 import { downloadDonationsExcel } from 'src/shared/utility/excel.utility';
 
 import { Between, FindOptionsWhere } from 'typeorm';
+import { FundraiserCampaignImagesRepository } from '../fundraiser-page/fundraiser-campaign-images.repository';
 
 @Injectable()
 export class FundraiserService {
@@ -27,6 +28,7 @@ export class FundraiserService {
     private fundRaiserRepository: FundRaiserRepository,
     private fundraiserPageRepository: FundraiserPageRepository,
     private donationRepository: DonationRepository,
+    private fundraiserCampaignImagesRepository: FundraiserCampaignImagesRepository,
   ) {}
 
   async changePassword(user, changePasswordDto: ChangePasswordDto): Promise<ResponseStructure> {
@@ -68,8 +70,9 @@ export class FundraiserService {
       if (!fundraiser) {
         throw new NotFoundException('Fundraiser Not Found');
       }
+      const FundraiserRaisedAmount = await this.getRaisedAmount(fundraiser);
 
-      return { message: 'Fundraiser Fetched Successfully', data: fundraiser, success: true };
+      return { message: 'Fundraiser Fetched Successfully', data: { fundraiser: fundraiser, dashboard_data: FundraiserRaisedAmount }, success: true };
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }
@@ -212,13 +215,12 @@ export class FundraiserService {
     }
   }
 
-  async getRaisedAmount(user): Promise<ResponseStructure> {
+  async getRaisedAmount(fundRaiser): Promise<any> {
     try {
-      const fundRaiser = await this.getLoggedInFundraiser(user);
       const totalDonor = await this.donationRepository.getTotalDonor(fundRaiser);
       const amount = await this.donationRepository.getRaisedAmount(fundRaiser);
       const donorNames = await this.donationRepository.getDonorNames(fundRaiser);
-      return { message: 'Raised Amount Fetched Successfully', data: { totalDonor, amount, donorNames } };
+      return { totalDonor, amount };
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }

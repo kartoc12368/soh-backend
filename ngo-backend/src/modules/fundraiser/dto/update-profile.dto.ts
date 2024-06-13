@@ -1,61 +1,60 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
-import { IsNotEmpty, IsNumber, IsNumberString, IsOptional, IsString } from 'class-validator';
+import { IsDate, IsNotEmpty, IsNumber, IsNumberString, IsOptional, IsString } from 'class-validator';
 
 export class UpdateFundraiserDto {
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ example: 'Kartavya' })
   @IsString()
   @IsNotEmpty({ message: 'First Name is Required' })
   @IsOptional()
   firstName: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ example: 'Patel' })
   @IsString()
   @IsOptional()
   lastName: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ example: '9265908056' })
   @IsOptional()
-  @IsString()
   @IsNumberString()
   mobile_number: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ example: 'profile.jpeg' })
   @IsString()
   @IsOptional()
   profilePicture: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ example: 'lorem ipsum dolor sit amet' })
   @IsString()
   @IsOptional()
   address: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ example: 'Ahmedabad' })
   @IsString()
   @IsOptional()
   city: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ example: 'Gujarat' })
   @IsString()
   @IsOptional()
   state: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ example: 'India' })
   @IsString()
   @IsOptional()
   country: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ example: 380060 })
   @IsNumber()
   @IsOptional()
   pincode: number;
 
-  @ApiPropertyOptional()
-  @IsString()
+  @ApiPropertyOptional({ example: '06/06/2024' })
+  @IsDate()
   @IsOptional()
-  dob: string;
+  dob: Date;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ example: 'AOCXX4500X' })
   @IsString()
   @IsOptional()
   pan: string;

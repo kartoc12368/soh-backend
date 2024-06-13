@@ -7,12 +7,14 @@ import { Request } from 'express';
 
 import { Observable } from 'rxjs';
 import { ErrorResponseUtility } from '../utility/error-response.utility';
+import { FundraiserCampaignImagesRepository } from 'src/modules/fundraiser-page/fundraiser-campaign-images.repository';
 
 @Injectable()
 export class OwnershipGuard implements CanActivate {
   constructor(
     private readonly fundraiserPageRepository: FundraiserPageRepository,
     private readonly fundraiserRepository: FundRaiserRepository,
+    private fundraiserCampaignImagesRepository: FundraiserCampaignImagesRepository,
   ) {}
 
   canActivate(context: ExecutionContext): boolean | Promise<boolean> | Observable<boolean> {
@@ -56,7 +58,7 @@ export class OwnershipGuard implements CanActivate {
 
   async checkOwnershipforImage(dataId: string, email: string): Promise<boolean> {
     try {
-      const fundraiserPage = await this.fundraiserPageRepository.getFundraiserByImage(dataId);
+      const fundraiserImage = await this.fundraiserCampaignImagesRepository.getFundraiserByImage(dataId);
 
       const fundraiser = await this.fundraiserRepository.getFundraiser({ where: { email: email } });
 
@@ -64,11 +66,11 @@ export class OwnershipGuard implements CanActivate {
         return true;
       }
 
-      if (fundraiserPage == null) {
+      if (fundraiserImage == null) {
         throw new ForbiddenException('Image Not exist for current fundraiser Page');
       }
 
-      return fundraiserPage?.fundraiser?.fundraiser_id === fundraiser?.fundraiser_id;
+      return fundraiserImage?.fundraiser_page?.fundraiser?.fundraiser_id === fundraiser?.fundraiser_id;
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }

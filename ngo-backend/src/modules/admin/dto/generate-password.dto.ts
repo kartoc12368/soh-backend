@@ -13,8 +13,7 @@ export class GeneratePasswordDto {
   @IsNotEmpty({ message: 'First Name is Required' })
   firstName: string;
 
-  @ApiProperty({ example: '1234567890' })
-  @IsString()
+  @ApiProperty({ example: '1234567890', maxLength: 10 })
   @IsNotEmpty()
   @IsNumberString()
   mobile_number: string;

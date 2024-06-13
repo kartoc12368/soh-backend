@@ -29,7 +29,10 @@ export class Donation {
   })
   donor_last_name: string;
 
-  @Column({ nullable: true })
+  @Column('character varying', {
+    nullable: true,
+    length: 10,
+  })
   pan: string;
 
   @Column('character varying', { nullable: true, length: 255 })
@@ -38,10 +41,16 @@ export class Donation {
   @Column('character varying', { length: 15 })
   donor_phone: string;
 
-  @Column({ nullable: true })
+  @Column('character varying', {
+    nullable: true,
+    length: 255,
+  })
   donor_address: string;
 
-  @Column({ nullable: true })
+  @Column('character varying', {
+    nullable: true,
+    length: 255,
+  })
   comments: string;
 
   @Column({
@@ -65,12 +74,6 @@ export class Donation {
 
   @Column({ nullable: true, default: null })
   payment_id: string;
-
-  @Column({ nullable: true, default: null })
-  payment_order_id: string;
-
-  @Column({ nullable: true, default: null })
-  payment_signature: string;
 
   @Column({ nullable: true, type: 'date' })
   donation_date: Date;
@@ -113,6 +116,9 @@ export class Donation {
 
   @Column({ nullable: true })
   payment_method: string;
+
+  @Column({ type: 'json', nullable: true })
+  payment_details: object;
 
   @CreateDateColumn({
     type: 'timestamp',

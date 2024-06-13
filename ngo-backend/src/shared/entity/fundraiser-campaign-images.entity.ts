@@ -1,12 +1,15 @@
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
-import { Fundraiser } from './fundraiser.entity';
+import { FundraiserPage } from './fundraiser-page.entity';
 
 @Entity()
 export class FundraiserCampaignImages {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn()
   id: string;
 
-  //   @ManyToOne(() => Fundraiser)
-  //   @JoinColumn({name:"fundraiser_id"})
-  //   fundraiser: Fundraiser;
+  @ManyToOne(() => FundraiserPage)
+  @JoinColumn({ name: 'fundraiser_page_id' })
+  fundraiser_page: FundraiserPage;
+
+  @Column({ nullable: true })
+  image_url: string;
 }

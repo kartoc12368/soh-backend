@@ -38,9 +38,10 @@ export class FundraiserPageController {
     files: Express.Multer.File,
 
     @Param('id', ParseUUIDPipe) PageId: string,
+    @Req() req: any,
   ): Promise<ResponseStructure> {
     console.log(files);
-    return this.fundraiserPageService.uploadFile(files, PageId);
+    return this.fundraiserPageService.uploadFile(files, PageId, req.user);
   }
 
   @Put('/updatePage/:id')

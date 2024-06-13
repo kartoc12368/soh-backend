@@ -1,11 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-import { IsDecimal, IsNotEmpty, Min } from 'class-validator';
+import { IsDecimal, IsNotEmpty, Max, Min } from 'class-validator';
 
 export class PaymentDto {
-  @ApiProperty()
+  @ApiProperty({ type: 'float', example: 100 })
   @IsDecimal()
   @IsNotEmpty()
-  // @Min(1)
+  @Min(1)
+  @Max(100000000)
   amount: number;
 }

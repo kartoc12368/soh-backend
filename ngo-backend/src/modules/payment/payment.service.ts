@@ -87,10 +87,8 @@ export class PaymentService {
       }
 
       await this.donationRepository.UpdateOneDonation(donation?.donation_id, {
-        payment_order_id: razorpay_order_id,
         payment_status: 'success',
-        payment_signature: razorpay_signature,
-        payment_id: razorpay_payment_id,
+        payment_details: body,
       });
 
       if (id != 'undefined') {

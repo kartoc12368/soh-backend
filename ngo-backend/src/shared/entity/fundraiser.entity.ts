@@ -61,12 +61,6 @@ export class Fundraiser {
   @Column({ nullable: true })
   pan: string;
 
-  @Column({ default: 0 })
-  total_amount_raised: number;
-
-  @Column({ default: 0 })
-  total_donations: number;
-
   @CreateDateColumn({
     type: 'timestamp',
     default: () => 'CURRENT_TIMESTAMP(6)',

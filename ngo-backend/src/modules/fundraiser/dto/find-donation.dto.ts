@@ -8,12 +8,10 @@ import { PaymentStatus } from 'src/shared/enums/payment-status.enum';
 
 export class FindDonationsDto {
   @ApiPropertyOptional({ enum: PaymentType })
-  @IsString()
   @IsOptional()
   @IsEnum(PaymentType)
   payment_option: string;
 
-  @IsString()
   @ApiPropertyOptional({ enum: PaymentStatus })
   @IsOptional()
   @IsEnum(PaymentStatus)
