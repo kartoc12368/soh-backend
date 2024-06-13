@@ -1,121 +1,213 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { MailerService } from '@nestjs-modules/mailer';
+import { Injectable } from '@nestjs/common';
+import * as crypto from 'crypto';
 
-import { DonationRepository } from '../donation/donation.repository';
+import { DonationRepository } from 'src/modules/donation/donation.repository';
 
-import { DonationService } from '../donation/donation.service';
-
-import crypto from 'crypto';
-
-import axios from 'axios';
-import Razorpay from 'razorpay';
-import { ResponseStructure } from 'src/shared/interface/response-structure.interface';
+import { SendEmailDto } from 'src/shared/interface/mail.interface';
 import { ErrorResponseUtility } from 'src/shared/utility/error-response.utility';
+import { SendMailerUtility } from 'src/shared/utility/send-mailer.utility';
 
 @Injectable()
 export class PaymentService {
+  private merchantId: string;
+  private encryptionKey: string;
+  private subMerchantId: string;
+  private paymode: string;
+  private returnUrl: string;
+
   constructor(
     private donationRepository: DonationRepository,
-    private donationService: DonationService,
-  ) {}
+    private readonly mailerService: MailerService,
+  ) {
+    this.merchantId = '100011';
+    this.encryptionKey = '1000060000000000';
+    this.subMerchantId = '1234';
+    this.paymode = '9';
+    this.returnUrl = 'http://localhost:3001/easypay/verification';
+  }
 
-  async getInstance(): Promise<any> {
+  async redirectUrl(res, body) {
+    console.log(body);
     try {
-      const instance = new Razorpay({
-        key_id: process?.env?.RAZORPAY_API_KEY,
-        key_secret: process?.env?.RAZORPAY_API_SECRET,
-      });
+      const amount = body?.amount;
 
-      return instance;
+      const { donor_phone, donor_email } = body;
+
+      // Include the payment processing logic
+      const reference_no = Math.floor(Math.random() * 1000000);
+      const payment_url = await this.getPaymentUrl(amount, String(reference_no), donor_phone, donor_email);
+      console.log('payment_url:' + payment_url);
+
+      // Redirect the user to the payment URL
+      // res.redirect(payment_url);
+      return { url: payment_url };
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }
   }
 
-  async checkout(amount, reference): Promise<ResponseStructure> {
-    try {
-      let donation = await this.donationRepository.getOneDonation({ where: { reference_payment: reference } });
+  async verify(body) {
+    if (Object.keys(body).length !== 0 && body.Total_Amount && body.Response_Code === 'E000') {
+      const res = body;
 
-      if (!donation) {
-        throw new NotFoundException('Donation with this reference does not exist');
-      }
+      // Same encryption key that we gave for generating the URL
+      const aesKeyForPaymentSuccess = 'XXXXXXXXXXXXXXXX';
 
-      amount *= 100;
-
-      const options = {
-        amount: parseInt(amount),
-        currency: 'INR',
-        // receipt: 'order_rcptid_11',
-        // payment_capture: 1
+      const data = {
+        Response_Code: res.Response_Code,
+        Unique_Ref_Number: res.Unique_Ref_Number,
+        Service_Tax_Amount: res.Service_Tax_Amount,
+        Processing_Fee_Amount: res.Processing_Fee_Amount,
+        Total_Amount: res.Total_Amount,
+        Transaction_Amount: res.Transaction_Amount,
+        Transaction_Date: res.Transaction_Date,
+        Interchange_Value: res.Interchange_Value,
+        TDR: res.TDR,
+        Payment_Mode: res.Payment_Mode,
+        SubMerchantId: res.SubMerchantId,
+        ReferenceNo: res.ReferenceNo,
+        ID: res.ID,
+        RS: res.RS,
+        TPS: res.TPS,
       };
 
-      const response = await (await this?.getInstance())?.orders?.create(options);
+      const verificationKey = `${data.ID}|${data.Response_Code}|${data.Unique_Ref_Number}|${data.Service_Tax_Amount}|${data.Processing_Fee_Amount}|${data.Total_Amount}|${data.Transaction_Amount}|${data.Transaction_Date}|${data.Interchange_Value}|${data.TDR}|${data.Payment_Mode}|${data.SubMerchantId}|${data.ReferenceNo}|${data.TPS}|${aesKeyForPaymentSuccess}`;
 
-      await this.donationRepository.UpdateOneDonation(donation?.donation_id, { order_id: response?.id });
+      const encryptedMessage = crypto.createHash('sha512').update(verificationKey).digest('hex');
+      if (encryptedMessage === data.RS) {
+        const donation = await this.donationRepository.getOneDonation({ where: { reference: data?.Unique_Ref_Number } });
 
-      console.log(response);
+        const sendEmailDto: SendEmailDto = {
+          firstName: donation?.donor_first_name,
+          recipients: [{ name: donation?.donor_first_name, address: donation?.donor_email }],
+          data: donation,
+        };
 
-      return { message: 'Checkout Successful', data: response, success: true };
-    } catch (error) {
-      await ErrorResponseUtility.errorResponse(error);
-    }
-  }
+        await new SendMailerUtility(this.mailerService).transactionSuccess(sendEmailDto);
 
-  async paymentVerification(body, res, query): Promise<ResponseStructure> {
-    try {
-      const { id } = query;
-
-      const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = body;
-
-      console.log(razorpay_order_id, razorpay_payment_id, razorpay_signature);
-      // console.log(res)
-
-      const newBody = razorpay_order_id + '|' + razorpay_payment_id;
-
-      const expectedSignature = crypto.createHmac('sha256', process?.env?.RAZORPAY_API_SECRET).update(newBody.toString()).digest('hex');
-
-      const isAuthentic = expectedSignature === razorpay_signature;
-
-      if (!isAuthentic) {
-        return { message: 'Payment is Not Authenticated', success: false };
-      }
-
-      // Database comes here
-      const donation = await this.donationRepository.getOneDonation({ where: { order_id: razorpay_order_id }, relations: ['fundraiser'] });
-
-      if (!donation) {
-        throw new NotFoundException('Donation with this order_id does not exist');
-      }
-
-      await this.donationRepository.UpdateOneDonation(donation?.donation_id, {
-        payment_status: 'success',
-        payment_details: body,
-      });
-
-      if (id != 'undefined') {
-        res.redirect(`http://localhost:3000/paymentsuccess/${id}/?reference=${razorpay_payment_id}`);
-        await this.donationService.saveDonation(donation);
+        return true;
       } else {
-        res.redirect(`http://localhost:3000/paymentsuccess/?reference=${razorpay_payment_id}`);
+        return false;
       }
+    } else {
+      return false;
+    }
+  }
+  async getPaymentUrl(amount, referenceNo, mobileNumber, email) {
+    try {
+      const mandatoryField = await this.getMandatoryField(amount, referenceNo);
+      console.log(mandatoryField);
+      const optionalFieldValue = await this.getOptionalField(mobileNumber, email);
+      console.log('optionalFieldValue: ' + optionalFieldValue);
 
-      return { message: 'Payment Successfully Processed', success: true };
+      const amountValue = await this.getAmount(amount);
+      console.log('amountValue: ' + amountValue);
+      const referenceNoValue = await this.getReferenceNo(referenceNo);
+      console.log('referenceNoValue: ' + referenceNoValue);
+
+      const paymentUrl = await this.generatePaymentUrl(mandatoryField, optionalFieldValue, amount, referenceNo, email, mobileNumber);
+      return paymentUrl;
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }
   }
 
-  async findAll() {
-    const donations = await this.donationRepository.getAllDonations({ where: { payment_status: 'pending' } });
-    console.log(donations);
-    donations.forEach(async (donation) => {
-      const { data } = await axios({
-        method: 'GET',
-        url: 'https://api.razorpay.com/v1/orders',
-        auth: { username: process?.env?.RAZORPAY_API_KEY, password: process?.env?.RAZORPAY_API_SECRET },
-      });
-      if (data?.amount_due == data?.amount) {
-        await this.donationRepository.UpdateOneDonation(donation?.donation_id, { payment_status: 'failed' });
-      }
-    });
+  async generatePaymentUrl(mandatoryField, optionalField, amount, referenceNo, email, mobileNumber) {
+    try {
+      const url = `https://eazypay.icicibank.com/EazyPG?merchantid=${this.merchantId}&mandatoryfields=${referenceNo}|${this.subMerchantId}|${amount}&optionalfields=${email}|${mobileNumber}&returnurl=${this.returnUrl}&ReferenceNo=${referenceNo}&submerchantid=${this.subMerchantId}&transactionamount=${amount}&paymode=${this.paymode}`;
+      console.log('unencrypted', url);
+      const encryptedUrl = `https://eazypay.icicibank.com/EazyPG?merchantid=${
+        this.merchantId
+      }&mandatoryfields=${mandatoryField}&optionalfields=${optionalField}&returnurl=${await this.getReturnUrl()}&ReferenceNo=${referenceNo}&submerchantid=${await this.getSubMerchantId()}&transactionamount=${amount}&paymode=${await this.getPaymode()}`;
+      return encryptedUrl;
+    } catch (error) {
+      await ErrorResponseUtility.errorResponse(error);
+    }
+  }
+
+  async pushUrl(body) {
+    try {
+      console.log(body);
+      return 'Success';
+    } catch (error) {
+      await ErrorResponseUtility.errorResponse(error);
+    }
+  }
+
+  async getMandatoryField(amount, referenceNo) {
+    try {
+      return await this.getEncryptValue(`${referenceNo}|${this.subMerchantId}|${amount}`);
+    } catch (error) {
+      await ErrorResponseUtility.errorResponse(error);
+    }
+  }
+
+  async getOptionalField(email, mobileNumber) {
+    try {
+      return await this.getEncryptValue(`${email}|${mobileNumber}`);
+    } catch (error) {
+      await ErrorResponseUtility.errorResponse(error);
+    }
+  }
+
+  async getAmount(amount) {
+    try {
+      return await this.getEncryptValue(amount);
+    } catch (error) {
+      await ErrorResponseUtility.errorResponse(error);
+    }
+  }
+
+  async getReturnUrl() {
+    try {
+      return await this.getEncryptValue(this.returnUrl);
+    } catch (error) {
+      await ErrorResponseUtility.errorResponse(error);
+    }
+  }
+
+  async getReferenceNo(referenceNo) {
+    try {
+      return await this.getEncryptValue(referenceNo);
+    } catch (error) {
+      await ErrorResponseUtility.errorResponse(error);
+    }
+  }
+
+  async getSubMerchantId() {
+    try {
+      return await this.getEncryptValue(this.subMerchantId);
+    } catch (error) {
+      await ErrorResponseUtility.errorResponse(error);
+    }
+  }
+
+  async getPaymode() {
+    try {
+      return await this.getEncryptValue(this.paymode);
+    } catch (error) {
+      await ErrorResponseUtility.errorResponse(error);
+    }
+  }
+
+  async getEncryptValue(data) {
+    try {
+      const encrypted = await this.encrypt(data, this.encryptionKey);
+      return btoa(encrypted);
+    } catch (error) {
+      await ErrorResponseUtility.errorResponse(error);
+    }
+  }
+
+  async encrypt(data, key) {
+    try {
+      const cipher = crypto.createCipheriv('aes-128-ecb', key, null);
+      let encrypted = cipher.update(data, 'utf8', 'binary');
+      encrypted += cipher.final('binary');
+      return encrypted;
+    } catch (error) {
+      await ErrorResponseUtility.errorResponse(error);
+    }
   }
 }

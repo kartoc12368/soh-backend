@@ -256,24 +256,4 @@ export class AdminService {
       await ErrorResponseUtility.errorResponse(error);
     }
   }
-
-  async downloadExcelforDonations(res: Response, dto): Promise<any> {
-    try {
-      const donations = await this.getDonationsAdmin(dto);
-
-      if (!donations) {
-        throw new NotFoundException('Donations Not Found');
-      }
-
-      const filename = await downloadDonationsExcel(donations.data);
-
-      if (!filename) {
-        throw new NotFoundException('Filename Not Found');
-      }
-
-      return of(res.sendFile(path.join(process.cwd(), 'downloads/' + filename)));
-    } catch (error) {
-      await ErrorResponseUtility.errorResponse(error);
-    }
-  }
 }

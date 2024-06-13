@@ -13,7 +13,7 @@ export class FundraiserCampaignImagesRepository extends Repository<FundraiserCam
 
   async getFundraiserByImage(dataId) {
     try {
-      return await this.findOne({ where: { image_url: dataId }, relations: ['fundraiser_page_id'] });
+      return await this.findOne({ where: { image_url: dataId }, relations: ['fundraiser_page'] });
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }

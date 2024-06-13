@@ -146,15 +146,4 @@ export class AdminController {
   updatePage(@Body() body: UpdateFundraiserPageDto, @Param('id', ParseUUIDPipe) id: string): Promise<ResponseStructure> {
     return this.fundraiserPageService.updateFundraiserPage(body, id);
   }
-
-  @Get('/donations/download')
-  @ApiOperation({ summary: 'Download Excel for all donations (roles: admin)' })
-  @ApiResponse({ status: 201, description: 'Api success' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 404, description: 'Not found!' })
-  @ApiResponse({ status: 400, description: 'Bad Request' })
-  @ApiResponse({ status: 500, description: 'Internal server error!' })
-  downloadExcel(@Res() res: Response, @Query() dto: FindDonationsDto): Promise<any> {
-    return this.adminService.downloadExcelforDonations(res, dto);
-  }
 }

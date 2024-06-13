@@ -71,8 +71,9 @@ export class FundraiserService {
         throw new NotFoundException('Fundraiser Not Found');
       }
       const FundraiserRaisedAmount = await this.getRaisedAmount(fundraiser);
+      let gallery = await this.fundraiserCampaignImagesRepository.find({ select: ['image_url'], where: { fundraiser_page: { fundraiser: { fundraiser_id: fundraiser.fundraiser_id } } } });
 
-      return { message: 'Fundraiser Fetched Successfully', data: { fundraiser: fundraiser, dashboard_data: FundraiserRaisedAmount }, success: true };
+      return { message: 'Fundraiser Fetched Successfully', data: { fundraiser: fundraiser, dashboard_data: FundraiserRaisedAmount, gallery: gallery }, success: true };
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }

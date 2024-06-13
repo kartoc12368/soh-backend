@@ -1,16 +1,16 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 
-import { IsAlpha, IsDecimal, IsEmail, IsEnum, IsLowercase, IsNotEmpty, IsNumberString, IsOptional, IsString, Max, Min } from 'class-validator';
+import { IsAlpha, IsDecimal, IsEmail, IsEnum, IsLowercase, IsNotEmpty, IsNumber, IsNumberString, IsOptional, IsString, Max, Min } from 'class-validator';
 import { ProjectName } from 'src/shared/enums/project.enum';
 
 export class DonateDto {
   @ApiProperty({ example: 100, maximum: 100000000, minimum: 1, type: 'float' })
   @IsNotEmpty()
-  @Transform(({ value }) => Number.parseFloat(value))
-  @Min(1)
-  @Max(100000000)
-  @IsDecimal()
+  @Type(() => Number)
+  @Min(1.0)
+  @Max(100000000.0)
+  @IsNumber({ maxDecimalPlaces: 2 })
   amount: number;
 
   @ApiProperty({ example: 'Kartavya' })
