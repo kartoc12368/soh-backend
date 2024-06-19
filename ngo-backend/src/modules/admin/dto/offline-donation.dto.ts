@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 
-import { IsAlpha, IsDate, IsDecimal, IsEmail, IsNotEmpty, IsNumber, IsNumberString, IsOptional, IsString, Max, Min } from 'class-validator';
+import { IsAlpha, IsDate, IsEmail, IsNotEmpty, IsNumber, IsNumberString, IsOptional, IsString, Max, Min } from 'class-validator';
 
 export class AddOfflineDonationDto {
   @ApiPropertyOptional({ example: 'kartavya.oc@gmail.com', required: false })
@@ -10,10 +10,11 @@ export class AddOfflineDonationDto {
   email: string;
 
   @ApiProperty({ example: 100, maximum: 100000000, minimum: 1, type: 'float' })
-  @IsDecimal()
   @IsNotEmpty()
-  @Min(1)
-  @Max(100000000)
+  @Type(() => Number)
+  @Min(1.0)
+  @Max(100000000.0)
+  @IsNumber({ maxDecimalPlaces: 2 })
   amount: number;
 
   @ApiProperty({ example: 'Hardik' })

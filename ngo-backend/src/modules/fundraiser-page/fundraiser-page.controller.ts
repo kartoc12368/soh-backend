@@ -1,5 +1,5 @@
-import { Body, Controller, Delete, FileTypeValidator, Get, Param, ParseFilePipe, ParseUUIDPipe, Post, Put, Req, UploadedFile, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common';
-import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
+import { Body, Controller, Delete, FileTypeValidator, Get, Param, ParseFilePipe, ParseUUIDPipe, Post, Put, Req, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common';
+import { FilesInterceptor } from '@nestjs/platform-express';
 import { ApiOperation, ApiResponse, ApiSecurity, ApiTags } from '@nestjs/swagger';
 
 import { FundraiserPageService } from './fundraiser-page.service';
@@ -10,9 +10,9 @@ import { RoleGuard } from 'src/shared/helper/role.guard';
 import { Public } from 'src/shared/decorators/public.decorator';
 import { storageForFundraiserPage } from 'src/shared/utility/storage.utility';
 
-import { UpdateFundraiserPageDto } from './dto/update-fundraiser-page.dto';
-import { ResponseStructure } from 'src/shared/interface/response-structure.interface';
 import { RoleEnum } from 'src/shared/enums/role.enum';
+import { ResponseStructure } from 'src/shared/interface/response-structure.interface';
+import { UpdateFundraiserPageDto } from './dto/update-fundraiser-page.dto';
 
 @ApiTags('Fundraiser-Page')
 @Controller('fundraiser-page')

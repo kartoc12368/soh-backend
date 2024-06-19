@@ -100,6 +100,7 @@ export class AdminController {
   @ApiResponse({ status: 400, description: 'Bad Request' })
   @ApiResponse({ status: 500, description: 'Internal server error!' })
   addOfflineDonation(@Body() body: AddOfflineDonationDto): Promise<ResponseStructure> {
+    console.log(body);
     return this.adminService.addOfflineDonation(body);
   }
 

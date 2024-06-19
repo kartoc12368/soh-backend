@@ -22,6 +22,7 @@ export class PaymentController {
   }
 
   @Post('verification')
+  @Public()
   @ApiOperation({ summary: 'Verifying Payment Response' })
   @ApiResponse({ status: 201, description: 'Api success' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -29,6 +30,7 @@ export class PaymentController {
   @ApiResponse({ status: 400, description: 'Bad Request' })
   @ApiResponse({ status: 500, description: 'Internal server error!' })
   async verify(@Body() body) {
+    console.log(body);
     return await this.paymentService.verify(body);
   }
 

@@ -6,9 +6,8 @@ import { FundRaiserRepository } from 'src/modules/fundraiser/fundraiser.reposito
 import { Request } from 'express';
 
 import { Observable } from 'rxjs';
-import { ErrorResponseUtility } from '../utility/error-response.utility';
 import { FundraiserCampaignImagesRepository } from 'src/modules/fundraiser-page/fundraiser-campaign-images.repository';
-import { Console } from 'console';
+import { ErrorResponseUtility } from '../utility/error-response.utility';
 
 @Injectable()
 export class OwnershipGuard implements CanActivate {

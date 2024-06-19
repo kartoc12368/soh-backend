@@ -20,11 +20,12 @@ export class PaymentService {
     private donationRepository: DonationRepository,
     private readonly mailerService: MailerService,
   ) {
-    this.merchantId = '100011';
-    this.encryptionKey = '1000060000000000';
-    this.subMerchantId = '1234';
-    this.paymode = '9';
-    this.returnUrl = 'http://localhost:3001/easypay/verification';
+    // this.merchantId = process.env?.EASYPAY_MERCHANT_ID;
+    this.merchantId = process.env?.EASYPAY_MERCHANT_ID_UAT;
+    this.encryptionKey = process.env?.EASYPAY_AESKEY_UAT;
+    this.subMerchantId = process.env?.EASYPAY_SUBMID;
+    this.paymode = process.env?.EASYPAY_PAYMODE;
+    this.returnUrl = process.env?.EASYPAY_RETURNURL;
   }
 
   async redirectUrl(res, body) {
@@ -32,11 +33,11 @@ export class PaymentService {
     try {
       const amount = body?.amount;
 
-      const { donor_phone, donor_email } = body;
+      const { donor_phone, donor_email, donor_address, donor_first_name, pan } = body;
 
       // Include the payment processing logic
       const reference_no = Math.floor(Math.random() * 1000000);
-      const payment_url = await this.getPaymentUrl(amount, String(reference_no), donor_phone, donor_email);
+      const payment_url = await this.getPaymentUrl(amount, String(reference_no), donor_phone, donor_email, donor_first_name, donor_address, pan);
       console.log('payment_url:' + payment_url);
 
       // Redirect the user to the payment URL
@@ -48,11 +49,11 @@ export class PaymentService {
   }
 
   async verify(body) {
-    if (Object.keys(body).length !== 0 && body.Total_Amount && body.Response_Code === 'E000') {
+    if (Object.keys(body).length !== 0 && body['Total Amount'] && body['Response Code'] === 'E000') {
       const res = body;
 
       // Same encryption key that we gave for generating the URL
-      const aesKeyForPaymentSuccess = 'XXXXXXXXXXXXXXXX';
+      const aesKeyForPaymentSuccess = process.env?.EASYPAY_AESKEY_UAT;
 
       const data = {
         Response_Code: res.Response_Code,
@@ -72,11 +73,16 @@ export class PaymentService {
         TPS: res.TPS,
       };
 
-      const verificationKey = `${data.ID}|${data.Response_Code}|${data.Unique_Ref_Number}|${data.Service_Tax_Amount}|${data.Processing_Fee_Amount}|${data.Total_Amount}|${data.Transaction_Amount}|${data.Transaction_Date}|${data.Interchange_Value}|${data.TDR}|${data.Payment_Mode}|${data.SubMerchantId}|${data.ReferenceNo}|${data.TPS}|${aesKeyForPaymentSuccess}`;
+      const verificationKey = `${body.ID}|${body['Response Code']}|${body['Unique Ref Number']}|${body['Service Tax Amount']}|${body['Processing Fee Amount']}|${body['Total Amount']}|${body['Transaction Amount']}|${body['Transaction Date']}|${body['Interchange Value']}|${body.TDR}|${body['Payment Mode']}|${body.SubMerchantId}|${body.ReferenceNo}|${body.TPS}|${aesKeyForPaymentSuccess}`;
 
       const encryptedMessage = crypto.createHash('sha512').update(verificationKey).digest('hex');
+      console.log(encryptedMessage);
       if (encryptedMessage === data.RS) {
         const donation = await this.donationRepository.getOneDonation({ where: { reference: data?.Unique_Ref_Number } });
+
+        await this.donationRepository.UpdateOneDonation(donation?.donation_id, {
+          payment_status: 'success',
+        });
 
         const sendEmailDto: SendEmailDto = {
           firstName: donation?.donor_first_name,
@@ -86,19 +92,20 @@ export class PaymentService {
 
         await new SendMailerUtility(this.mailerService).transactionSuccess(sendEmailDto);
 
-        return true;
+        res.status(201).location('http://localhost:3000/thank-you').json(donation);
       } else {
-        return false;
+        res.status(401).location('http://localhost:3000/donation-fail').json({});
       }
     } else {
-      return false;
+      return body;
+      // return false;
     }
   }
-  async getPaymentUrl(amount, referenceNo, mobileNumber, email) {
+  async getPaymentUrl(amount, referenceNo, mobileNumber, email, donor_first_name, donor_address, pan) {
     try {
-      const mandatoryField = await this.getMandatoryField(amount, referenceNo);
+      const mandatoryField = await this.getMandatoryField(amount, referenceNo, donor_first_name, donor_address);
       console.log(mandatoryField);
-      const optionalFieldValue = await this.getOptionalField(mobileNumber, email);
+      const optionalFieldValue = await this.getOptionalField(pan, email, mobileNumber);
       console.log('optionalFieldValue: ' + optionalFieldValue);
 
       const amountValue = await this.getAmount(amount);
@@ -106,20 +113,20 @@ export class PaymentService {
       const referenceNoValue = await this.getReferenceNo(referenceNo);
       console.log('referenceNoValue: ' + referenceNoValue);
 
-      const paymentUrl = await this.generatePaymentUrl(mandatoryField, optionalFieldValue, amount, referenceNo, email, mobileNumber);
+      const paymentUrl = await this.generatePaymentUrl(mandatoryField, optionalFieldValue, amount, referenceNo, email, mobileNumber, donor_first_name, donor_address, pan);
       return paymentUrl;
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }
   }
 
-  async generatePaymentUrl(mandatoryField, optionalField, amount, referenceNo, email, mobileNumber) {
+  async generatePaymentUrl(mandatoryField, optionalField, amount, referenceNo, email, mobileNumber, donor_first_name, donor_address, pan) {
     try {
-      const url = `https://eazypay.icicibank.com/EazyPG?merchantid=${this.merchantId}&mandatoryfields=${referenceNo}|${this.subMerchantId}|${amount}&optionalfields=${email}|${mobileNumber}&returnurl=${this.returnUrl}&ReferenceNo=${referenceNo}&submerchantid=${this.subMerchantId}&transactionamount=${amount}&paymode=${this.paymode}`;
+      const url = `${process.env?.EASYPAY_URL_UAT}?merchantid=${this.merchantId}&mandatory fields=${referenceNo}|${this.subMerchantId}|${amount}|${donor_first_name}|${donor_address}&optional fields=${pan}|${email}|${mobileNumber}&returnurl=${this.returnUrl}&Reference No=${referenceNo}&submerchantid=${this.subMerchantId}&transaction amount=${amount}&paymode=${this.paymode}`;
       console.log('unencrypted', url);
-      const encryptedUrl = `https://eazypay.icicibank.com/EazyPG?merchantid=${
+      const encryptedUrl = `${process.env?.EASYPAY_URL_UAT}?merchantid=${
         this.merchantId
-      }&mandatoryfields=${mandatoryField}&optionalfields=${optionalField}&returnurl=${await this.getReturnUrl()}&ReferenceNo=${referenceNo}&submerchantid=${await this.getSubMerchantId()}&transactionamount=${amount}&paymode=${await this.getPaymode()}`;
+      }&mandatory fields=${mandatoryField}&optional fields=${optionalField}&returnurl=${await this.getReturnUrl()}&Reference No=${await this.getReferenceNo(referenceNo)}&submerchantid=${await this.getSubMerchantId()}&transaction amount=${await this.getAmount(amount)}&paymode=${await this.getPaymode()}`;
       return encryptedUrl;
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
@@ -135,17 +142,17 @@ export class PaymentService {
     }
   }
 
-  async getMandatoryField(amount, referenceNo) {
+  async getMandatoryField(amount, referenceNo, donor_first_name, donor_address) {
     try {
-      return await this.getEncryptValue(`${referenceNo}|${this.subMerchantId}|${amount}`);
+      return await this.getEncryptValue(`${referenceNo}|${this.subMerchantId}|${amount}|${donor_first_name}|${donor_address}`);
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }
   }
 
-  async getOptionalField(email, mobileNumber) {
+  async getOptionalField(pan, email, mobileNumber) {
     try {
-      return await this.getEncryptValue(`${email}|${mobileNumber}`);
+      return await this.getEncryptValue(`${pan}|${email}|${mobileNumber}`);
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }
