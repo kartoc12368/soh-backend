@@ -22,7 +22,6 @@ export class DonationRepository extends Repository<Donation> {
         .andWhere('donation.payment_status=:payment_status', { payment_status: 'success' })
         .getMany();
 
-      console.log(donations, 'donate');
       if (!donations?.length && donations?.length != 0) {
         throw new NotFoundException('Donations Not Found');
       }
@@ -59,7 +58,6 @@ export class DonationRepository extends Repository<Donation> {
       if (!donations?.length && donations?.length != 0) {
         throw new NotFoundException('Donations not found');
       }
-      console.log(donations.length, 'hhh');
 
       for (let index = 0; index < donations.length; index++) {
         const element = donations[index].amount;

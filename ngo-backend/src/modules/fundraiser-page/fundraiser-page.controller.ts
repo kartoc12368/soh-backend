@@ -40,7 +40,6 @@ export class FundraiserPageController {
     @Param('id', ParseUUIDPipe) PageId: string,
     @Req() req: any,
   ): Promise<ResponseStructure> {
-    console.log(files);
     return this.fundraiserPageService.uploadFile(files, PageId, req.user);
   }
 

@@ -36,11 +36,9 @@ export class FundraiserPageService {
 
       //accessing existing galley of fundraiserPage and pushing new uploaded files
       files.forEach(async (file) => {
-        console.log(file?.filename, 'hh');
         const fundraiserCampaignImages: FundraiserCampaignImages = new FundraiserCampaignImages();
         fundraiserCampaignImages.fundraiser_page = fundraiserPage;
         fundraiserCampaignImages.image_url = file?.filename;
-        console.log(fundraiserCampaignImages);
         await this.fundraiserCampaignImagesRepository.save(fundraiserCampaignImages);
       });
 

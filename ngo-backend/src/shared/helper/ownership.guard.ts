@@ -25,7 +25,6 @@ export class OwnershipGuard implements CanActivate {
     const dataId = request?.params?.id;
 
     if (dataId.length > 36) {
-      console.log('helo');
       return this.checkOwnershipforImage(dataId, user?.email);
     } else {
       return this.checkOwnership(dataId, user?.email);
@@ -60,10 +59,8 @@ export class OwnershipGuard implements CanActivate {
   async checkOwnershipforImage(dataId: string, email: string): Promise<boolean> {
     try {
       const fundraiserImage = await this.fundraiserCampaignImagesRepository.getFundraiserByImage(dataId);
-      console.log(fundraiserImage);
 
       const fundraiser = await this.fundraiserRepository.getFundraiser({ where: { email: email }, relations: ['fundraiser_page'] });
-      console.log(fundraiser);
 
       if (fundraiser?.role == 'ADMIN') {
         return true;

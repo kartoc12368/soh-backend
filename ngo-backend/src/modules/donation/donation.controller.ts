@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Param, ParseUUIDPipe, Post, Put, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Post, Put, ValidationPipe } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import { Public } from 'src/shared/decorators/public.decorator';
@@ -58,5 +58,11 @@ export class DonationController {
   @ApiResponse({ status: 500, description: 'Internal server error!' })
   deleteDonation(@Param('id') id: ParseUUIDPipe) {
     this.donationService.deleteDonation(id);
+  }
+
+  @Get('/donation/:id')
+  @Public()
+  async getDonationByReference(@Param('id') id: ParseUUIDPipe) {
+    return await this.donationService.getDonationByReference(id);
   }
 }

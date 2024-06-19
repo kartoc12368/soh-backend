@@ -1,5 +1,6 @@
+import { todayDate } from '../utility/date.utility';
+
 export async function resetPassword(data) {
-  const todayDate = await new Date().getFullYear();
   const content = `<!DOCTYPE html>
   <html lang="en-US">
     <head>
@@ -187,7 +188,7 @@ export async function resetPassword(data) {
               </tr>
               <tr>
                 <td style="text-align: center">
-                <p class="p3">© <strong>${todayDate} Support Our Heroes</strong></p>
+                <p class="p3">© <strong>${todayDate()} Support Our Heroes</strong></p>
                 </td>
               </tr>
               <tr>

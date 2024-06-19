@@ -5,8 +5,11 @@ import * as crypto from 'crypto';
 import { DonationRepository } from 'src/modules/donation/donation.repository';
 
 import { SendEmailDto } from 'src/shared/interface/mail.interface';
+import EasyPayCodes from 'src/shared/utility/easypay-error.utility';
+import responseCode from 'src/shared/utility/easypay-error.utility';
 import { ErrorResponseUtility } from 'src/shared/utility/error-response.utility';
 import { SendMailerUtility } from 'src/shared/utility/send-mailer.utility';
+import { Between } from 'typeorm';
 
 @Injectable()
 export class PaymentService {
@@ -29,16 +32,16 @@ export class PaymentService {
   }
 
   async redirectUrl(res, body) {
-    console.log(body);
     try {
       const amount = body?.amount;
 
       const { donor_phone, donor_email, donor_address, donor_first_name, pan } = body;
 
       // Include the payment processing logic
-      const reference_no = Math.floor(Math.random() * 1000000);
-      const payment_url = await this.getPaymentUrl(amount, String(reference_no), donor_phone, donor_email, donor_first_name, donor_address, pan);
-      console.log('payment_url:' + payment_url);
+      const fifteenMinutesAgo = new Date(Date.now() - (5 * 60 + 60) * 60 * 1000);
+      const now = new Date();
+      const { reference_payment } = await this.donationRepository.getOneDonation({ where: { donor_phone: donor_phone, created_at: Between(fifteenMinutesAgo, new Date()) }, select: ['reference_payment'], order: { donation_id_frontend: 'DESC' } });
+      const payment_url = await this.getPaymentUrl(amount, String(reference_payment), donor_phone, donor_email, donor_first_name, donor_address, pan);
 
       // Redirect the user to the payment URL
       // res.redirect(payment_url);
@@ -48,70 +51,83 @@ export class PaymentService {
     }
   }
 
-  async verify(body) {
+  async verify(body, response) {
     if (Object.keys(body).length !== 0 && body['Total Amount'] && body['Response Code'] === 'E000') {
       const res = body;
 
       // Same encryption key that we gave for generating the URL
       const aesKeyForPaymentSuccess = process.env?.EASYPAY_AESKEY_UAT;
 
-      const data = {
-        Response_Code: res.Response_Code,
-        Unique_Ref_Number: res.Unique_Ref_Number,
-        Service_Tax_Amount: res.Service_Tax_Amount,
-        Processing_Fee_Amount: res.Processing_Fee_Amount,
-        Total_Amount: res.Total_Amount,
-        Transaction_Amount: res.Transaction_Amount,
-        Transaction_Date: res.Transaction_Date,
-        Interchange_Value: res.Interchange_Value,
-        TDR: res.TDR,
-        Payment_Mode: res.Payment_Mode,
-        SubMerchantId: res.SubMerchantId,
-        ReferenceNo: res.ReferenceNo,
-        ID: res.ID,
-        RS: res.RS,
-        TPS: res.TPS,
-      };
-
       const verificationKey = `${body.ID}|${body['Response Code']}|${body['Unique Ref Number']}|${body['Service Tax Amount']}|${body['Processing Fee Amount']}|${body['Total Amount']}|${body['Transaction Amount']}|${body['Transaction Date']}|${body['Interchange Value']}|${body.TDR}|${body['Payment Mode']}|${body.SubMerchantId}|${body.ReferenceNo}|${body.TPS}|${aesKeyForPaymentSuccess}`;
 
       const encryptedMessage = crypto.createHash('sha512').update(verificationKey).digest('hex');
-      console.log(encryptedMessage);
-      if (encryptedMessage === data.RS) {
-        const donation = await this.donationRepository.getOneDonation({ where: { reference: data?.Unique_Ref_Number } });
+      if (encryptedMessage === body.RS) {
+        const donation = await this.donationRepository.getOneDonation({ where: { reference_payment: body['ReferenceNo'] } });
 
         await this.donationRepository.UpdateOneDonation(donation?.donation_id, {
           payment_status: 'success',
+          payment_details: body,
+          payment_info: EasyPayCodes(body['Response Code']),
+          payment_method: body['Payment Mode'],
         });
 
         const sendEmailDto: SendEmailDto = {
           firstName: donation?.donor_first_name,
-          recipients: [{ name: donation?.donor_first_name, address: donation?.donor_email }],
+          recipients: [{ name: 'Kartavya', address: 'kartavya.oc@gmail.com' }],
           data: donation,
         };
 
         await new SendMailerUtility(this.mailerService).transactionSuccess(sendEmailDto);
 
-        res.status(201).location('http://localhost:3000/thank-you').json(donation);
+        response.redirect(`http://localhost:3000/thank-you/${body['ReferenceNo']}`);
       } else {
-        res.status(401).location('http://localhost:3000/donation-fail').json({});
+        const donation = await this.donationRepository.getOneDonation({ where: { reference_payment: body['ReferenceNo'] } });
+
+        await this.donationRepository.UpdateOneDonation(donation?.donation_id, {
+          payment_status: 'failed',
+          payment_details: body,
+          payment_info: EasyPayCodes(body['Response Code']),
+          payment_method: body['Payment Mode'],
+        });
+
+        const sendEmailDto: SendEmailDto = {
+          firstName: donation?.donor_first_name,
+          recipients: [{ name: 'Kartavya', address: 'kartavya.oc@gmail.com' }],
+          data: donation,
+        };
+
+        await new SendMailerUtility(this.mailerService).transactionFailed(sendEmailDto);
+
+        response.redirect(`http://localhost:3000/donation-fail/${body['ReferenceNo']}`);
       }
     } else {
-      return body;
-      // return false;
+      const donation = await this.donationRepository.getOneDonation({ where: { reference_payment: body['ReferenceNo'] } });
+
+      await this.donationRepository.UpdateOneDonation(donation?.donation_id, {
+        payment_status: 'failed',
+        payment_details: body,
+        payment_info: EasyPayCodes(body['Response Code']),
+        payment_method: body['Payment Mode'],
+      });
+
+      const sendEmailDto: SendEmailDto = {
+        firstName: donation?.donor_first_name,
+        recipients: [{ name: 'Kartavya', address: 'kartavya.oc@gmail.com' }],
+        data: donation,
+      };
+
+      await new SendMailerUtility(this.mailerService).transactionFailed(sendEmailDto);
+
+      response.redirect(`http://localhost:3000/donation-fail/${body['ReferenceNo']}`);
     }
   }
   async getPaymentUrl(amount, referenceNo, mobileNumber, email, donor_first_name, donor_address, pan) {
     try {
       const mandatoryField = await this.getMandatoryField(amount, referenceNo, donor_first_name, donor_address);
-      console.log(mandatoryField);
       const optionalFieldValue = await this.getOptionalField(pan, email, mobileNumber);
-      console.log('optionalFieldValue: ' + optionalFieldValue);
 
       const amountValue = await this.getAmount(amount);
-      console.log('amountValue: ' + amountValue);
       const referenceNoValue = await this.getReferenceNo(referenceNo);
-      console.log('referenceNoValue: ' + referenceNoValue);
 
       const paymentUrl = await this.generatePaymentUrl(mandatoryField, optionalFieldValue, amount, referenceNo, email, mobileNumber, donor_first_name, donor_address, pan);
       return paymentUrl;
@@ -123,7 +139,6 @@ export class PaymentService {
   async generatePaymentUrl(mandatoryField, optionalField, amount, referenceNo, email, mobileNumber, donor_first_name, donor_address, pan) {
     try {
       const url = `${process.env?.EASYPAY_URL_UAT}?merchantid=${this.merchantId}&mandatory fields=${referenceNo}|${this.subMerchantId}|${amount}|${donor_first_name}|${donor_address}&optional fields=${pan}|${email}|${mobileNumber}&returnurl=${this.returnUrl}&Reference No=${referenceNo}&submerchantid=${this.subMerchantId}&transaction amount=${amount}&paymode=${this.paymode}`;
-      console.log('unencrypted', url);
       const encryptedUrl = `${process.env?.EASYPAY_URL_UAT}?merchantid=${
         this.merchantId
       }&mandatory fields=${mandatoryField}&optional fields=${optionalField}&returnurl=${await this.getReturnUrl()}&Reference No=${await this.getReferenceNo(referenceNo)}&submerchantid=${await this.getSubMerchantId()}&transaction amount=${await this.getAmount(amount)}&paymode=${await this.getPaymode()}`;
@@ -135,7 +150,6 @@ export class PaymentService {
 
   async pushUrl(body) {
     try {
-      console.log(body);
       return 'Success';
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
@@ -216,5 +230,13 @@ export class PaymentService {
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }
+  }
+
+  async findPendingPayment() {
+    const donations = await this.donationRepository.getAllDonations({ where: { payment_status: 'pending' } });
+    donations.forEach(async (donation) => {
+      await this.donationRepository.UpdateOneDonation(donation?.donation_id, { payment_status: 'failed' });
+      // await this.donationRepository.deleteDonation(donation.donation_id);
+    });
   }
 }

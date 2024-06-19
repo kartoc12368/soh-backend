@@ -16,7 +16,6 @@ export const storageForFundraiserPage = {
 
         cb(null, `${filename}${extension}`);
       } catch (error) {
-        console.log(error.message);
         throw new NotFoundException('Filename is not found');
       }
     },

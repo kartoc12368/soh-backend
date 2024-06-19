@@ -141,7 +141,10 @@ export class Donation {
   @Column({ nullable: true })
   payment_method: string;
 
-  @Column({ type: 'json', nullable: true })
+  @Column({ nullable: true })
+  payment_info: string;
+
+  @Column({ type: 'json', nullable: true, select: false })
   payment_details: object;
 
   @CreateDateColumn({

@@ -70,7 +70,7 @@ export class AdminService {
           : {}), // Only add filter if either from_date or to_date is provided
       };
 
-      const donationsData = await this.donationRepository.getAllDonations({ relations: { fundraiser: true }, where: conditions, order: { donation_date: 'DESC' } });
+      const donationsData = await this.donationRepository.getAllDonations({ relations: { fundraiser: true }, where: conditions, order: { donation_id_frontend: 'DESC' } });
 
       return { message: 'Donations Received Successfully', data: donationsData, success: true };
     } catch (error) {
@@ -170,7 +170,6 @@ export class AdminService {
 
   async addOfflineDonation(body: AddOfflineDonationDto): Promise<ResponseStructure> {
     try {
-      console.log(body?.email);
       //same code from donate service here admin passes data in body
       if (!body?.email) {
         await this.donationRepository.createDonationOffline(body);

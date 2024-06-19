@@ -170,10 +170,15 @@ export async function failedTransaction(data) {
                         <span class="s1"></span>
                         <p class="p2">
                         <strong class="st1">Amount</strong>${data?.amount}
-                        <strong class="st2">Donor Name</strong>${data?.donor_firstName}
+                        <strong class="st2">Donor Name</strong>${data?.donor_first_name}
                         <strong class="st2">Email</strong>${data?.donor_email}
                         <strong class="st2">Mobile Number</strong>${data?.donor_phone}
+                        <strong class="st2">PAN</strong>${data?.pan}
+                        <strong class="st2">Address</strong>${data?.donor_address}
                         <strong class="st2">Reference</strong>${data?.reference_payment}
+                        <strong class="st2">Donation ID</strong>${data?.donation_id_frontend}
+                        <strong class="st2">80G Certificate</strong>${data?.certificate}
+
                       </p>
                         <a href="http://localhost:3000/login"></a>
                       </td>
@@ -189,7 +194,7 @@ export async function failedTransaction(data) {
               </tr>
               <tr>
                 <td style="text-align: center">
-                  <p class="p3">© <strong>${todayDate} Support Our Heroes</strong></p>
+                  <p class="p3">© <strong>${await todayDate()} Support Our Heroes</strong></p>
                 </td>
               </tr>
               <tr>

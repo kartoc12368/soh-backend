@@ -1,8 +1,9 @@
-import { Body, Controller, Post, Res } from '@nestjs/common';
+import { Body, Controller, Get, Post, Res } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import { Public } from 'src/shared/decorators/public.decorator';
 import { PaymentService } from './payment.service';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Controller('easypay')
 @ApiTags('Easypay')
@@ -29,9 +30,8 @@ export class PaymentController {
   @ApiResponse({ status: 404, description: 'Not found!' })
   @ApiResponse({ status: 400, description: 'Bad Request' })
   @ApiResponse({ status: 500, description: 'Internal server error!' })
-  async verify(@Body() body) {
-    console.log(body);
-    return await this.paymentService.verify(body);
+  async verify(@Body() body, @Res() res: any) {
+    return await this.paymentService.verify(body, res);
   }
 
   @Post('push')
@@ -44,5 +44,10 @@ export class PaymentController {
   @ApiResponse({ status: 500, description: 'Internal server error!' })
   async pushUrl(@Body() body) {
     return await this.paymentService.pushUrl(body);
+  }
+
+  @Cron(CronExpression.EVERY_DAY_AT_2AM)
+  async findPendingPayment() {
+    await this.paymentService.findPendingPayment();
   }
 }

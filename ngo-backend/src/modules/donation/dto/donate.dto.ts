@@ -20,7 +20,6 @@ export class DonateDto {
 
   @ApiProperty({ example: 'Patel', required: false })
   @IsAlpha()
-  @IsNotEmpty()
   @IsOptional()
   donor_last_name: string;
 

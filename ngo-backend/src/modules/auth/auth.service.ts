@@ -205,13 +205,11 @@ export class AuthService {
         //date shifting for IST timezone (+5 hours and 30 minutes)
         dateIST.setHours(dateIST.getHours() + 5);
         dateIST.setMinutes(dateIST.getMinutes() + 45);
-        console.log(dateIST.toLocaleString());
         if (dateIST.toLocaleString() < new Date().toLocaleString()) {
           await this.forgottenPasswordRepository.updateOtp(otp?.id, { otp_state: 'expired' });
         }
       });
     } catch (error) {
-      console.log(error);
       await ErrorResponseUtility.errorResponse(error);
     }
   }

@@ -104,4 +104,13 @@ export class DonationService {
       await ErrorResponseUtility.errorResponse(error);
     }
   }
+
+  async getDonationByReference(id): Promise<ResponseStructure> {
+    try {
+      const donation = await this.donationRepository.getOneDonation({ where: { reference_payment: id } });
+      return { message: 'Donation Status', data: donation };
+    } catch (error) {
+      await ErrorResponseUtility.errorResponse(error);
+    }
+  }
 }
