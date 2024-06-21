@@ -6,6 +6,7 @@ import { PaymentStatus } from '../enums/payment-status.enum';
 import { PaymentType } from '../enums/payment-type.enum';
 import { ProjectName } from '../enums/project.enum';
 import * as crypto from 'crypto';
+import { CertificateStatus } from '../enums/certificate.enum';
 
 @Entity()
 export class Donation {
@@ -121,11 +122,8 @@ export class Donation {
   @Column({
     nullable: true,
     type: 'enum',
-    enum: {
-      No: 'No',
-      Yes: 'Yes',
-    },
-    default: 'No',
+    enum: CertificateStatus,
+    default: CertificateStatus.TRUE,
   })
   certificate: string;
 

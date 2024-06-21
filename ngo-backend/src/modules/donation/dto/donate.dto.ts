@@ -1,7 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 
 import { IsAlpha, IsEmail, IsEnum, IsLowercase, IsNotEmpty, IsNumber, IsNumberString, IsObject, IsOptional, IsString, Max, Min } from 'class-validator';
+import { CertificateStatus } from 'src/shared/enums/certificate.enum';
 import { ProjectName } from 'src/shared/enums/project.enum';
 
 export class DonateDto {
@@ -69,9 +70,10 @@ export class DonateDto {
   @IsEnum(ProjectName)
   project_name: string;
 
-  @ApiProperty({ enum: { Yes: 'Yes', No: 'No' }, default: 'No' })
+  @ApiProperty({ enum: CertificateStatus, default: CertificateStatus.FALSE })
   @IsOptional()
-  @IsEnum({ enum: { Yes: 'Yes', No: 'No' } })
+  @IsEnum(CertificateStatus)
+  @Transform(({ value }) => (value === true ? CertificateStatus.TRUE : CertificateStatus.FALSE))
   certificate: string;
 
   @ApiProperty({ example: 'Make it anonymous', required: false })

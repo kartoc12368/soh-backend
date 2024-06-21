@@ -172,7 +172,6 @@ export async function sendPassword(data) {
                           <strong class="st1">Name</strong>${data.firstName}
                           <strong class="st2">Password</strong>${data.password}
                         </p>
-                        <a href="http://localhost:3000/login"></a>
                       </td>
                     </tr>
                     <tr>

@@ -36,12 +36,11 @@ export class PaymentService {
       const amount = body?.amount;
 
       const { donor_phone, donor_email, donor_address, donor_first_name, pan } = body;
-
+      console.log(donor_phone);
       // Include the payment processing logic
-      const fifteenMinutesAgo = new Date(Date.now() - (5 * 60 + 60) * 60 * 1000);
-      const now = new Date();
-      const { reference_payment } = await this.donationRepository.getOneDonation({ where: { donor_phone: donor_phone, created_at: Between(fifteenMinutesAgo, new Date()) }, select: ['reference_payment'], order: { donation_id_frontend: 'DESC' } });
-      const payment_url = await this.getPaymentUrl(amount, String(reference_payment), donor_phone, donor_email, donor_first_name, donor_address, pan);
+      const { reference_payment } = await this.donationRepository.getOneDonation({ where: { donor_phone: donor_phone, payment_status: 'pending' }, select: ['reference_payment'], order: { donation_id_frontend: 'DESC' } });
+      console.log(reference_payment);
+      const payment_url = await this.getPaymentUrl(String(amount), reference_payment, donor_phone, donor_email, donor_first_name, donor_address, pan);
 
       // Redirect the user to the payment URL
       // res.redirect(payment_url);
@@ -52,8 +51,10 @@ export class PaymentService {
   }
 
   async verify(body, response) {
+    console.log(body);
     if (Object.keys(body).length !== 0 && body['Total Amount'] && body['Response Code'] === 'E000') {
       const res = body;
+      console.log(body);
 
       // Same encryption key that we gave for generating the URL
       const aesKeyForPaymentSuccess = process.env?.EASYPAY_AESKEY_UAT;
@@ -79,7 +80,7 @@ export class PaymentService {
 
         await new SendMailerUtility(this.mailerService).transactionSuccess(sendEmailDto);
 
-        response.redirect(`http://localhost:3000/thank-you/${body['ReferenceNo']}`);
+        response.redirect(`${process.env?.FRONTEND_URL}/thank-you/${body['ReferenceNo']}`);
       } else {
         const donation = await this.donationRepository.getOneDonation({ where: { reference_payment: body['ReferenceNo'] } });
 
@@ -96,11 +97,13 @@ export class PaymentService {
           data: donation,
         };
 
-        await new SendMailerUtility(this.mailerService).transactionFailed(sendEmailDto);
+        // await new SendMailerUtility(this.mailerService).transactionFailed(sendEmailDto);
 
-        response.redirect(`http://localhost:3000/donation-fail/${body['ReferenceNo']}`);
+        response.redirect(`${process.env?.FRONTEND_URL}/donation-fail/${body['ReferenceNo']}`);
       }
     } else {
+      console.log(body);
+
       const donation = await this.donationRepository.getOneDonation({ where: { reference_payment: body['ReferenceNo'] } });
 
       await this.donationRepository.UpdateOneDonation(donation?.donation_id, {
@@ -116,9 +119,9 @@ export class PaymentService {
         data: donation,
       };
 
-      await new SendMailerUtility(this.mailerService).transactionFailed(sendEmailDto);
+      // await new SendMailerUtility(this.mailerService).transactionFailed(sendEmailDto);
 
-      response.redirect(`http://localhost:3000/donation-fail/${body['ReferenceNo']}`);
+      response.redirect(`${process.env?.FRONTEND_URL}/donation-fail/${body['ReferenceNo']}`);
     }
   }
   async getPaymentUrl(amount, referenceNo, mobileNumber, email, donor_first_name, donor_address, pan) {
@@ -166,6 +169,12 @@ export class PaymentService {
 
   async getOptionalField(pan, email, mobileNumber) {
     try {
+      if (pan == undefined) {
+        if (email == undefined) {
+          return await this.getEncryptValue(`||${mobileNumber}`);
+        }
+        return await this.getEncryptValue(`|${email}|${mobileNumber}`);
+      }
       return await this.getEncryptValue(`${pan}|${email}|${mobileNumber}`);
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);

@@ -180,7 +180,6 @@ export async function failedTransaction(data) {
                         <strong class="st2">80G Certificate</strong>${data?.certificate}
 
                       </p>
-                        <a href="http://localhost:3000/login"></a>
                       </td>
                     </tr>
                     <tr>

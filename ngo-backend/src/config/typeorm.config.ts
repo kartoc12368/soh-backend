@@ -3,6 +3,8 @@ import { TypeOrmModuleAsyncOptions, TypeOrmModuleOptions, TypeOrmOptionsFactory 
 
 export const typeOrmAsyncConfig: TypeOrmModuleAsyncOptions = {
   useFactory: async (): Promise<TypeOrmModuleOptions> => {
+    console.log(process.env?.DATABASE_HOST, Number(process.env?.DATABASE_PORT), process.env?.DATABASE_USERNAME, String(process.env?.DATABASE_PASSWORD), process.env?.DATABASE_NAME);
+
     return {
       url: process.env?.DATABASE_URL,
       type: 'postgres',
