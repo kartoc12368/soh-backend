@@ -74,7 +74,7 @@ export class PaymentService {
 
         const sendEmailDto: SendEmailDto = {
           firstName: donation?.donor_first_name,
-          recipients: [{ name: 'Kartavya', address: 'kartavya.oc@gmail.com' }],
+          recipients: [{ name: 'Support Our Heroes', address: 'fundraise.soh@gmail.com' }],
           data: donation,
         };
 
@@ -93,7 +93,7 @@ export class PaymentService {
 
         const sendEmailDto: SendEmailDto = {
           firstName: donation?.donor_first_name,
-          recipients: [{ name: 'Kartavya', address: 'kartavya.oc@gmail.com' }],
+          recipients: [{ name: 'Support Our Heroes', address: 'fundraise.soh@gmail.com' }],
           data: donation,
         };
 
@@ -115,7 +115,7 @@ export class PaymentService {
 
       const sendEmailDto: SendEmailDto = {
         firstName: donation?.donor_first_name,
-        recipients: [{ name: 'Kartavya', address: 'kartavya.oc@gmail.com' }],
+        recipients: [{ name: 'Support Our Heroes', address: 'fundraise.soh@gmail.com' }],
         data: donation,
       };
 
