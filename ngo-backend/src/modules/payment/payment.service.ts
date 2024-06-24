@@ -113,9 +113,14 @@ export class PaymentService {
         data: donation,
       };
 
-      await new SendMailerUtility(this.mailerService).transactionFailed(sendEmailDto);
+      if (body['Response Code'] === 'E00335') {
+        await new SendMailerUtility(this.mailerService).transactionCancelled(sendEmailDto);
+        response.redirect(`${process.env?.FRONTEND_URL}/summary`);
+      } else {
+        await new SendMailerUtility(this.mailerService).transactionFailed(sendEmailDto);
 
-      response.redirect(`${process.env?.FRONTEND_URL}/donation-fail/${body['ReferenceNo']}`);
+        response.redirect(`${process.env?.FRONTEND_URL}/donation-fail/${body['ReferenceNo']}`);
+      }
     }
   }
   async getPaymentUrl(amount, referenceNo, mobileNumber, email, donor_first_name, donor_address, pan) {

@@ -44,4 +44,13 @@ export class SendMailerUtility {
       html: await failedTransaction(data?.data),
     });
   }
+
+  async transactionCancelled(data) {
+    const { recipients } = data;
+    await this.mailerService.sendMail({
+      subject: `Donation Transaction Cancelled - ${await getFormattedDate(data?.data?.created_at)}`,
+      to: recipients,
+      html: await successTransaction(data?.data),
+    });
+  }
 }
