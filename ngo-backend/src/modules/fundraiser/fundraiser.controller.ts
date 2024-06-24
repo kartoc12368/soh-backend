@@ -137,18 +137,6 @@ export class FundraiserController {
     return this.fundraiserService.getDonationFundraiser(query, req?.user);
   }
 
-  @Get('/donations/download')
-  @UseGuards(new RoleGuard(RoleEnum.FUNDRAISER_ROLE))
-  @ApiOperation({ summary: 'Download excel for donations history (roles: fundraiser)' })
-  @ApiResponse({ status: 201, description: 'Api success' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 404, description: 'Not found!' })
-  @ApiResponse({ status: 400, description: 'Bad Request' })
-  @ApiResponse({ status: 500, description: 'Internal server error!' })
-  downloadExcel(@Req() req, @Res() res): Promise<ResponseStructure> {
-    return this.fundraiserService.downloadExcelforDonations(req.user, res);
-  }
-
   @Get('/getRaisedAmount')
   @ApiOperation({ summary: 'Get current fundraiser raised amount (roles: fundraiser)' })
   @ApiResponse({ status: 201, description: 'Api success' })

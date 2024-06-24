@@ -17,7 +17,6 @@ import { FundRaiserRepository } from './fundraiser.repository';
 import { ResponseStructure } from 'src/shared/interface/response-structure.interface';
 import { incrementDate } from 'src/shared/utility/date.utility';
 import { ErrorResponseUtility } from 'src/shared/utility/error-response.utility';
-import { downloadDonationsExcel } from 'src/shared/utility/excel.utility';
 
 import { Between, FindOptionsWhere } from 'typeorm';
 import { FundraiserCampaignImagesRepository } from '../fundraiser-page/fundraiser-campaign-images.repository';
@@ -192,24 +191,6 @@ export class FundraiserService {
 
       const donations = await this.donationRepository.getAllDonations({ relations: { fundraiser: true }, where: conditions, order: { donation_id_frontend: 'DESC' } });
       return { message: 'Donations Fetched Successfully', data: donations };
-    } catch (error) {
-      await ErrorResponseUtility.errorResponse(error);
-    }
-  }
-
-  async downloadExcelforDonations(user, res): Promise<any> {
-    try {
-      const donations = await this.donationRepository.getAllDonations({
-        where: { fundraiser: { fundraiser_id: user?.id } }, // Filter by fundraiser
-      });
-
-      const filename = await downloadDonationsExcel(donations);
-
-      if (!filename) {
-        throw new NotFoundException('Filename Not Found');
-      }
-
-      return of(res.sendFile(path?.join(process.cwd(), 'downloads/' + filename)));
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }

@@ -24,8 +24,8 @@ export class PaymentService {
     private readonly mailerService: MailerService,
   ) {
     // this.merchantId = process.env?.EASYPAY_MERCHANT_ID;
-    this.merchantId = process.env?.EASYPAY_MERCHANT_ID_UAT;
-    this.encryptionKey = process.env?.EASYPAY_AESKEY_UAT;
+    this.merchantId = process.env?.EASYPAY_MERCHANT_ID;
+    this.encryptionKey = process.env?.EASYPAY_AESKEY;
     this.subMerchantId = process.env?.EASYPAY_SUBMID;
     this.paymode = process.env?.EASYPAY_PAYMODE;
     this.returnUrl = process.env?.EASYPAY_RETURNURL;
@@ -36,10 +36,8 @@ export class PaymentService {
       const amount = body?.amount;
 
       const { donor_phone, donor_email, donor_address, donor_first_name, pan } = body;
-      console.log(donor_phone);
       // Include the payment processing logic
       const { reference_payment } = await this.donationRepository.getOneDonation({ where: { donor_phone: donor_phone, payment_status: 'pending' }, select: ['reference_payment'], order: { donation_id_frontend: 'DESC' } });
-      console.log(reference_payment);
       const payment_url = await this.getPaymentUrl(String(amount), reference_payment, donor_phone, donor_email, donor_first_name, donor_address, pan);
 
       // Redirect the user to the payment URL
@@ -51,13 +49,11 @@ export class PaymentService {
   }
 
   async verify(body, response) {
-    console.log(body);
     if (Object.keys(body).length !== 0 && body['Total Amount'] && body['Response Code'] === 'E000') {
       const res = body;
-      console.log(body);
 
       // Same encryption key that we gave for generating the URL
-      const aesKeyForPaymentSuccess = process.env?.EASYPAY_AESKEY_UAT;
+      const aesKeyForPaymentSuccess = process.env?.EASYPAY_AESKEY;
 
       const verificationKey = `${body.ID}|${body['Response Code']}|${body['Unique Ref Number']}|${body['Service Tax Amount']}|${body['Processing Fee Amount']}|${body['Total Amount']}|${body['Transaction Amount']}|${body['Transaction Date']}|${body['Interchange Value']}|${body.TDR}|${body['Payment Mode']}|${body.SubMerchantId}|${body.ReferenceNo}|${body.TPS}|${aesKeyForPaymentSuccess}`;
 
@@ -74,7 +70,7 @@ export class PaymentService {
 
         const sendEmailDto: SendEmailDto = {
           firstName: donation?.donor_first_name,
-          recipients: [{ name: 'Support Our Heroes', address: 'fundraise.soh@gmail.com' }],
+          recipients: [{ name: 'Support Our Heroes', address: `${process.env?.MAIL_USER}` }],
           data: donation,
         };
 
@@ -93,7 +89,7 @@ export class PaymentService {
 
         const sendEmailDto: SendEmailDto = {
           firstName: donation?.donor_first_name,
-          recipients: [{ name: 'Support Our Heroes', address: 'fundraise.soh@gmail.com' }],
+          recipients: [{ name: 'Support Our Heroes', address: `${process.env?.MAIL_USER}` }],
           data: donation,
         };
 
@@ -102,8 +98,6 @@ export class PaymentService {
         response.redirect(`${process.env?.FRONTEND_URL}/donation-fail/${body['ReferenceNo']}`);
       }
     } else {
-      console.log(body);
-
       const donation = await this.donationRepository.getOneDonation({ where: { reference_payment: body['ReferenceNo'] } });
 
       await this.donationRepository.UpdateOneDonation(donation?.donation_id, {
@@ -115,11 +109,11 @@ export class PaymentService {
 
       const sendEmailDto: SendEmailDto = {
         firstName: donation?.donor_first_name,
-        recipients: [{ name: 'Support Our Heroes', address: 'fundraise.soh@gmail.com' }],
+        recipients: [{ name: 'Support Our Heroes', address: `${process.env?.MAIL_USER}` }],
         data: donation,
       };
 
-      // await new SendMailerUtility(this.mailerService).transactionFailed(sendEmailDto);
+      await new SendMailerUtility(this.mailerService).transactionFailed(sendEmailDto);
 
       response.redirect(`${process.env?.FRONTEND_URL}/donation-fail/${body['ReferenceNo']}`);
     }
@@ -141,19 +135,11 @@ export class PaymentService {
 
   async generatePaymentUrl(mandatoryField, optionalField, amount, referenceNo, email, mobileNumber, donor_first_name, donor_address, pan) {
     try {
-      const url = `${process.env?.EASYPAY_URL_UAT}?merchantid=${this.merchantId}&mandatory fields=${referenceNo}|${this.subMerchantId}|${amount}|${donor_first_name}|${donor_address}&optional fields=${pan}|${email}|${mobileNumber}&returnurl=${this.returnUrl}&Reference No=${referenceNo}&submerchantid=${this.subMerchantId}&transaction amount=${amount}&paymode=${this.paymode}`;
-      const encryptedUrl = `${process.env?.EASYPAY_URL_UAT}?merchantid=${
+      const url = `${process.env?.EASYPAY_URL}?merchantid=${this.merchantId}&mandatory fields=${referenceNo}|${this.subMerchantId}|${amount}|${donor_first_name}|${donor_address}&optional fields=${pan}|${email}|${mobileNumber}&returnurl=${this.returnUrl}&Reference No=${referenceNo}&submerchantid=${this.subMerchantId}&transaction amount=${amount}&paymode=${this.paymode}`;
+      const encryptedUrl = `${process.env?.EASYPAY_URL}?merchantid=${
         this.merchantId
       }&mandatory fields=${mandatoryField}&optional fields=${optionalField}&returnurl=${await this.getReturnUrl()}&Reference No=${await this.getReferenceNo(referenceNo)}&submerchantid=${await this.getSubMerchantId()}&transaction amount=${await this.getAmount(amount)}&paymode=${await this.getPaymode()}`;
       return encryptedUrl;
-    } catch (error) {
-      await ErrorResponseUtility.errorResponse(error);
-    }
-  }
-
-  async pushUrl(body) {
-    try {
-      return 'Success';
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }

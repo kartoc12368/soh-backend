@@ -34,18 +34,6 @@ export class PaymentController {
     return await this.paymentService.verify(body, res);
   }
 
-  @Post('push')
-  @Public()
-  @ApiOperation({ summary: 'Getting Transaction Data End of Day (roles: admin)' })
-  @ApiResponse({ status: 201, description: 'Api success' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 404, description: 'Not found!' })
-  @ApiResponse({ status: 400, description: 'Bad Request' })
-  @ApiResponse({ status: 500, description: 'Internal server error!' })
-  async pushUrl(@Body() body) {
-    return await this.paymentService.pushUrl(body);
-  }
-
   @Cron(CronExpression.EVERY_DAY_AT_2AM)
   async findPendingPayment() {
     await this.paymentService.findPendingPayment();

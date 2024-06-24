@@ -1,4 +1,4 @@
-import { todayDate } from '../utility/date.utility';
+import { getFormattedDate, todayDate } from '../utility/date.utility';
 
 export async function successTransaction(data) {
   const content = `<!DOCTYPE html>
@@ -179,6 +179,8 @@ export async function successTransaction(data) {
                         <strong class="st2">Reference</strong>${data?.reference_payment}
                         <strong class="st2">Donation ID</strong>${data?.donation_id_frontend}
                         <strong class="st2">80G Certificate</strong>${data?.certificate}
+                        <strong class="st2">Date & Time</strong>${await getFormattedDate(data?.created_at)}
+
 
                       </p>
                       </td>
