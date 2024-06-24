@@ -5,6 +5,7 @@ import { resetPassword } from '../email_templates/reset-password.html';
 import { failedTransaction } from '../email_templates/failed-transaction.html';
 import { successTransaction } from '../email_templates/success-transaction.html';
 import { getFormattedDate } from './date.utility';
+import { cancelledTransaction } from '../email_templates/cancelled-transaction.html';
 
 export class SendMailerUtility {
   constructor(private readonly mailerService: MailerService) {}
@@ -50,7 +51,7 @@ export class SendMailerUtility {
     await this.mailerService.sendMail({
       subject: `Donation Transaction Cancelled - ${await getFormattedDate(data?.data?.created_at)}`,
       to: recipients,
-      html: await successTransaction(data?.data),
+      html: await cancelledTransaction(data?.data),
     });
   }
 }
