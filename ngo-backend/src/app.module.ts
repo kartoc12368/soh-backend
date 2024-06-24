@@ -16,7 +16,7 @@ import { typeOrmAsyncConfig } from './config/typeorm.config';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true, envFilePath: 'config/env/development.yaml' }),
+    ConfigModule.forRoot({ isGlobal: true, envFilePath: `config/env/${process.env?.NODE_ENV}.yaml` }),
     TypeOrmModule.forRootAsync(typeOrmAsyncConfig),
     MailerModule.forRoot({
       transport: {

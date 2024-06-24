@@ -185,7 +185,7 @@ export async function sendPassword(data) {
               </tr>
               <tr>
                 <td style="text-align: center">
-                  <p class="p3">© <strong>${todayDate()} Support Our Heroes</strong></p>
+                  <p class="p3">© <strong>${await todayDate()} Support Our Heroes</strong></p>
                 </td>
               </tr>
               <tr>
