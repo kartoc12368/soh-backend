@@ -6,10 +6,8 @@ import { DonationRepository } from 'src/modules/donation/donation.repository';
 
 import { SendEmailDto } from 'src/shared/interface/mail.interface';
 import EasyPayCodes from 'src/shared/utility/easypay-error.utility';
-import responseCode from 'src/shared/utility/easypay-error.utility';
 import { ErrorResponseUtility } from 'src/shared/utility/error-response.utility';
 import { SendMailerUtility } from 'src/shared/utility/send-mailer.utility';
-import { Between } from 'typeorm';
 
 @Injectable()
 export class PaymentService {
@@ -20,10 +18,9 @@ export class PaymentService {
   private returnUrl: string;
 
   constructor(
-    private donationRepository: DonationRepository,
+    private readonly donationRepository: DonationRepository,
     private readonly mailerService: MailerService,
   ) {
-    // this.merchantId = process.env?.EASYPAY_MERCHANT_ID;
     this.merchantId = process.env?.EASYPAY_MERCHANT_ID;
     this.encryptionKey = process.env?.EASYPAY_AESKEY;
     this.subMerchantId = process.env?.EASYPAY_SUBMID;
@@ -49,6 +46,7 @@ export class PaymentService {
   }
 
   async verify(body, response) {
+    console.log(body);
     if (Object.keys(body).length !== 0 && body['Total Amount'] && body['Response Code'] === 'E000') {
       const res = body;
 
@@ -126,28 +124,34 @@ export class PaymentService {
   async getPaymentUrl(amount, referenceNo, mobileNumber, email, donor_first_name, donor_address, pan) {
     try {
       const mandatoryField = await this.getMandatoryField(amount, referenceNo, donor_first_name, donor_address);
-      const optionalFieldValue = await this.getOptionalField(pan, email, mobileNumber);
+      const optionalFieldValue = await this.getOptionalField(donor_address, pan, email, mobileNumber);
 
       const amountValue = await this.getAmount(amount);
       const referenceNoValue = await this.getReferenceNo(referenceNo);
 
-      const paymentUrl = await this.generatePaymentUrl(mandatoryField, optionalFieldValue, amount, referenceNo, email, mobileNumber, donor_first_name, donor_address, pan);
+      const paymentUrl = await this.generatePaymentUrl(mandatoryField, optionalFieldValue, amountValue, referenceNoValue);
+      await this.printPlainURL(amount, referenceNo, email, mobileNumber, donor_first_name, donor_address, pan);
       return paymentUrl;
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }
   }
 
-  async generatePaymentUrl(mandatoryField, optionalField, amount, referenceNo, email, mobileNumber, donor_first_name, donor_address, pan) {
+  async generatePaymentUrl(mandatoryField, optionalField, amount, referenceNo) {
     try {
-      const url = `${process.env?.EASYPAY_URL}?merchantid=${this.merchantId}&mandatory fields=${referenceNo}|${this.subMerchantId}|${amount}|${donor_first_name}|${donor_address}&optional fields=${pan}|${email}|${mobileNumber}&returnurl=${this.returnUrl}&Reference No=${referenceNo}&submerchantid=${this.subMerchantId}&transaction amount=${amount}&paymode=${this.paymode}`;
       const encryptedUrl = `${process.env?.EASYPAY_URL}?merchantid=${
         this.merchantId
-      }&mandatory fields=${mandatoryField}&optional fields=${optionalField}&returnurl=${await this.getReturnUrl()}&Reference No=${await this.getReferenceNo(referenceNo)}&submerchantid=${await this.getSubMerchantId()}&transaction amount=${await this.getAmount(amount)}&paymode=${await this.getPaymode()}`;
+      }&mandatory fields=${mandatoryField}&optional fields=${optionalField}&returnurl=${await this.getReturnUrl()}&Reference No=${referenceNo}&submerchantid=${await this.getSubMerchantId()}&transaction amount=${amount}&paymode=${await this.getPaymode()}`;
+      console.log(encryptedUrl);
       return encryptedUrl;
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }
+  }
+
+  async printPlainURL(amount, referenceNo, email, mobileNumber, donor_first_name, donor_address, pan) {
+    const url = `${process.env?.EASYPAY_URL}?merchantid=${this.merchantId}&mandatory fields=${referenceNo}|${this.subMerchantId}|${amount}|${donor_first_name}&optional fields=${pan}|${email}|${mobileNumber}|${donor_address}&returnurl=${this.returnUrl}&Reference No=${referenceNo}&submerchantid=${this.subMerchantId}&transaction amount=${amount}&paymode=${this.paymode}`;
+    console.log(url);
   }
 
   async getMandatoryField(amount, referenceNo, donor_first_name, donor_address) {
@@ -158,14 +162,19 @@ export class PaymentService {
     }
   }
 
-  async getOptionalField(pan, email, mobileNumber) {
+  async getOptionalField(donor_address, pan, email, mobileNumber) {
     try {
-      if (pan == undefined) {
-        if (email == undefined) {
-          return await this.getEncryptValue(`||${mobileNumber}`);
-        }
-        return await this.getEncryptValue(`|${email}|${mobileNumber}`);
-      }
+      // if (pan == undefined) {
+      //   if (email == undefined) {
+      //     return await this.getEncryptValue(`||${mobileNumber}`);
+      //   }
+      //   return await this.getEncryptValue(`|${email}|${mobileNumber}`);
+      // }
+      pan = pan || '';
+      email = email || '';
+      donor_address = donor_address || '';
+      console.log(`${pan}|${email}|${mobileNumber}|${donor_address}`);
+
       return await this.getEncryptValue(`${pan}|${email}|${mobileNumber}`);
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
@@ -235,7 +244,7 @@ export class PaymentService {
   async findPendingPayment() {
     const donations = await this.donationRepository.getAllDonations({ where: { payment_status: 'pending' } });
     donations.forEach(async (donation) => {
-      await this.donationRepository.UpdateOneDonation(donation?.donation_id, { payment_status: 'failed' });
+      await this.donationRepository.UpdateOneDonation(donation?.donation_id, { payment_status: 'failed', payment_info: 'Payment Window closed by User' });
       // await this.donationRepository.deleteDonation(donation.donation_id);
     });
   }

@@ -1,4 +1,4 @@
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 
 @Entity()
 export class ResetPassword {
@@ -11,8 +11,8 @@ export class ResetPassword {
   @Column()
   otp: string;
 
-  @Column({ type: 'enum', enum: { ACTIVE: 'active', EXPIRED: 'expired' }, default: 'active' })
-  otp_state: string;
+  @Column('bigint', { name: 'expire_at', nullable: true })
+  expireAt: number;
 
   @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP(6)' })
   created_at: Date;

@@ -15,8 +15,11 @@ export class ForgottenPasswordRepository extends Repository<ResetPassword> {
     try {
       let forgotPassword = new ResetPassword();
 
+      const expireTime = new Date().getTime() + 15 * 60000;
+
       forgotPassword.email = email;
       forgotPassword.otp = randomstring;
+      forgotPassword.expireAt = expireTime;
 
       await this.save(forgotPassword);
     } catch (error) {

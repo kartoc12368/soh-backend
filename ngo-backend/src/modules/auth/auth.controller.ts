@@ -66,9 +66,4 @@ export class AuthController {
   setNewPassword(@Body(ValidationPipe) body: ResetPasswordDto): Promise<ResponseStructure> {
     return this.authService.setNewPassword(body);
   }
-
-  @Cron(CronExpression.EVERY_10_MINUTES)
-  expireOtp() {
-    return this.authService.expireOtp();
-  }
 }

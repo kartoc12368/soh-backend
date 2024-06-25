@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotAcceptableException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { MailerService } from '@nestjs-modules/mailer';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -73,9 +73,13 @@ export class AuthService {
         throw new NotFoundException('Fundraiser Not Found');
       }
 
+      if (fundraiser?.role === 'ADMIN') {
+        throw new ForbiddenException('Reset Password Failed.Please Contact Developer');
+      }
+
       const otpExists = await this.forgottenPasswordRepository.getFundraiserByOtp({ where: { email: email } });
 
-      if (otpExists?.otp_state == 'active') {
+      if (otpExists?.expireAt > new Date().getTime()) {
         return { message: 'Email Already Sent', success: true };
       }
 
@@ -89,8 +93,10 @@ export class AuthService {
 
       await new SendMailerUtility(this.mailerService).resetPassword(sendEmailDto);
 
-      if (otpExists?.otp_state == 'expired') {
-        await this.forgottenPasswordRepository.updateOtp(otpExists?.id, { otp_state: 'active', otp: OTP });
+      if (otpExists?.expireAt < new Date().getTime()) {
+        const expireTime = new Date().getTime() + 15 * 60000;
+        console.log(expireTime);
+        await this.forgottenPasswordRepository.updateOtp(otpExists?.id, { expireAt: expireTime, otp: OTP });
         return { message: 'Email Sent successfully', success: true };
       }
 
@@ -108,6 +114,10 @@ export class AuthService {
 
       if (!fundraiser) {
         throw new NotFoundException('Invalid Otp');
+      }
+
+      if (fundraiser?.expireAt < new Date().getTime()) {
+        throw new NotAcceptableException('Otp Expired. Please request new OTP');
       }
 
       const user_new = await this.fundraiserRepository.findFundRaiserByEmail(fundraiser?.email);
@@ -190,25 +200,6 @@ export class AuthService {
       });
 
       return { message: 'Login Successful', data: { token: accessToken, refreshToken: refreshToken } };
-    } catch (error) {
-      await ErrorResponseUtility.errorResponse(error);
-    }
-  }
-
-  async expireOtp() {
-    try {
-      const otpHistory = await this.forgottenPasswordRepository.getAllOtp();
-
-      otpHistory.forEach(async (otp) => {
-        var dateUTC = new Date(otp.created_at).getTime();
-        var dateIST = new Date(dateUTC);
-        //date shifting for IST timezone (+5 hours and 30 minutes)
-        dateIST.setHours(dateIST.getHours() + 5);
-        dateIST.setMinutes(dateIST.getMinutes() + 45);
-        if (dateIST.toLocaleString() < new Date().toLocaleString()) {
-          await this.forgottenPasswordRepository.updateOtp(otp?.id, { otp_state: 'expired' });
-        }
-      });
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }
