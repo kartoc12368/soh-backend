@@ -123,8 +123,8 @@ export class PaymentService {
   }
   async getPaymentUrl(amount, referenceNo, mobileNumber, email, donor_first_name, donor_address, pan) {
     try {
-      const mandatoryField = await this.getMandatoryField(amount, referenceNo, donor_first_name);
-      const optionalFieldValue = await this.getOptionalField(pan, email, mobileNumber, donor_address);
+      const mandatoryField = await this.getMandatoryField(amount, referenceNo, donor_first_name, donor_address);
+      const optionalFieldValue = await this.getOptionalField(pan, email, mobileNumber);
 
       const amountValue = await this.getAmount(amount);
       const referenceNoValue = await this.getReferenceNo(referenceNo);
@@ -142,7 +142,7 @@ export class PaymentService {
       const encryptedUrl = `${process.env?.EASYPAY_URL}?merchantid=${
         this.merchantId
       }&mandatory fields=${mandatoryField}&optional fields=${optionalField}&returnurl=${await this.getReturnUrl()}&Reference No=${referenceNo}&submerchantid=${await this.getSubMerchantId()}&transaction amount=${amount}&paymode=${await this.getPaymode()}`;
-      console.log(encryptedUrl);
+      console.log(encryptedUrl, 'h');
       return encryptedUrl;
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
@@ -154,22 +154,22 @@ export class PaymentService {
     console.log(url);
   }
 
-  async getMandatoryField(amount, referenceNo, donor_first_name) {
+  async getMandatoryField(amount, referenceNo, donor_first_name, donor_address) {
     try {
-      return await this.getEncryptValue(`${referenceNo}|${this.subMerchantId}|${amount}|${donor_first_name}`);
+      return await this.getEncryptValue(`${referenceNo}|${this.subMerchantId}|${amount}|${donor_first_name}|${donor_address}`);
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }
   }
 
-  async getOptionalField(pan, email, mobileNumber, donor_address) {
+  async getOptionalField(pan, email, mobileNumber) {
     try {
       pan = pan || '';
       email = email || '';
-      donor_address = donor_address || '';
-      console.log(`${pan}|${email}|${mobileNumber}|${donor_address}`);
+      // donor_address = donor_address || '';
+      // console.log(`${pan}|${email}|${mobileNumber}|${donor_address}`);
 
-      return await this.getEncryptValue(`${pan}|${email}|${mobileNumber}|${donor_address}`);
+      return await this.getEncryptValue(`${pan}|${email}|${mobileNumber}`);
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }
