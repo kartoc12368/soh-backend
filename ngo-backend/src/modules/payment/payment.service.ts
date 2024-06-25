@@ -217,6 +217,7 @@ export class PaymentService {
 
   async getEncryptValue(data) {
     try {
+      console.log(data);
       const encrypted = await this.encrypt(data, this.encryptionKey);
       return btoa(encrypted);
     } catch (error) {
