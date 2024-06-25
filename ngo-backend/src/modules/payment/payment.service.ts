@@ -123,8 +123,8 @@ export class PaymentService {
   }
   async getPaymentUrl(amount, referenceNo, mobileNumber, email, donor_first_name, donor_address, pan) {
     try {
-      const mandatoryField = await this.getMandatoryField(amount, referenceNo, donor_first_name, donor_address);
-      const optionalFieldValue = await this.getOptionalField(pan, email, mobileNumber);
+      const mandatoryField = await this.getMandatoryField(amount, referenceNo, donor_first_name);
+      const optionalFieldValue = await this.getOptionalField(pan, email, mobileNumber, donor_address);
 
       const amountValue = await this.getAmount(amount);
       const referenceNoValue = await this.getReferenceNo(referenceNo);
@@ -154,22 +154,22 @@ export class PaymentService {
     console.log(url);
   }
 
-  async getMandatoryField(amount, referenceNo, donor_first_name, donor_address) {
+  async getMandatoryField(amount, referenceNo, donor_first_name) {
     try {
-      return await this.getEncryptValue(`${referenceNo}|${this.subMerchantId}|${amount}|${donor_first_name}|${donor_address}`);
+      return await this.getEncryptValue(`${referenceNo}|${this.subMerchantId}|${amount}|${donor_first_name}`);
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }
   }
 
-  async getOptionalField(pan, email, mobileNumber) {
+  async getOptionalField(pan, email, mobileNumber, donor_address) {
     try {
       pan = pan || '';
       email = email || '';
-      // donor_address = donor_address || '';
-      // console.log(`${pan}|${email}|${mobileNumber}|${donor_address}`);
+      donor_address = donor_address || '';
+      console.log(`${pan}|${email}|${mobileNumber}|${donor_address}`);
 
-      return await this.getEncryptValue(`${pan}|${email}|${mobileNumber}`);
+      return await this.getEncryptValue(`${pan}|${email}|${mobileNumber}|${donor_address}`);
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }
