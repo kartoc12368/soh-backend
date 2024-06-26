@@ -164,6 +164,10 @@ export class PaymentService {
 
   async getOptionalField(pan, email, mobileNumber, donor_address) {
     try {
+      console.log(pan, email, donor_address);
+      console.log(pan == undefined);
+      console.log(pan === undefined);
+      console.log(pan == 'undefined');
       if (pan == undefined) {
         pan = '';
       }
