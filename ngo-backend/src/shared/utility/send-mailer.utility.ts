@@ -29,29 +29,29 @@ export class SendMailerUtility {
   }
 
   async transactionSuccess(data) {
-    const { recipients } = data;
+    const { recipients, payment_info } = data;
     await this.mailerService.sendMail({
       subject: `Donation Transaction Success - ${await getFormattedDate(data?.data?.created_at)}`,
       to: recipients,
-      html: await successTransaction(data?.data),
+      html: await successTransaction(data?.data, payment_info),
     });
   }
 
   async transactionFailed(data) {
-    const { recipients } = data;
+    const { recipients, payment_info } = data;
     await this.mailerService.sendMail({
       subject: `Donation Transaction Failed - ${await getFormattedDate(data?.data?.created_at)}`,
       to: recipients,
-      html: await failedTransaction(data?.data),
+      html: await failedTransaction(data?.data, payment_info),
     });
   }
 
   async transactionCancelled(data) {
-    const { recipients } = data;
+    const { recipients, payment_info } = data;
     await this.mailerService.sendMail({
       subject: `Donation Transaction Cancelled - ${await getFormattedDate(data?.data?.created_at)}`,
       to: recipients,
-      html: await cancelledTransaction(data?.data),
+      html: await cancelledTransaction(data?.data, payment_info),
     });
   }
 }

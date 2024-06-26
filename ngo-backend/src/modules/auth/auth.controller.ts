@@ -1,6 +1,5 @@
 import { Body, Controller, Get, Headers, Post, Req, UseGuards, ValidationPipe } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { Cron, CronExpression } from '@nestjs/schedule';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import { ForgotPasswordDto } from './dto/forgot-password.dto';

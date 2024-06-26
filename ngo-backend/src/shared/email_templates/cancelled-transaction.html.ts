@@ -1,6 +1,7 @@
 import { getFormattedDate, todayDate } from '../utility/date.utility';
 
-export async function cancelledTransaction(data) {
+export async function cancelledTransaction(data, payment_info) {
+  data?.donor_last_name ? data?.donor_last_name : '';
   const content = `<!DOCTYPE html>
 <html lang="en-US">
   <head>
@@ -47,13 +48,14 @@ export async function cancelledTransaction(data) {
                       <span style="display:inline-block;vertical-align:middle;margin:29px 0 26px;border-bottom:1px solid #cecece;width:100px;"></span>
                       <p style="font-size:18px;color:#455056;line-height:20px;margin:0;font-weight:500;">
                         <strong style="display:block;font-size:13px;margin:0 0 4px;color:rgba(0,0,0,0.64);font-weight:normal;">Amount</strong>${data?.amount}
-                        <strong style="display:block;font-size:13px;margin:24px 0 4px 0;font-weight:normal;color:rgba(0,0,0,0.64);">Donor Name</strong>${data?.donor_first_name}
+                        <strong style="display:block;font-size:13px;margin:24px 0 4px 0;font-weight:normal;color:rgba(0,0,0,0.64);">Donor Name</strong>${data?.donor_first_name + ' ' + data?.donor_last_name}
                         <strong style="display:block;font-size:13px;margin:24px 0 4px 0;font-weight:normal;color:rgba(0,0,0,0.64);">Email</strong>${data?.donor_email}
                         <strong style="display:block;font-size:13px;margin:24px 0 4px 0;font-weight:normal;color:rgba(0,0,0,0.64);">Mobile Number</strong>${data?.donor_phone}
                         <strong style="display:block;font-size:13px;margin:24px 0 4px 0;font-weight:normal;color:rgba(0,0,0,0.64);">PAN</strong>${data?.pan}
                         <strong style="display:block;font-size:13px;margin:24px 0 4px 0;font-weight:normal;color:rgba(0,0,0,0.64);">Address</strong>${data?.donor_address}
                         <br>
                         <br>
+                        <strong style="display:block;font-size:13px;margin:24px 0 4px 0;font-weight:normal;color:rgba(0,0,0,0.64);">Payment Info</strong>${payment_info?.payment_info}
                         <strong style="display:block;font-size:13px;margin:24px 0 4px 0;font-weight:normal;color:rgba(0,0,0,0.64);">Reference</strong>${data?.reference_payment}
                         <strong style="display:block;font-size:13px;margin:24px 0 4px 0;font-weight:normal;color:rgba(0,0,0,0.64);">Donation ID</strong>${data?.donation_id_frontend}
                         <strong style="display:block;font-size:13px;margin:24px 0 4px 0;font-weight:normal;color:rgba(0,0,0,0.64);">80G Certificate</strong>${data?.certificate}

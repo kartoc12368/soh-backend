@@ -95,7 +95,6 @@ export class AuthService {
 
       if (otpExists?.expireAt < new Date().getTime()) {
         const expireTime = new Date().getTime() + 15 * 60000;
-        console.log(expireTime);
         await this.forgottenPasswordRepository.updateOtp(otpExists?.id, { expireAt: expireTime, otp: OTP });
         return { message: 'Email Sent successfully', success: true };
       }
