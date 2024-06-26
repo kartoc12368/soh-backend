@@ -164,10 +164,9 @@ export class PaymentService {
 
   async getOptionalField(pan, email, mobileNumber, donor_address) {
     try {
-      pan = pan || '';
-      email = email || '';
-      donor_address = donor_address || '';
-      console.log(`${pan}|${email}|${mobileNumber}|${donor_address}`);
+      pan = pan ? pan : '';
+      email = email ? email : '';
+      donor_address = donor_address ? donor_address : '';
 
       return await this.getEncryptValue(`${pan}|${email}|${mobileNumber}|${donor_address}`);
     } catch (error) {
