@@ -1,6 +1,6 @@
 import { getFormattedDate, todayDate } from '../utility/date.utility';
 
-export async function failedTransaction(data, payment_info) {
+export async function closedTransaction(data, payment_info) {
   if (data?.donor_last_name == null || data?.donor_last_name == undefined) {
     data.donor_last_name = '';
   }

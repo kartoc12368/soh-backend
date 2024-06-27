@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 
 import { IsEmail, IsNotEmpty, IsNumberString, IsString } from 'class-validator';
 
@@ -6,6 +7,7 @@ export class GeneratePasswordDto {
   @ApiProperty({ example: 'kartavya.oc@gmail.com' })
   @IsEmail()
   @IsNotEmpty()
+  @Transform(({ value }) => value.toLowerCase(), { toClassOnly: true })
   email: string;
 
   @ApiProperty({ example: 'Kartavya' })

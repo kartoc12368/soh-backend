@@ -24,3 +24,10 @@ export async function getFormattedDate(dateStr) {
   const formattedDate = `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
   return await formattedDate;
 }
+
+export async function getTomorrowDate(): Promise<string> {
+  const today = new Date();
+  const tomorrow = new Date(today);
+  tomorrow.setDate(today.getDate() - 1);
+  return tomorrow.toISOString().split('T')[0]; // Returns YYYY-MM-DD format
+}

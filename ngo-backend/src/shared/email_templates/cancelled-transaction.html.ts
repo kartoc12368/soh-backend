@@ -1,7 +1,9 @@
 import { getFormattedDate, todayDate } from '../utility/date.utility';
 
 export async function cancelledTransaction(data, payment_info) {
-  data?.donor_last_name ? data?.donor_last_name : '';
+  if (data?.donor_last_name == null || data?.donor_last_name == undefined) {
+    data.donor_last_name = '';
+  }
   const content = `<!DOCTYPE html>
 <html lang="en-US">
   <head>

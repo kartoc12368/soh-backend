@@ -69,6 +69,7 @@ export class PaymentService {
           firstName: donation?.donor_first_name,
           recipients: [{ name: 'Support Our Heroes', address: `${process.env?.MAIL_USER}` }],
           data: donation,
+          payment_info: { payment_info: EasyPayCodes(body['Response Code']), payment_method: body['Payment Mode'] },
         };
 
         await new SendMailerUtility(this.mailerService).transactionSuccess(sendEmailDto);
@@ -88,6 +89,7 @@ export class PaymentService {
           firstName: donation?.donor_first_name,
           recipients: [{ name: 'Support Our Heroes', address: `${process.env?.MAIL_USER}` }],
           data: donation,
+          payment_info: { payment_info: EasyPayCodes(body['Response Code']), payment_method: body['Payment Mode'] },
         };
 
         await new SendMailerUtility(this.mailerService).transactionFailed(sendEmailDto);
@@ -108,6 +110,7 @@ export class PaymentService {
         firstName: donation?.donor_first_name,
         recipients: [{ name: 'Support Our Heroes', address: `${process.env?.MAIL_USER}` }],
         data: donation,
+        payment_info: { payment_info: EasyPayCodes(body['Response Code']), payment_method: body['Payment Mode'] },
       };
 
       if (body['Response Code'] === 'E00335') {
@@ -236,16 +239,16 @@ export class PaymentService {
 
   async findPendingPayment() {
     const donations = await this.donationRepository.getAllDonations({ where: { payment_status: 'pending' } });
-    donations.forEach(async (donation) => {
+    if (donations.length) {
       const sendEmailDto: SendEmailDto = {
-        firstName: donation?.donor_first_name,
         recipients: [{ name: 'Support Our Heroes', address: `${process.env?.MAIL_USER}` }],
-        data: donation,
+        data: donations,
         payment_info: { payment_info: 'Payment Window Closed by User' },
       };
 
-      await new SendMailerUtility(this.mailerService).transactionFailed(sendEmailDto);
-
+      await new SendMailerUtility(this.mailerService).transactionClosed(sendEmailDto);
+    }
+    donations.forEach(async (donation) => {
       await this.donationRepository.UpdateOneDonation(donation?.donation_id, { payment_status: 'failed', payment_info: 'Payment Window closed by User' });
     });
   }

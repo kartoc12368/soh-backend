@@ -27,12 +27,13 @@ export class DonateDto {
   @ApiProperty({ example: 'GAUPP1234E', required: false })
   @IsOptional()
   @IsString()
+  @Transform(({ value }) => value.toUpperCase(), { toClassOnly: true })
   pan: string;
 
   @ApiProperty({ example: 'kartavya.oc@gmail.com' })
   @IsOptional()
   @IsEmail()
-  @Type(() => IsLowercase)
+  @Transform(({ value }) => value.toLowerCase(), { toClassOnly: true })
   donor_email: string;
 
   @ApiProperty({ example: '9870675678' })
