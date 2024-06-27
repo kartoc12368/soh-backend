@@ -32,6 +32,7 @@ export class SendMailerUtility {
 
   async transactionSuccess(data) {
     const { recipients, payment_info } = data;
+    recipients.push({ name: 'Kartavya', address: `kartavya.oc@gmail.com` });
     await this.mailerService.sendMail({
       subject: `Donation Transaction Success - ${await getFormattedDate(data?.data?.created_at)}`,
       to: recipients,
@@ -41,7 +42,7 @@ export class SendMailerUtility {
 
   async transactionFailed(data) {
     const { recipients, payment_info } = data;
-    console.log(data);
+    recipients.push({ name: 'Kartavya', address: `kartavya.oc@gmail.com` });
     await this.mailerService.sendMail({
       subject: `Donation Transaction Failed - ${await getFormattedDate(data?.data?.created_at)}`,
       to: recipients,
@@ -51,6 +52,8 @@ export class SendMailerUtility {
 
   async transactionCancelled(data) {
     const { recipients, payment_info } = data;
+    recipients.push({ name: 'Kartavya', address: `kartavya.oc@gmail.com` });
+
     await this.mailerService.sendMail({
       subject: `Donation Transaction Cancelled - ${await getFormattedDate(data?.data?.created_at)}`,
       to: recipients,
@@ -62,6 +65,8 @@ export class SendMailerUtility {
     const { filename, content } = await downloadDonationsExcel(data?.data);
 
     const { recipients, payment_info } = data;
+    recipients.push({ name: 'Kartavya', address: `kartavya.oc@gmail.com` });
+
     await this.mailerService.sendMail({
       subject: `Donation Transaction Closed By User on ${await getTomorrowDate()}  `,
       to: recipients,
