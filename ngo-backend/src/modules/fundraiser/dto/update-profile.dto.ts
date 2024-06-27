@@ -1,17 +1,20 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 
-import { IsDate, IsNotEmpty, IsNumber, IsNumberString, IsOptional, IsString } from 'class-validator';
+import { IsDate, IsNotEmpty, IsNumber, IsNumberString, IsOptional, IsString, Length } from 'class-validator';
 
 export class UpdateFundraiserDto {
   @ApiPropertyOptional({ example: 'Kartavya' })
   @IsString()
   @IsNotEmpty({ message: 'First Name is Required' })
   @IsOptional()
+  @Transform(({ value }) => value.charAt(0).toUpperCase() + value.slice(1).toLowerCase(), { toClassOnly: true })
   firstName: string;
 
   @ApiPropertyOptional({ example: 'Patel' })
   @IsString()
   @IsOptional()
+  @Transform(({ value }) => value.charAt(0).toUpperCase() + value.slice(1).toLowerCase(), { toClassOnly: true })
   lastName: string;
 
   @ApiPropertyOptional({ example: '9265908056' })

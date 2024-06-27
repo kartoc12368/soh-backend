@@ -53,42 +53,6 @@ export class DonationService {
     }
   }
 
-  async saveDonation(body): Promise<ResponseStructure> {
-    try {
-      //getting fundraiser to update its dashboard content
-      let fundraiser: Fundraiser = await this.fundRaiserRepository.getFundraiser({ where: { fundraiser_id: body?.fundraiser?.fundraiser_id }, relations: ['fundraiser_page'] });
-
-      if (!fundraiser) {
-        throw new NotFoundException('Fundraiser Not Found');
-      }
-
-      let fundraiserPage = await this.fundRaiserPageRepository.getFundraiserPage({
-        where: { id: fundraiser?.fundraiser_page?.id },
-      });
-
-      if (!fundraiserPage) {
-        throw new NotFoundException('Fundraiser Page Not Found');
-      }
-
-      //getting existing fundraiserPage supporters and pushing new supporters
-      const supportersOfFundraiser = await this.donationRepository.getDonorNames(body?.fundraiser);
-
-      const total_amount_raised = await this.donationRepository.getRaisedAmount(body?.fundraiser);
-
-      const total_donations = await this.donationRepository.getTotalDonor(body?.fundraiser);
-
-      await this.fundRaiserRepository.UpdateFundraiser(fundraiser?.fundraiser_id, {
-        total_amount_raised: total_amount_raised,
-        total_donations: total_donations,
-      });
-
-      await this.fundRaiserPageRepository.UpdateFundraiserPage(fundraiser?.fundraiser_page?.id, { raised_amount: total_amount_raised, supporters: supportersOfFundraiser });
-      return { message: 'Donation Updated Successfully To Page' };
-    } catch (error) {
-      await ErrorResponseUtility.errorResponse(error);
-    }
-  }
-
   async updateDonation(id, body): Promise<ResponseStructure> {
     try {
       await this.donationRepository.UpdateOneDonation(id, body);

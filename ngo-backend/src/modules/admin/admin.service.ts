@@ -196,23 +196,6 @@ export class AdminService {
         throw new NotFoundException('Fundraiser Page Not Found');
       }
 
-      //getting existing fundraiserPage supporters and pushing new supporters
-      const supportersOfFundraiser = await this.donationRepository.getDonorNames(fundraiser);
-
-      const total_amount_raised = await this.donationRepository.getRaisedAmount(fundraiser);
-
-      const total_donations = await this.donationRepository.getTotalDonor(fundraiser);
-
-      await this.fundraiserRepository.UpdateFundraiser(fundraiser?.fundraiser_id, {
-        total_amount_raised: total_amount_raised,
-        total_donations: total_donations,
-      });
-
-      await this.fundraiserPageRepository.UpdateFundraiserPage(fundraiserPage?.id, {
-        raised_amount: total_amount_raised,
-        supporters: supportersOfFundraiser,
-      });
-
       return { message: 'Donation Added Successfully' };
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
@@ -247,6 +230,34 @@ export class AdminService {
     try {
       await this.fundraiserPageRepository.deleteFundraiserPage(id);
       return { message: 'Fundraiser Page Deleted Successfully' };
+    } catch (error) {
+      await ErrorResponseUtility.errorResponse(error);
+    }
+  }
+
+  async getDonationsAdminForDelete(dto: FindDonationsDto): Promise<ResponseStructure> {
+    try {
+      const { to_date, from_date } = dto;
+      console.log(incrementDate(new Date(to_date)));
+
+      const donationsData = await this.donationRepository
+        .createQueryBuilder('donation')
+        .leftJoinAndSelect('donation.fundraiser', 'fundraiser')
+        .where('donation.fundraiser IS NULL')
+        .andWhere('donation.donation_date BETWEEN :from_date AND :to_date', {
+          from_date: from_date ? new Date(from_date) : new Date('1970-01-01'),
+          to_date: to_date ? incrementDate(new Date(to_date)) : new Date(),
+        })
+        .getMany();
+      return { message: 'Donations Received Successfully', data: donationsData, success: true };
+    } catch (error) {
+      await ErrorResponseUtility.errorResponse(error);
+    }
+  }
+
+  async deleteDonations(ids) {
+    try {
+      return await this.donationRepository.delete(ids['ids']);
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }

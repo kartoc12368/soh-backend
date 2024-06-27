@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 
-import { IsAlpha, IsEmail, IsEnum, IsLowercase, IsNotEmpty, IsNumber, IsNumberString, IsObject, IsOptional, IsString, Max, Min } from 'class-validator';
+import { IsAlpha, IsEmail, IsEnum, IsNotEmpty, IsNumber, IsNumberString, IsObject, IsOptional, IsString, Length, Max, Min } from 'class-validator';
 import { CertificateStatus } from 'src/shared/enums/certificate.enum';
 import { ProjectName } from 'src/shared/enums/project.enum';
 
@@ -17,11 +17,13 @@ export class DonateDto {
   @ApiProperty({ example: 'Kartavya' })
   @IsAlpha()
   @IsNotEmpty()
+  @Transform(({ value }) => value.charAt(0).toUpperCase() + value.slice(1).toLowerCase(), { toClassOnly: true })
   donor_first_name: string;
 
   @ApiProperty({ example: 'Patel', required: false })
   @IsAlpha()
   @IsOptional()
+  @Transform(({ value }) => value.charAt(0).toUpperCase() + value.slice(1).toLowerCase(), { toClassOnly: true })
   donor_last_name: string;
 
   @ApiProperty({ example: 'GAUPP1234E', required: false })

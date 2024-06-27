@@ -6,6 +6,7 @@ import { ResponseStructure } from 'src/shared/interface/response-structure.inter
 
 import { DonationService } from './donation.service';
 import { DonateDto } from './dto/donate.dto';
+import { DeleteMultipleDto } from './dto/delete-donation.dto';
 
 @ApiTags('Donation')
 @Controller('donate')

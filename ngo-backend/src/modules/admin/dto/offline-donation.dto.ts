@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 
-import { IsAlpha, IsDate, IsEmail, IsNotEmpty, IsNumber, IsNumberString, IsOptional, IsString, Max, Min } from 'class-validator';
+import { IsAlpha, IsDate, IsEmail, IsNotEmpty, IsNumber, IsNumberString, IsOptional, IsString, Length, Max, Min } from 'class-validator';
 
 export class AddOfflineDonationDto {
   @ApiPropertyOptional({ example: 'kartavya.oc@gmail.com', required: false })
@@ -21,6 +21,7 @@ export class AddOfflineDonationDto {
   @ApiProperty({ example: 'Hardik' })
   @IsAlpha()
   @IsNotEmpty()
+  @Transform(({ value }) => value.charAt(0).toUpperCase() + value.slice(1).toLowerCase(), { toClassOnly: true })
   donor_first_name: string;
 
   @ApiPropertyOptional({ example: 'HARDI0110K', maxLength: 10, required: false })
@@ -30,7 +31,7 @@ export class AddOfflineDonationDto {
 
   @ApiPropertyOptional({ example: 'hardiksaresa.oc@gmail.com', required: false })
   @IsOptional()
-  @IsEmail()
+  // @IsEmail()
   @Transform(({ value }) => value.toLowerCase(), { toClassOnly: true })
   donor_email: string;
 
