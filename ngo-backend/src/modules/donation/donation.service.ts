@@ -18,7 +18,10 @@ export class DonationService {
 
   async donate(body, id?): Promise<ResponseStructure> {
     try {
-      const reference = Math.random().toString(36).slice(-8);
+      // const reference = Math.random().toString(36).slice(-8);
+      const timestamp = Date.now().toString(36);
+      const randomPart = Math.random().toString(36).slice(-8);
+      const reference = timestamp + randomPart;
 
       if (!id) {
         await this.donationRepository.createDonationOnline(body, reference);

@@ -31,9 +31,10 @@ export class PaymentService {
   async redirectUrl(res, body) {
     try {
       const { donor_phone, donor_email, donor_address, donor_first_name, pan, amount } = body;
-
+      console.log(await this.donationRepository.getAllDonations({ where: { donor_phone: donor_phone, payment_status: 'pending' }, select: ['reference_payment'], order: { donation_id_frontend: 'DESC' } }));
       // Include the payment processing logic
-      const { reference_payment } = await this.donationRepository.getOneDonation({ where: { donor_phone: donor_phone, payment_status: 'pending' }, select: ['reference_payment'], order: { donation_id_frontend: 'DESC' } });
+      const donations = await this.donationRepository.getAllDonations({ where: { donor_phone: donor_phone, payment_status: 'pending' }, select: ['reference_payment'], order: { donation_id_frontend: 'DESC' } });
+      const reference_payment = donations[0].reference_payment;
 
       const payment_url = await this.getPaymentUrl(String(amount), reference_payment, donor_phone, donor_email, donor_first_name, donor_address, pan);
 
