@@ -69,12 +69,6 @@ export class Donation {
   })
   donor_address: string;
 
-  @Column('character varying', {
-    nullable: true,
-    length: 255,
-  })
-  comments: string;
-
   @Column({
     nullable: true,
     type: 'enum',
@@ -90,12 +84,6 @@ export class Donation {
     default: PaymentStatus.PENDING,
   })
   payment_status: string;
-
-  @Column({ nullable: true })
-  order_id: string;
-
-  @Column({ nullable: true, default: null })
-  payment_id: string;
 
   @Column({ nullable: true, type: 'date' })
   donation_date: Date;
@@ -123,15 +111,12 @@ export class Donation {
     nullable: true,
     type: 'enum',
     enum: CertificateStatus,
-    default: CertificateStatus.TRUE,
+    default: CertificateStatus.FALSE,
   })
   certificate: string;
 
   @Column({ nullable: true })
   reference_payment: string;
-
-  @Column({ nullable: true, type: 'enum', enum: ProjectName })
-  project_name: string;
 
   @Column({ nullable: true, type: 'json' })
   donation_activity: object;
