@@ -1,6 +1,6 @@
-export async function sendPassword(data) {
-  const todayDate = await new Date().getFullYear();
+import { todayDate } from '../utility/date.utility';
 
+export async function sendPassword(data) {
   const content = `<!DOCTYPE html>
   <html lang="en-US">
     <head>
@@ -172,7 +172,6 @@ export async function sendPassword(data) {
                           <strong class="st1">Name</strong>${data.firstName}
                           <strong class="st2">Password</strong>${data.password}
                         </p>
-                        <a href="http://localhost:3000/login"></a>
                       </td>
                     </tr>
                     <tr>
@@ -186,7 +185,7 @@ export async function sendPassword(data) {
               </tr>
               <tr>
                 <td style="text-align: center">
-                  <p class="p3">© <strong>${todayDate} Support Our Heroes</strong></p>
+                  <p class="p3">© <strong>${await todayDate()} Support Our Heroes</strong></p>
                 </td>
               </tr>
               <tr>

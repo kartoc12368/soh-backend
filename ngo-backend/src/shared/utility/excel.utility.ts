@@ -12,53 +12,52 @@ export async function downloadDonationsExcel(donations: Donation[]) {
   sheet.columns = [
     { header: 'Donation Id', key: 'donation_id_frontend' },
     { header: 'Donation Date', key: 'donation_date' },
+    { header: 'Donation Time', key: 'donation_time' },
     { header: 'Donor Name', key: 'donor_name' },
-    { header: 'Donation Amount', key: 'amount' },
+    { header: 'Amount', key: 'amount' },
     { header: 'Payment Type', key: 'payment_type' },
-    { header: 'Payment Status', key: 'payment_status' },
     { header: 'PAN', key: 'pan' },
     { header: 'Donor Email', key: 'donor_email' },
     { header: 'Donor Phone', key: 'donor_phone' },
     { header: 'Donor Address', key: 'donor_address' },
-    { header: 'Donor City', key: 'donor_city' },
-    { header: 'Donor State', key: 'donor_state' },
-    { header: 'Donor Country', key: 'donor_country' },
     { header: 'Payment Reference', key: 'payment_id' },
   ];
 
   donations.forEach((value, idx) => {
+    const date = new Date(value?.created_at);
+
     sheet.addRow({
       donation_id_frontend: value?.donation_id_frontend,
       donation_date: value?.donation_date,
-      donor_name: value?.donor_name,
+      donation_time: date.toTimeString().split(' ')[0],
+      donor_name: value?.donor_first_name + ' ' + (value?.donor_last_name ?? ''),
       amount: value?.amount,
       payment_type: value?.payment_type,
-      payment_status: value?.payment_status,
       pan: value?.pan,
       donor_email: value?.donor_email,
       donor_phone: value?.donor_phone,
       donor_address: value?.donor_address,
-      donor_city: value?.donor_city,
-      donor_state: value?.donor_state,
-      donor_country: value?.donor_country,
-      payment_id: value?.payment_id,
+      payment_id: value?.reference_payment,
     });
   });
 
-  const downloadsFolder = path.join(__dirname, '../../../', 'downloads');
+  //   const downloadsFolder = path.join(__dirname, '../../../', 'downloads');
 
-  if (!fs.existsSync(downloadsFolder)) {
-    try {
-      fs.mkdirSync(downloadsFolder);
-    } catch (error) {
-      console.error('Error creating downloads folder:', error);
-    }
-  }
+  //   if (!fs.existsSync(downloadsFolder)) {
+  //     try {
+  //       fs.mkdirSync(downloadsFolder);
+  //     } catch (error) {
+  //       console.error('Error creating downloads folder:', error);
+  //     }
+  //   }
 
   const filename = `${uuidv4()}.xlsx`;
 
-  const filePath = path.join(downloadsFolder, filename);
+  //   const filePath = path.join(downloadsFolder, filename);
 
-  await workbook.xlsx.writeFile(filePath);
-  return filename;
+  //   await workbook.xlsx.writeFile(filePath);
+  const buffer = await workbook.xlsx.writeBuffer();
+  await workbook.xlsx.load(buffer);
+
+  return { filename: filename, content: buffer };
 }

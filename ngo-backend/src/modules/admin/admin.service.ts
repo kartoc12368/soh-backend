@@ -1,8 +1,6 @@
-import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { MailerService } from '@nestjs-modules/mailer';
+import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { Between, FindOptionsWhere } from 'typeorm';
-import * as path from 'path';
-import { of } from 'rxjs';
 
 import { Donation } from 'src/shared/entity/donation.entity';
 import { Fundraiser } from 'src/shared/entity/fundraiser.entity';
@@ -13,14 +11,15 @@ import { FundRaiserRepository } from '../fundraiser/fundraiser.repository';
 
 import { incrementDate } from 'src/shared/utility/date.utility';
 import { ErrorResponseUtility } from 'src/shared/utility/error-response.utility';
-import { downloadDonationsExcel } from 'src/shared/utility/excel.utility';
 import { SendMailerUtility } from 'src/shared/utility/send-mailer.utility';
 
-import { ResponseStructure } from 'src/shared/interface/response-structure.interface';
 import { SendEmailDto } from 'src/shared/interface/mail.interface';
+import { ResponseStructure } from 'src/shared/interface/response-structure.interface';
 
 import { FindDonationsDto } from '../fundraiser/dto/find-donation.dto';
+import { CreateFundraiserPageAdminDto } from './dto/create-fundraiserpage-admin.dto';
 import { GeneratePasswordDto } from './dto/generate-password.dto';
+import { AddOfflineDonationDto } from './dto/offline-donation.dto';
 
 @Injectable()
 export class AdminService {
@@ -28,15 +27,14 @@ export class AdminService {
     private readonly fundraiserRepository: FundRaiserRepository,
     private readonly donationRepository: DonationRepository,
     private readonly fundraiserPageRepository: FundraiserPageRepository,
-
     private readonly mailerService: MailerService,
   ) {}
 
   async getAdminDashboardData(): Promise<ResponseStructure> {
     try {
-      const totalFundraisers = await this.fundraiserRepository.countFundraisers();
+      const totalFundraisers = await this.fundraiserRepository.countFundraisers({ where: { role: 'FUNDRAISER' } });
 
-      const activeFundraisers = await this.fundraiserRepository.countFundraisers({ where: { status: 'active' } });
+      const activeFundraisers = await this.fundraiserRepository.countFundraisers({ where: { status: 'active', role: 'FUNDRAISER' } });
 
       const todayDonations = await this.donationRepository.getTodayDonations();
 
@@ -44,7 +42,7 @@ export class AdminService {
 
       const totalDonations = await this.donationRepository.getTotalDonations();
 
-      return { message: 'Dashboard Data received successfully', data: { totalDonations, totalFundraisers, activeFundraisers, todayDonations, thisMonthDonations }, success: true };
+      return { message: 'Dashboard Data Received Successfully', data: { totalDonations, totalFundraisers, activeFundraisers, todayDonations, thisMonthDonations }, success: true };
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }
@@ -68,7 +66,7 @@ export class AdminService {
           : {}), // Only add filter if either from_date or to_date is provided
       };
 
-      const donationsData = await this.donationRepository.getAllDonations({ relations: { fundraiser: true }, where: conditions, order: { donation_id_frontend: 'ASC' } });
+      const donationsData = await this.donationRepository.getAllDonations({ relations: { fundraiser: true }, where: conditions, order: { donation_id_frontend: 'DESC' } });
 
       return { message: 'Donations Received Successfully', data: donationsData, success: true };
     } catch (error) {
@@ -91,7 +89,7 @@ export class AdminService {
       const fundraiser = await this.fundraiserRepository.getFundraiser({ where: { fundraiser_id: id } });
 
       if (!fundraiser) {
-        throw new NotFoundException('Fundraiser not found');
+        throw new NotFoundException('Fundraiser Not Found');
       }
       // Toggle the status based on its current value
       fundraiser.status = fundraiser?.status === 'active' ? 'inactive' : 'active';
@@ -100,9 +98,9 @@ export class AdminService {
       await this.fundraiserRepository.UpdateFundraiser(id, { status: fundraiser?.status });
 
       if (fundraiser?.status === 'active') {
-        return { message: 'Status changed to active ', success: true };
+        return { message: 'Status Changed To Active ', success: true, data: { status: 1 } };
       } else {
-        return { message: 'Status changed to inactive', success: true };
+        return { message: 'Status Changed To Inactive', success: true, data: { status: 0 } };
       }
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
@@ -114,7 +112,7 @@ export class AdminService {
       const fundraiser = await this.fundraiserRepository.getFundraiser({ where: { fundraiser_id: id } });
 
       if (!fundraiser) {
-        throw new NotFoundException('Fundraiser not found');
+        throw new NotFoundException('Fundraiser Not Found');
       }
 
       if (fundraiser?.role == 'ADMIN') {
@@ -123,7 +121,7 @@ export class AdminService {
 
       await this.fundraiserRepository.deleteFundraiser(id);
 
-      return { message: 'Fundraiser deleted successfully', success: true };
+      return { message: 'Fundraiser Deleted Successfully', success: true };
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }
@@ -131,22 +129,22 @@ export class AdminService {
 
   async getAllFundraiser(): Promise<ResponseStructure> {
     try {
-      const fundraisers = await this.fundraiserRepository.getAllFundraisers({ relations: ['fundraiser_page'], order: { f_id: 'ASC' } });
+      const fundraisers = await this.fundraiserRepository.getAllFundraisers({ relations: ['fundraiser_page'], order: { f_id: 'DESC' } });
 
       const filteredUsers = fundraisers?.filter((fundraiser) => fundraiser?.role !== 'ADMIN');
 
-      return { message: 'Fundraisers data fetched successfully', data: filteredUsers, success: true };
+      return { message: 'Fundraisers Data Fetched Successfully', data: filteredUsers, success: true };
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }
   }
 
-  async generatePasswordByEmail(body): Promise<ResponseStructure> {
+  async generatePasswordByEmail(body: GeneratePasswordDto): Promise<ResponseStructure> {
     try {
       const isFundraiserExists = await this.fundraiserRepository.getFundraiser({ where: { email: body?.email } });
 
       if (isFundraiserExists && isFundraiserExists?.role == 'FUNDRAISER') {
-        throw new ConflictException('Email already in use');
+        throw new ConflictException('Fundraiser Already Exists');
       } else {
         //generating random password in randomPassword variable
         const randomPassword = Math?.random()?.toString(36)?.slice(-8);
@@ -166,13 +164,13 @@ export class AdminService {
     }
   }
 
-  async addOfflineDonation(body): Promise<ResponseStructure> {
+  async addOfflineDonation(body: AddOfflineDonationDto): Promise<ResponseStructure> {
     try {
       //same code from donate service here admin passes data in body
-      if (!body.email) {
+      if (!body?.email) {
         await this.donationRepository.createDonationOffline(body);
 
-        return { message: 'Donation added successfully' };
+        return { message: 'Donation Added Successfully' };
       }
 
       let fundraiser: Fundraiser = await this.fundraiserRepository.getFundraiser({
@@ -181,11 +179,11 @@ export class AdminService {
       });
 
       if (!fundraiser) {
-        throw new NotFoundException('Fundraiser not found');
+        throw new NotFoundException('Fundraiser Not Found');
       }
 
       if (fundraiser?.status == 'inactive') {
-        throw new ForbiddenException('Fundraiser is inactive');
+        throw new ForbiddenException('Fundraiser Is Inactive');
       }
 
       await this.donationRepository.createDonationOffline(body, fundraiser);
@@ -195,38 +193,21 @@ export class AdminService {
       });
 
       if (!fundraiserPage) {
-        throw new NotFoundException('Fundraiser page not found');
+        throw new NotFoundException('Fundraiser Page Not Found');
       }
 
-      //getting existing fundraiserPage supporters and pushing new supporters
-      const supportersOfFundraiser = await this.donationRepository.getDonorNames(fundraiser);
-
-      const total_amount_raised = await this.donationRepository.getRaisedAmount(fundraiser);
-
-      const total_donations = await this.donationRepository.getTotalDonor(fundraiser);
-
-      await this.fundraiserRepository.UpdateFundraiser(fundraiser?.fundraiser_id, {
-        total_amount_raised: total_amount_raised,
-        total_donations: total_donations,
-      });
-
-      await this.fundraiserPageRepository.UpdateFundraiserPage(fundraiserPage?.id, {
-        raised_amount: total_amount_raised,
-        supporters: supportersOfFundraiser,
-      });
-
-      return { message: 'Donation added successfully' };
+      return { message: 'Donation Added Successfully' };
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }
   }
 
-  async createFundraiserPageByEmail(body): Promise<ResponseStructure> {
+  async createFundraiserPageByEmail(body: CreateFundraiserPageAdminDto): Promise<ResponseStructure> {
     try {
       let fundRaiser = await this.fundraiserRepository.findFundRaiserByEmail(body?.email);
 
       if (!fundRaiser) {
-        throw new NotFoundException('Fundraiser not found');
+        throw new NotFoundException('Fundraiser Not Found');
       }
 
       let fundRaiserPage = await this.fundraiserPageRepository.getFundraiserPage({
@@ -236,73 +217,46 @@ export class AdminService {
       if (fundRaiserPage == null) {
         const fundraiserPage = await this.fundraiserPageRepository.createFundraiserPage(fundRaiser);
 
-        return { message: 'Fundraiser page successfully created', data: fundraiserPage, success: true };
+        return { message: 'Fundraiser Page Successfully Created', data: fundraiserPage, success: true };
       } else {
-        throw new ConflictException('Fundraiser Page already exists');
+        throw new ConflictException('Fundraiser Page Already Exists');
       }
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }
   }
 
-  // async updateFundraiserPage(body, files, PageId): Promise<ResponseStructure> {
-  //   try {
-  //     //finding fundraiserPage using id from parmameters and updating data using body data
-  //     let fundRaiserPageNew = await this.fundraiserPageRepository.getFundraiserPage({
-  //       where: { id: PageId },
-  //     });
-
-  //     if (!fundRaiserPageNew) {
-  //       throw new NotFoundException('Fundraiser Page not found');
-  //     }
-
-  //     await this.fundraiserPageRepository.UpdateFundraiserPage(PageId, body);
-
-  //     //accessing existing galley of fundraiserPage and pushing new uploaded files
-  //     const fundraiserGallery = fundRaiserPageNew?.gallery;
-
-  //     // if (!files?.length) {
-  //     //   throw new NotFoundException("File not Uploaded");
-  //     // }
-
-  //     for (let i = 0; i < files?.length; i++) {
-  //       fundraiserGallery?.push(files[i]);
-  //     }
-
-  //     //saving new data of fundraiserPage with gallery
-  //     await this.fundraiserPageRepository.UpdateFundraiserPage(PageId, {
-  //       gallery: fundraiserGallery,
-  //     });
-  //     return { message: 'FundraiserPage updated successfully' };
-  //   } catch (error) {
-  //     await ErrorResponseUtility.errorResponse(error);
-  //   }
-  // }
-
-  async deleteFundraiserPage(id): Promise<ResponseStructure> {
+  async deleteFundraiserPage(id: string): Promise<ResponseStructure> {
     try {
       await this.fundraiserPageRepository.deleteFundraiserPage(id);
-      return { message: 'Fundraiser page deleted successfully' };
+      return { message: 'Fundraiser Page Deleted Successfully' };
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }
   }
 
-  async downloadExcelforDonations(res): Promise<any> {
+  async getDonationsAdminForDelete(dto: FindDonationsDto): Promise<ResponseStructure> {
     try {
-      const donations = await this.donationRepository.getAllDonations();
+      const { to_date, from_date } = dto;
 
-      if (!donations) {
-        throw new NotFoundException('Donations not found');
-      }
+      const donationsData = await this.donationRepository
+        .createQueryBuilder('donation')
+        .leftJoinAndSelect('donation.fundraiser', 'fundraiser')
+        .where('donation.fundraiser IS NULL')
+        .andWhere('donation.donation_date BETWEEN :from_date AND :to_date', {
+          from_date: from_date ? new Date(from_date) : new Date('1970-01-01'),
+          to_date: to_date ? incrementDate(new Date(to_date)) : new Date(),
+        })
+        .getMany();
+      return { message: 'Donations Received Successfully', data: donationsData, success: true };
+    } catch (error) {
+      await ErrorResponseUtility.errorResponse(error);
+    }
+  }
 
-      const filename = await downloadDonationsExcel(donations);
-
-      if (!filename) {
-        throw new NotFoundException('Filename not found');
-      }
-
-      return of(res.sendFile(path.join(process.cwd(), 'downloads/' + filename)));
+  async deleteDonations(ids) {
+    try {
+      return await this.donationRepository.delete(ids['ids']);
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }

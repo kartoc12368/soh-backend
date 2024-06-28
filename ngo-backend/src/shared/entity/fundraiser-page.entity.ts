@@ -10,38 +10,29 @@ export class FundraiserPage {
   @Column({ default: 0 })
   target_amount: number;
 
-  @Column({ default: 0 })
-  raised_amount: number;
-
-  @Column({ nullable: true })
+  @Column({ nullable: true, length: 350 })
   resolution: string;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, length: 500 })
   money_raised_for: string;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, length: 500 })
   story: string;
-
-  @Column('text', { array: true, nullable: true })
-  supporters: string[];
-
-  @Column('text', { array: true, nullable: true })
-  gallery: string[];
 
   @CreateDateColumn({
     type: 'timestamp',
     default: () => 'CURRENT_TIMESTAMP(6)',
   })
-  public created_at: Date;
+  created_at: Date;
 
   @UpdateDateColumn({
     type: 'timestamp',
     default: () => 'CURRENT_TIMESTAMP(6)',
     onUpdate: 'CURRENT_TIMESTAMP(6)',
   })
-  public updated_at: Date;
+  updated_at: Date;
 
   @OneToOne(() => Fundraiser, (fundraiser) => fundraiser.fundraiser_page, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'fundraiser_uuid', referencedColumnName: 'fundraiser_id' })
+  @JoinColumn({ name: 'fundraiser_id', referencedColumnName: 'fundraiser_id' })
   fundraiser: Fundraiser;
 }

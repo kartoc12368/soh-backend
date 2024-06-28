@@ -18,12 +18,12 @@ export class DonationRepository extends Repository<Donation> {
       const donations = await this.dataSource
         .getRepository(Donation)
         .createQueryBuilder('donation')
-        .where('DATE(donation.created_at)=:date', { date: new Date() })
+        .where('DATE(donation.donation_date)=:date', { date: new Date() })
         .andWhere('donation.payment_status=:payment_status', { payment_status: 'success' })
         .getMany();
 
       if (!donations?.length && donations?.length != 0) {
-        throw new NotFoundException('Donations not found');
+        throw new NotFoundException('Donations Not Found');
       }
 
       for (let index = 0; index < donations?.length; index++) {
@@ -49,7 +49,7 @@ export class DonationRepository extends Repository<Donation> {
       const donations = await this.dataSource
         .getRepository(Donation)
         .createQueryBuilder('donation')
-        .where("date_part('month',donation.created_at)=:date", {
+        .where("date_part('month',donation.donation_date)=:date", {
           date: new Date().getMonth() + 1,
         })
         .andWhere('donation.payment_status=:payment_status', { payment_status: 'success' })
@@ -118,10 +118,23 @@ export class DonationRepository extends Repository<Donation> {
   async getDonorNames(user) {
     let supporters = [];
 
-    let donations = await this.find({ select: { donor_name: true }, where: { fundraiser: { fundraiser_id: user.fundraiser_id }, payment_status: 'success' } });
+    let donations = await this.dataSource
+      .getRepository(Donation)
+      .createQueryBuilder('donation')
+      .select(['donation.donor_first_name', 'donation.donor_last_name', 'donation.donor_phone'])
+      .innerJoin('donation.fundraiser', 'fundraiser')
+      .where('fundraiser.fundraiser_id = :fundraiserId', { fundraiserId: user.fundraiser_id })
+      .groupBy('donation.donor_phone')
+      .addGroupBy('donation.donor_first_name')
+      .addGroupBy('donation.donor_last_name')
+      // .having('COUNT(*) = 1')
+      .getRawMany();
 
     for (let index = 0; index < donations.length; index++) {
-      supporters.push(donations[index].donor_name);
+      if (!donations[index]?.donation_donor_last_name) {
+        donations[index].donation_donor_last_name = '';
+      }
+      supporters.push(donations[index]?.donation_donor_first_name + ' ' + donations[index]?.donation_donor_last_name);
     }
 
     return supporters;
@@ -157,7 +170,6 @@ export class DonationRepository extends Repository<Donation> {
 
   async getAllDonations(obj?: object) {
     try {
-      // return await this.find({ relations: ['fundraiser'] });
       return await this.find(obj);
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);

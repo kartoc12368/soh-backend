@@ -3,13 +3,10 @@ import { CanActivate, ExecutionContext, ForbiddenException, Injectable, NotFound
 import { FundraiserPageRepository } from 'src/modules/fundraiser-page/fundraiser-page.repository';
 import { FundRaiserRepository } from 'src/modules/fundraiser/fundraiser.repository';
 
-import { FundraiserPage } from '../entity/fundraiser-page.entity';
-
-import { DataSource } from 'typeorm';
-
 import { Request } from 'express';
 
 import { Observable } from 'rxjs';
+import { FundraiserCampaignImagesRepository } from 'src/modules/fundraiser-page/fundraiser-campaign-images.repository';
 import { ErrorResponseUtility } from '../utility/error-response.utility';
 
 @Injectable()
@@ -17,7 +14,7 @@ export class OwnershipGuard implements CanActivate {
   constructor(
     private readonly fundraiserPageRepository: FundraiserPageRepository,
     private readonly fundraiserRepository: FundRaiserRepository,
-    private readonly dataSource: DataSource,
+    private fundraiserCampaignImagesRepository: FundraiserCampaignImagesRepository,
   ) {}
 
   canActivate(context: ExecutionContext): boolean | Promise<boolean> | Observable<boolean> {
@@ -61,19 +58,19 @@ export class OwnershipGuard implements CanActivate {
 
   async checkOwnershipforImage(dataId: string, email: string): Promise<boolean> {
     try {
-      const fundraiserPage = await this.fundraiserPageRepository.getFundraiserByImage(dataId);
+      const fundraiserImage = await this.fundraiserCampaignImagesRepository.getFundraiserByImage(dataId);
 
-      const fundraiser = await this.fundraiserRepository.getFundraiser({ where: { email: email } });
+      const fundraiser = await this.fundraiserRepository.getFundraiser({ where: { email: email }, relations: ['fundraiser_page'] });
 
       if (fundraiser?.role == 'ADMIN') {
         return true;
       }
 
-      if (fundraiserPage == null) {
+      if (fundraiserImage == null) {
         throw new ForbiddenException('Image Not exist for current fundraiser Page');
       }
 
-      return fundraiserPage?.fundraiser?.fundraiser_id === fundraiser?.fundraiser_id;
+      return fundraiserImage?.fundraiser_page?.id === fundraiser?.fundraiser_page?.id;
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }

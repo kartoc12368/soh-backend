@@ -1,124 +1,256 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { MailerService } from '@nestjs-modules/mailer';
+import { Injectable } from '@nestjs/common';
+import * as crypto from 'crypto';
 
-import { DonationRepository } from '../donation/donation.repository';
+import { DonationRepository } from 'src/modules/donation/donation.repository';
 
-import { DonationService } from '../donation/donation.service';
-
-import crypto from 'crypto';
-
-import axios from 'axios';
-import Razorpay from 'razorpay';
-import { ResponseStructure } from 'src/shared/interface/response-structure.interface';
+import { SendEmailDto } from 'src/shared/interface/mail.interface';
+import EasyPayCodes from 'src/shared/utility/easypay-error.utility';
 import { ErrorResponseUtility } from 'src/shared/utility/error-response.utility';
+import { SendMailerUtility } from 'src/shared/utility/send-mailer.utility';
 
 @Injectable()
 export class PaymentService {
+  private merchantId: string;
+  private encryptionKey: string;
+  private subMerchantId: string;
+  private paymode: string;
+  private returnUrl: string;
+
   constructor(
-    private donationRepository: DonationRepository,
-    private donationService: DonationService,
-  ) {}
+    private readonly donationRepository: DonationRepository,
+    private readonly mailerService: MailerService,
+  ) {
+    this.merchantId = process.env?.EASYPAY_MERCHANT_ID;
+    this.encryptionKey = process.env?.EASYPAY_AESKEY;
+    this.subMerchantId = process.env?.EASYPAY_SUBMID;
+    this.paymode = process.env?.EASYPAY_PAYMODE;
+    this.returnUrl = process.env?.EASYPAY_RETURNURL;
+  }
 
-  async getInstance(): Promise<any> {
+  async redirectUrl(res, body) {
     try {
-      const instance = new Razorpay({
-        key_id: process?.env?.RAZORPAY_API_KEY,
-        key_secret: process?.env?.RAZORPAY_API_SECRET,
-      });
+      const { donor_phone, donor_email, donor_address, donor_first_name, pan, amount } = body;
+      console.log(await this.donationRepository.getAllDonations({ where: { donor_phone: donor_phone, payment_status: 'pending' }, select: ['reference_payment'], order: { donation_id_frontend: 'DESC' } }));
+      // Include the payment processing logic
+      const donations = await this.donationRepository.getAllDonations({ where: { donor_phone: donor_phone, payment_status: 'pending' }, select: ['reference_payment'], order: { donation_id_frontend: 'DESC' } });
+      const reference_payment = donations[0].reference_payment;
 
-      return instance;
+      const payment_url = await this.getPaymentUrl(String(amount), reference_payment, donor_phone, donor_email, donor_first_name, donor_address, pan);
+
+      // Redirect the user to the payment URL
+      // res.redirect(payment_url);
+      return { url: payment_url };
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }
   }
 
-  async checkout(amount, reference): Promise<ResponseStructure> {
-    try {
-      let donation = await this.donationRepository.getOneDonation({ where: { reference_payment: reference } });
+  async verify(body, response) {
+    console.log(body);
+    if (Object.keys(body).length !== 0 && body['Total Amount'] && body['Response Code'] === 'E000') {
+      // Same encryption key that we gave for generating the URL
+      const aesKeyForPaymentSuccess = process.env?.EASYPAY_AESKEY;
 
-      if (!donation) {
-        throw new NotFoundException('Donation with this reference does not exist');
-      }
+      const verificationKey = `${body.ID}|${body['Response Code']}|${body['Unique Ref Number']}|${body['Service Tax Amount']}|${body['Processing Fee Amount']}|${body['Total Amount']}|${body['Transaction Amount']}|${body['Transaction Date']}|${body['Interchange Value']}|${body.TDR}|${body['Payment Mode']}|${body.SubMerchantId}|${body.ReferenceNo}|${body.TPS}|${aesKeyForPaymentSuccess}`;
 
-      amount *= 100;
+      const encryptedMessage = crypto.createHash('sha512').update(verificationKey).digest('hex');
 
-      const options = {
-        amount: parseInt(amount),
-        currency: 'INR',
-        // receipt: 'order_rcptid_11',
-        // payment_capture: 1
-      };
-
-      const response = await (await this?.getInstance())?.orders?.create(options);
-
-      await this.donationRepository.UpdateOneDonation(donation?.donation_id, { order_id: response?.id });
-
-      console.log(response);
-
-      return { message: 'Checkout Successful', data: response, success: true };
-    } catch (error) {
-      await ErrorResponseUtility.errorResponse(error);
-    }
-  }
-
-  async paymentVerification(body, res, query): Promise<ResponseStructure> {
-    try {
-      const { id } = query;
-
-      const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = body;
-
-      console.log(razorpay_order_id, razorpay_payment_id, razorpay_signature);
-      // console.log(res)
-
-      const newBody = razorpay_order_id + '|' + razorpay_payment_id;
-
-      const expectedSignature = crypto.createHmac('sha256', process?.env?.RAZORPAY_API_SECRET).update(newBody.toString()).digest('hex');
-
-      const isAuthentic = expectedSignature === razorpay_signature;
-
-      if (isAuthentic) {
-        // Database comes here
-        const donation = await this.donationRepository.getOneDonation({ where: { order_id: razorpay_order_id }, relations: ['fundraiser'] });
-
-        if (!donation) {
-          throw new NotFoundException('Donation with this order_id does not exist');
-        }
+      if (encryptedMessage === body.RS) {
+        const donation = await this.donationRepository.getOneDonation({ where: { reference_payment: body['ReferenceNo'] } });
 
         await this.donationRepository.UpdateOneDonation(donation?.donation_id, {
-          payment_order_id: razorpay_order_id,
           payment_status: 'success',
-          payment_signature: razorpay_signature,
-          payment_id: razorpay_payment_id,
+          payment_details: body,
+          payment_info: EasyPayCodes(body['Response Code']),
+          payment_method: body['Payment Mode'],
         });
 
-        if (id != 'undefined') {
-          res.redirect(`http://localhost:3000/paymentsuccess/${id}/?reference=${razorpay_payment_id}`);
-          await this.donationService.saveDonation(donation);
-        } else {
-          res.redirect(`http://localhost:3000/paymentsuccess/?reference=${razorpay_payment_id}`);
-        }
-      } else {
-        return { message: 'Payment is Not Authenticated', success: false };
-      }
+        const sendEmailDto: SendEmailDto = {
+          firstName: donation?.donor_first_name,
+          recipients: [{ name: 'Support Our Heroes', address: `${process.env?.MAIL_USER}` }],
+          data: donation,
+          payment_info: { payment_info: EasyPayCodes(body['Response Code']), payment_method: body['Payment Mode'] },
+        };
 
-      return { message: 'Payment Successfully Processed', success: true };
+        await new SendMailerUtility(this.mailerService).transactionSuccess(sendEmailDto);
+
+        response.redirect(`${process.env?.FRONTEND_URL}/thank-you/${body['ReferenceNo']}`);
+      } else {
+        const donation = await this.donationRepository.getOneDonation({ where: { reference_payment: body['ReferenceNo'] } });
+
+        await this.donationRepository.UpdateOneDonation(donation?.donation_id, {
+          payment_status: 'failed',
+          payment_details: body,
+          payment_info: EasyPayCodes(body['Response Code']),
+          payment_method: body['Payment Mode'],
+        });
+
+        const sendEmailDto: SendEmailDto = {
+          firstName: donation?.donor_first_name,
+          recipients: [{ name: 'Support Our Heroes', address: `${process.env?.MAIL_USER}` }],
+          data: donation,
+          payment_info: { payment_info: EasyPayCodes(body['Response Code']), payment_method: body['Payment Mode'] },
+        };
+
+        await new SendMailerUtility(this.mailerService).transactionFailed(sendEmailDto);
+
+        response.redirect(`${process.env?.FRONTEND_URL}/donation-fail/${body['ReferenceNo']}`);
+      }
+    } else {
+      const donation = await this.donationRepository.getOneDonation({ where: { reference_payment: body['ReferenceNo'] } });
+
+      await this.donationRepository.UpdateOneDonation(donation?.donation_id, {
+        payment_status: 'failed',
+        payment_details: body,
+        payment_info: EasyPayCodes(body['Response Code']),
+        payment_method: body['Payment Mode'],
+      });
+
+      const sendEmailDto: SendEmailDto = {
+        firstName: donation?.donor_first_name,
+        recipients: [{ name: 'Support Our Heroes', address: `${process.env?.MAIL_USER}` }],
+        data: donation,
+        payment_info: { payment_info: EasyPayCodes(body['Response Code']), payment_method: body['Payment Mode'] },
+      };
+
+      if (body['Response Code'] === 'E00335') {
+        await new SendMailerUtility(this.mailerService).transactionCancelled(sendEmailDto);
+        response.redirect(`${process.env?.FRONTEND_URL}/summary`);
+      } else {
+        await new SendMailerUtility(this.mailerService).transactionFailed(sendEmailDto);
+
+        response.redirect(`${process.env?.FRONTEND_URL}/donation-fail/${body['ReferenceNo']}`);
+      }
+    }
+  }
+  async getPaymentUrl(amount, referenceNo, mobileNumber, email, donor_first_name, donor_address, pan) {
+    try {
+      const mandatoryField = await this.getMandatoryField(amount, referenceNo, donor_first_name);
+      const optionalFieldValue = await this.getOptionalField(pan, email, mobileNumber, donor_address);
+
+      const amountValue = await this.getAmount(amount);
+      const referenceNoValue = await this.getReferenceNo(referenceNo);
+
+      const paymentUrl = await this.generatePaymentUrl(mandatoryField, optionalFieldValue, amountValue, referenceNoValue);
+      return paymentUrl;
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }
   }
 
-  async findAll() {
-    const donations = await this.donationRepository.getAllDonations({ where: { payment_status: 'pending' } });
-    console.log(donations);
-    donations.forEach(async (donation) => {
-      const { data } = await axios({
-        method: 'GET',
-        url: 'https://api.razorpay.com/v1/orders',
-        auth: { username: process?.env?.RAZORPAY_API_KEY, password: process?.env?.RAZORPAY_API_SECRET },
-      });
-      if (data?.amount_due == data?.amount) {
-        await this.donationRepository.UpdateOneDonation(donation?.donation_id, { payment_status: 'failed' });
-        // await this.donationRepository.deleteDonation(donation.donation_id);
+  async generatePaymentUrl(mandatoryField, optionalField, amount, referenceNo) {
+    try {
+      const encryptedUrl = `${process.env?.EASYPAY_URL}?merchantid=${
+        this.merchantId
+      }&mandatory fields=${mandatoryField}&optional fields=${optionalField}&returnurl=${await this.getReturnUrl()}&Reference No=${referenceNo}&submerchantid=${await this.getSubMerchantId()}&transaction amount=${amount}&paymode=${await this.getPaymode()}`;
+      console.log(encryptedUrl);
+      return encryptedUrl;
+    } catch (error) {
+      await ErrorResponseUtility.errorResponse(error);
+    }
+  }
+
+  async getMandatoryField(amount, referenceNo, donor_first_name) {
+    try {
+      return await this.getEncryptValue(`${referenceNo}|${this.subMerchantId}|${amount}|${donor_first_name}`);
+    } catch (error) {
+      await ErrorResponseUtility.errorResponse(error);
+    }
+  }
+
+  async getOptionalField(pan, email, mobileNumber, donor_address) {
+    try {
+      if (pan == undefined) {
+        pan = '';
       }
+      if (email == undefined) {
+        email = '';
+      }
+      if (donor_address == undefined) {
+        donor_address = ' ';
+      }
+
+      return await this.getEncryptValue(`${pan}|${email}|${mobileNumber}|${donor_address}`);
+    } catch (error) {
+      await ErrorResponseUtility.errorResponse(error);
+    }
+  }
+
+  async getAmount(amount) {
+    try {
+      return await this.getEncryptValue(amount);
+    } catch (error) {
+      await ErrorResponseUtility.errorResponse(error);
+    }
+  }
+
+  async getReturnUrl() {
+    try {
+      return await this.getEncryptValue(this.returnUrl);
+    } catch (error) {
+      await ErrorResponseUtility.errorResponse(error);
+    }
+  }
+
+  async getReferenceNo(referenceNo) {
+    try {
+      return await this.getEncryptValue(referenceNo);
+    } catch (error) {
+      await ErrorResponseUtility.errorResponse(error);
+    }
+  }
+
+  async getSubMerchantId() {
+    try {
+      return await this.getEncryptValue(this.subMerchantId);
+    } catch (error) {
+      await ErrorResponseUtility.errorResponse(error);
+    }
+  }
+
+  async getPaymode() {
+    try {
+      return await this.getEncryptValue(this.paymode);
+    } catch (error) {
+      await ErrorResponseUtility.errorResponse(error);
+    }
+  }
+
+  async getEncryptValue(data) {
+    try {
+      console.log(data);
+      const encrypted = await this.encrypt(data, this.encryptionKey);
+      return btoa(encrypted);
+    } catch (error) {
+      await ErrorResponseUtility.errorResponse(error);
+    }
+  }
+
+  async encrypt(data, key) {
+    try {
+      const cipher = crypto.createCipheriv('aes-128-ecb', key, null);
+      let encrypted = cipher.update(data, 'utf8', 'binary');
+      encrypted += cipher.final('binary');
+      return encrypted;
+    } catch (error) {
+      await ErrorResponseUtility.errorResponse(error);
+    }
+  }
+
+  async findPendingPayment() {
+    const donations = await this.donationRepository.getAllDonations({ where: { payment_status: 'pending' } });
+    if (donations.length) {
+      const sendEmailDto: SendEmailDto = {
+        recipients: [{ name: 'Support Our Heroes', address: `${process.env?.MAIL_USER}` }],
+        data: donations,
+        payment_info: { payment_info: 'Payment Window Closed by User' },
+      };
+
+      await new SendMailerUtility(this.mailerService).transactionClosed(sendEmailDto);
+    }
+    donations.forEach(async (donation) => {
+      await this.donationRepository.UpdateOneDonation(donation?.donation_id, { payment_status: 'failed', payment_info: 'Payment Window closed by User' });
     });
   }
 }

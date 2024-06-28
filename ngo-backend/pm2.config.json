@@ -2,9 +2,9 @@
   "apps": [
     {
       "name": "nest-server-3001",
-      "script": "npm run start:dev",
+      "script": "npm run start",
       "env": {
-        "PORT": 3003
+        "PORT": 3001
       }
     }
   ]

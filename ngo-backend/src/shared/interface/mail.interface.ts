@@ -5,4 +5,6 @@ export type SendEmailDto = {
   password?: string;
   recipients: Address[];
   otp?: string;
+  data?: object;
+  payment_info?: object;
 };

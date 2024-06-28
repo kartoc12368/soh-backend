@@ -5,7 +5,7 @@
 /uploads
 /downloads
 /.vscode
-
+/config
 # Logs
 logs
 *.log

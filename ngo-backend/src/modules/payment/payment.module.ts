@@ -1,14 +1,12 @@
-import { forwardRef, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
+import { MailerModule } from '@nestjs-modules/mailer';
 
-import { PaymentService } from './payment.service';
+import { DonationModule } from 'src/modules/donation/donation.module';
 import { PaymentController } from './payment.controller';
-
-import { DonationModule } from '../donation/donation.module';
-
-import { HttpModule } from '@nestjs/axios';
+import { PaymentService } from './payment.service';
 
 @Module({
-  imports: [forwardRef(() => DonationModule), HttpModule],
+  imports: [DonationModule, MailerModule],
   controllers: [PaymentController],
   providers: [PaymentService],
   exports: [PaymentService],

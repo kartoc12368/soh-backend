@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Headers, Post, Req, UseGuards, ValidationPipe } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { LoginDto } from './dto/login.dto';
@@ -10,7 +10,6 @@ import { Public } from 'src/shared/decorators/public.decorator';
 import { ResponseStructure } from 'src/shared/interface/response-structure.interface';
 
 import { AuthService } from './auth.service';
-import { Cron, CronExpression } from '@nestjs/schedule';
 
 @ApiTags('Login')
 @Controller('auth')
@@ -19,36 +18,51 @@ export class AuthController {
 
   @Post('/login')
   @UseGuards(AuthGuard('local'))
-  @ApiOperation({ summary: 'Login using email and password' })
+  @ApiOperation({ summary: 'Login using email and password (roles: admin,fundraiser)' })
+  @ApiResponse({ status: 201, description: 'Api success' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'Not found!' })
+  @ApiResponse({ status: 400, description: 'Bad Request' })
+  @ApiResponse({ status: 500, description: 'Internal server error!' })
   @Public()
-  async login(@Req() req, @Body(ValidationPipe) loginDto: LoginDto): Promise<ResponseStructure> {
-    return await this.authService.login(req?.user, loginDto);
+  login(@Req() req, @Body(ValidationPipe) loginDto: LoginDto): Promise<ResponseStructure> {
+    return this.authService.login(req?.user, loginDto);
   }
 
   @Get('/refreshToken')
-  @ApiOperation({ summary: 'Get access token using refresh token' })
+  @ApiOperation({ summary: 'Get access token using refresh token (roles: admin,fundraiser)' })
+  @ApiResponse({ status: 201, description: 'Api success' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'Not found!' })
+  @ApiResponse({ status: 400, description: 'Bad Request' })
+  @ApiResponse({ status: 500, description: 'Internal server error!' })
   @Public()
-  async refreshTokens(@Headers('refreshToken') refreshToken: string): Promise<ResponseStructure> {
-    return await this.authService.refreshToken(refreshToken);
+  refreshTokens(@Headers('refreshToken') refreshToken: string): Promise<ResponseStructure> {
+    return this.authService.refreshToken(refreshToken);
   }
 
   @Post('forgot-password')
-  @ApiOperation({ summary: 'Forgot Password to get OTP on mail' })
+  @ApiOperation({ summary: 'Forgot Password to get OTP on mail (roles: fundraiser)' })
+  @ApiResponse({ status: 201, description: 'Api success' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'Not found!' })
+  @ApiResponse({ status: 400, description: 'Bad Request' })
+  @ApiResponse({ status: 500, description: 'Internal server error!' })
   @Public()
-  public async sendEmailForgotPassword(@Body(ValidationPipe) body: ForgotPasswordDto): Promise<ResponseStructure> {
-    return await this.authService.sendEmailForgotPassword(body?.email);
+  public sendEmailForgotPassword(@Body(ValidationPipe) body: ForgotPasswordDto): Promise<ResponseStructure> {
+    return this.authService.sendEmailForgotPassword(body?.email);
   }
 
   //verify otp and update password
   @Post('reset-password')
-  @ApiOperation({ summary: 'Reset Password using mail OTP' })
+  @ApiOperation({ summary: 'Reset Password using mail OTP (roles: fundraiser)' })
+  @ApiResponse({ status: 201, description: 'Api success' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'Not found!' })
+  @ApiResponse({ status: 400, description: 'Bad Request' })
+  @ApiResponse({ status: 500, description: 'Internal server error!' })
   @Public()
-  async setNewPassword(@Body(ValidationPipe) body: ResetPasswordDto): Promise<ResponseStructure> {
-    return await this.authService.setNewPassword(body);
-  }
-
-  @Cron(CronExpression.EVERY_10_MINUTES)
-  async deleteExpiredOtp() {
-    return await this.authService.deleteExpiredOtp();
+  setNewPassword(@Body(ValidationPipe) body: ResetPasswordDto): Promise<ResponseStructure> {
+    return this.authService.setNewPassword(body);
   }
 }

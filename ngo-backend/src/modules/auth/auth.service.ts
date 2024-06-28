@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotAcceptableException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { MailerService } from '@nestjs-modules/mailer';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -32,13 +32,13 @@ export class AuthService {
       const fundraiser: Fundraiser = user;
 
       if (!fundraiser) {
-        throw new NotFoundException('Fundraiser not found');
+        throw new NotFoundException('Fundraiser Not Found');
       }
 
       const fundraiserStatus = await this.fundraiserRepository.getFundRaiserStatusByEmail(fundraiser?.email);
 
       if (!fundraiserStatus) {
-        throw new NotFoundException('Fundraiser status not found');
+        throw new NotFoundException('Fundraiser Status Not Found');
       }
 
       if ((fundraiser?.role == 'FUNDRAISER' && fundraiserStatus == 'active') || fundraiser?.role == 'ADMIN') {
@@ -58,7 +58,7 @@ export class AuthService {
           throw new UnauthorizedException('Invalid Password');
         }
       } else {
-        throw new UnauthorizedException('Please Sign Up');
+        throw new UnauthorizedException('Fundraiser Status is Inactive');
       }
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
@@ -70,12 +70,16 @@ export class AuthService {
       const fundraiser = await this.fundraiserRepository.findFundRaiserByEmail(email);
 
       if (!fundraiser) {
-        throw new NotFoundException('Fundraiser not found');
+        throw new NotFoundException('Fundraiser Not Found');
+      }
+
+      if (fundraiser?.role === 'ADMIN') {
+        throw new ForbiddenException('Reset Password Failed.Please Contact Developer');
       }
 
       const otpExists = await this.forgottenPasswordRepository.getFundraiserByOtp({ where: { email: email } });
 
-      if (otpExists) {
+      if (otpExists?.expireAt > new Date().getTime()) {
         return { message: 'Email Already Sent', success: true };
       }
 
@@ -89,6 +93,12 @@ export class AuthService {
 
       await new SendMailerUtility(this.mailerService).resetPassword(sendEmailDto);
 
+      if (otpExists?.expireAt < new Date().getTime()) {
+        const expireTime = new Date().getTime() + 15 * 60000;
+        await this.forgottenPasswordRepository.updateOtp(otpExists?.id, { expireAt: expireTime, otp: OTP });
+        return { message: 'Email Sent successfully', success: true };
+      }
+
       await this.forgottenPasswordRepository.createForgottenPassword(email, OTP);
 
       return { message: 'Email Sent successfully', success: true };
@@ -99,10 +109,14 @@ export class AuthService {
 
   async setNewPassword(body): Promise<ResponseStructure> {
     try {
-      const fundraiser = await this.forgottenPasswordRepository.getFundraiserByOtp({ where: { newPasswordToken: body?.otp } });
+      const fundraiser = await this.forgottenPasswordRepository.getFundraiserByOtp({ where: { otp: body?.otp } });
 
       if (!fundraiser) {
         throw new NotFoundException('Invalid Otp');
+      }
+
+      if (fundraiser?.expireAt < new Date().getTime()) {
+        throw new NotAcceptableException('Otp Expired. Please request new OTP');
       }
 
       const user_new = await this.fundraiserRepository.findFundRaiserByEmail(fundraiser?.email);
@@ -130,7 +144,7 @@ export class AuthService {
   async refreshToken(refreshToken): Promise<ResponseStructure> {
     try {
       if (!refreshToken) {
-        throw new UnauthorizedException('Refresh token not found');
+        throw new UnauthorizedException('Refresh Token Not Found');
       }
 
       const fundraiser = this.jwtService.verify(refreshToken, {
@@ -150,7 +164,7 @@ export class AuthService {
       });
 
       if (!userExists) {
-        throw new BadRequestException('User no longer exists');
+        throw new BadRequestException('User No Longer Exists');
       }
 
       const accessToken = this.jwtService.sign(payload, {
@@ -158,51 +172,35 @@ export class AuthService {
         expiresIn: '15min',
       });
 
-      return { message: 'Access Token successfully updated', data: { token: accessToken } };
+      return { message: 'Access Token Successfully Updated', data: { token: accessToken } };
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }
   }
 
   async issueTokens(fundraiser: Fundraiser): Promise<ResponseStructure> {
-    const payload = {
-      firstName: fundraiser.firstName,
-      email: fundraiser.email,
-      role: fundraiser.role,
-      fundraiserId: fundraiser.fundraiser_id,
-      profileImage: fundraiser.profileImage,
-    };
-
-    const accessToken = this.jwtService.sign(payload, {
-      secret: this.configService.get<string>('ACCESS_TOKEN_SECRET'),
-      expiresIn: '15min',
-    });
-
-    const refreshToken = this.jwtService.sign(payload, {
-      secret: this.configService.get<string>('REFRESH_TOKEN_SECRET'),
-      expiresIn: '7d',
-    });
-
-    return { message: 'Login Successful', data: { token: accessToken, refreshToken: refreshToken } };
-  }
-
-  async deleteExpiredOtp() {
     try {
-      const otpHistory = await this.forgottenPasswordRepository.getAllOtp();
+      const payload = {
+        firstName: fundraiser.firstName,
+        email: fundraiser.email,
+        role: fundraiser.role,
+        fundraiserId: fundraiser.fundraiser_id,
+        profileImage: fundraiser.profileImage,
+      };
 
-      otpHistory.forEach(async (otp) => {
-        var dateUTC = new Date(otp.created_at).getTime();
-        var dateIST = new Date(dateUTC);
-        //date shifting for IST timezone (+5 hours and 30 minutes)
-        dateIST.setHours(dateIST.getHours() + 5);
-        dateIST.setMinutes(dateIST.getMinutes() + 45);
-        console.log(dateIST.toLocaleString());
-        if (dateIST.toLocaleString() < new Date().toLocaleString()) {
-          await this.forgottenPasswordRepository.deleteOtp(otp);
-        }
+      const accessToken = this.jwtService.sign(payload, {
+        secret: this.configService.get<string>('ACCESS_TOKEN_SECRET'),
+        expiresIn: '15min',
       });
+
+      const refreshToken = this.jwtService.sign(payload, {
+        secret: this.configService.get<string>('REFRESH_TOKEN_SECRET'),
+        expiresIn: '7d',
+      });
+
+      return { message: 'Login Successful', data: { token: accessToken, refreshToken: refreshToken } };
     } catch (error) {
-      console.log(error);
+      await ErrorResponseUtility.errorResponse(error);
     }
   }
 }

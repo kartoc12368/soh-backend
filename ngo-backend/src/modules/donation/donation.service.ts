@@ -18,69 +18,64 @@ export class DonationService {
 
   async donate(body, id?): Promise<ResponseStructure> {
     try {
-      const reference = Math.random().toString(36).slice(-8);
+      // const reference = Math.random().toString(36).slice(-8);
+      const timestamp = Date.now().toString(36);
+      const randomPart = Math.random().toString(36).slice(-8);
+      const reference = timestamp + randomPart;
 
       if (!id) {
         await this.donationRepository.createDonationOnline(body, reference);
 
-        return { message: 'Donation received successfully', data: { reference: reference } };
+        return { message: 'Donation Received Successfully', data: { reference: reference } };
       }
 
       let fundraiserPage = await this.fundRaiserPageRepository.getFundraiserPage({ where: { id: id }, relations: ['fundraiser'] });
       if (!fundraiserPage) {
-        throw new NotFoundException('Fundraiser Page not found');
+        throw new NotFoundException('Fundraiser Page Not Found');
       }
 
       //getting fundraiser to update its dashboard content
       let fundraiser: Fundraiser = await this.fundRaiserRepository.getFundraiser({ where: { fundraiser_id: fundraiserPage?.fundraiser?.fundraiser_id } });
       if (!fundraiser) {
-        throw new NotFoundException('Fundraiser not found, Page is expired');
+        throw new NotFoundException('Fundraiser Not Found, Page Is Expired');
       }
 
       //checking if status is active then only fundraiser data is available in donation database
       if (fundraiser?.status == 'inactive') {
-        throw new BadRequestException('Fundraiser Status is inactive');
+        throw new BadRequestException('Fundraiser Status Is Inactive');
       }
 
       await this.donationRepository.createDonationOnline(body, reference, fundraiser);
 
-      return { message: 'Donation received successfully', data: { reference: reference, id: id } };
+      return { message: 'Donation Received Successfully', data: { reference: reference, id: id } };
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }
   }
 
-  async saveDonation(body): Promise<ResponseStructure> {
+  async updateDonation(id, body): Promise<ResponseStructure> {
     try {
-      //getting fundraiser to update its dashboard content
-      let fundraiser: Fundraiser = await this.fundRaiserRepository.getFundraiser({ where: { fundraiser_id: body?.fundraiser?.fundraiser_id }, relations: ['fundraiser_page'] });
+      await this.donationRepository.UpdateOneDonation(id, body);
 
-      if (!fundraiser) {
-        throw new NotFoundException('Fundraiser not found');
-      }
+      return { message: 'Donation Updated Successfully' };
+    } catch (error) {
+      await ErrorResponseUtility.errorResponse(error);
+    }
+  }
+  async deleteDonation(id): Promise<ResponseStructure> {
+    try {
+      await this.donationRepository.deleteDonation(id);
 
-      let fundraiserPage = await this.fundRaiserPageRepository.getFundraiserPage({
-        where: { id: fundraiser?.fundraiser_page?.id },
-      });
+      return { message: 'Donation Deleted Successfully' };
+    } catch (error) {
+      await ErrorResponseUtility.errorResponse(error);
+    }
+  }
 
-      if (!fundraiserPage) {
-        throw new NotFoundException('Fundraiser Page not found');
-      }
-
-      //getting existing fundraiserPage supporters and pushing new supporters
-      const supportersOfFundraiser = await this.donationRepository.getDonorNames(body?.fundraiser);
-
-      const total_amount_raised = await this.donationRepository.getRaisedAmount(body?.fundraiser);
-
-      const total_donations = await this.donationRepository.getTotalDonor(body?.fundraiser);
-
-      await this.fundRaiserRepository.UpdateFundraiser(fundraiser?.fundraiser_id, {
-        total_amount_raised: total_amount_raised,
-        total_donations: total_donations,
-      });
-
-      await this.fundRaiserPageRepository.UpdateFundraiserPage(fundraiser?.fundraiser_page?.id, { raised_amount: total_amount_raised, supporters: supportersOfFundraiser });
-      return { message: 'Donation updated successfully to Page' };
+  async getDonationByReference(id): Promise<ResponseStructure> {
+    try {
+      const donation = await this.donationRepository.getOneDonation({ where: { reference_payment: id } });
+      return { message: 'Donation Status', data: donation };
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);
     }
