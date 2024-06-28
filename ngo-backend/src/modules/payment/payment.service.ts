@@ -144,7 +144,7 @@ export class PaymentService {
       const encryptedUrl = `${process.env?.EASYPAY_URL}?merchantid=${
         this.merchantId
       }&mandatory fields=${mandatoryField}&optional fields=${optionalField}&returnurl=${await this.getReturnUrl()}&Reference No=${referenceNo}&submerchantid=${await this.getSubMerchantId()}&transaction amount=${amount}&paymode=${await this.getPaymode()}`;
-      console.log(encryptedUrl, 'h');
+      console.log(encryptedUrl);
       return encryptedUrl;
     } catch (error) {
       await ErrorResponseUtility.errorResponse(error);

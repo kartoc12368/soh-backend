@@ -132,7 +132,7 @@ export class FundraiserService {
 
   async findProfileImage(res, imagename): Promise<any> {
     try {
-      if (imagename == 'undefined') {
+      if (imagename == 'undefined' || 'null') {
         throw new BadRequestException('Imagename is undefined');
       }
       return of(res.sendFile(path.join(process.cwd(), 'uploads/profileImages/' + imagename)));

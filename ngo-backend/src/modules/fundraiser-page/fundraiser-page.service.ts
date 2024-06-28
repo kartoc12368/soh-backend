@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import * as fs from 'fs';
 
 import { FundraiserPage } from 'src/shared/entity/fundraiser-page.entity';
@@ -77,6 +77,10 @@ export class FundraiserPageService {
 
       if (!fundraiser) {
         throw new NotFoundException('Fundraiser Not Found and Page is Expired');
+      }
+
+      if (fundraiser?.status == 'inactive') {
+        throw new BadRequestException('Fundraiser is Inactive');
       }
 
       let gallery = await this.fundraiserCampaignImagesRepository.find({ select: ['image_url'], where: { fundraiser_page: { fundraiser: { fundraiser_id: fundraiser.fundraiser_id } } } });

@@ -118,10 +118,23 @@ export class DonationRepository extends Repository<Donation> {
   async getDonorNames(user) {
     let supporters = [];
 
-    let donations = await this.find({ select: { donor_first_name: true }, where: { fundraiser: { fundraiser_id: user.fundraiser_id }, payment_status: 'success' } });
+    let donations = await this.dataSource
+      .getRepository(Donation)
+      .createQueryBuilder('donation')
+      .select(['donation.donor_first_name', 'donation.donor_last_name', 'donation.donor_phone'])
+      .innerJoin('donation.fundraiser', 'fundraiser')
+      .where('fundraiser.fundraiser_id = :fundraiserId', { fundraiserId: user.fundraiser_id })
+      .groupBy('donation.donor_phone')
+      .addGroupBy('donation.donor_first_name')
+      .addGroupBy('donation.donor_last_name')
+      // .having('COUNT(*) = 1')
+      .getRawMany();
 
     for (let index = 0; index < donations.length; index++) {
-      supporters.push(donations[index].donor_first_name);
+      if (!donations[index]?.donation_donor_last_name) {
+        donations[index].donation_donor_last_name = '';
+      }
+      supporters.push(donations[index]?.donation_donor_first_name + ' ' + donations[index]?.donation_donor_last_name);
     }
 
     return supporters;

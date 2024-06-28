@@ -238,7 +238,6 @@ export class AdminService {
   async getDonationsAdminForDelete(dto: FindDonationsDto): Promise<ResponseStructure> {
     try {
       const { to_date, from_date } = dto;
-      console.log(incrementDate(new Date(to_date)));
 
       const donationsData = await this.donationRepository
         .createQueryBuilder('donation')

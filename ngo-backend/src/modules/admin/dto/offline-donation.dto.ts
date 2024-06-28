@@ -24,6 +24,12 @@ export class AddOfflineDonationDto {
   @Transform(({ value }) => value.charAt(0).toUpperCase() + value.slice(1).toLowerCase(), { toClassOnly: true })
   donor_first_name: string;
 
+  @ApiProperty({ example: 'Patel', required: false })
+  @IsAlpha()
+  @IsOptional()
+  @Transform(({ value }) => value.charAt(0).toUpperCase() + value.slice(1).toLowerCase(), { toClassOnly: true })
+  donor_last_name: string;
+
   @ApiPropertyOptional({ example: 'HARDI0110K', maxLength: 10, required: false })
   @IsOptional()
   @IsString()
